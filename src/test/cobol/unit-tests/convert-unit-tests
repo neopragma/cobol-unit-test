@@ -1,0 +1,112 @@
+      * Unit tests for convert.cbl
+
+           display spaces
+           display "================================================="
+           display "convert.cbl unit tests"
+
+           move "It converts text field 1 to upper case" 
+               to test-case-name
+           move "something" to text-value-1
+           perform 2100-convert-text-field-1
+           if text-out-1 = "SOMETHING"
+               display passed test-case-name
+           else 
+               display failed test-case-name 
+                   "| expected <SOMETHING>, got <" text-out-1 ">"
+               move 4 to retcode
+           end-if
+
+           move "It handles empty text field 1" 
+                to test-case-name
+           move low-values to text-value-1
+           perform 2100-convert-text-field-1
+           if text-out-1 = spaces
+               display passed test-case-name
+           else 
+               display failed test-case-name 
+                    "| expected spaces, got <" text-out-1 ">"
+               move 4 to retcode
+           end-if
+
+           move "It centers text field 2 and capitalizes first letter" 
+               to test-case-name
+           move "       Something        " to expected    
+           move "something" to text-value-2
+           perform 2300-convert-text-field-2
+
+           if text-out-2 = expected
+               display passed test-case-name
+           else 
+               display failed test-case-name 
+                   "| expected <" expected ", got <" text-out-2 ">"
+               move 4 to retcode
+           end-if
+
+           move "It handles empty text field 2" 
+               to test-case-name
+           move spaces to expected
+           move low-values to text-value-2
+           perform 2300-convert-text-field-2
+           if text-out-2 = spaces
+               display passed test-case-name
+           else 
+               display failed test-case-name 
+                   "| expected " expected ", got <" text-out-2 ">"
+               move 4 to retcode
+           end-if
+
+           move "It finds the state name for a valid state code" 
+               to test-case-name
+           move "Arizona" to expected    
+           move "AZ" to state-code-in
+           perform 2200-lookup-state-name
+           if  state-name-out = expected 
+               display passed test-case-name
+           else
+               display failed test-case-name "| 
+                   expected <" expected ">, got <" 
+                       state-name-out ">"
+               move 4 to retcode
+           end-if
+
+           move "It returns spaces for an invalid state code" 
+               to test-case-name
+           move "QR" to state-code-in
+           perform 2200-lookup-state-name
+           if  state-name-out = spaces 
+               display passed test-case-name
+           else
+               display failed test-case-name 
+                   "| expected spaces, got <"
+                       state-name-out ">"
+               move 4 to retcode
+           end-if
+
+           move "It converts decimal value 10.45 to 010.4500" 
+               to test-case-name
+           move "alpha,az,weasel,10.45" to input-record
+           perform 2050-break-out-delimited-values
+           if  decimal-value-1 = 010.4500 
+               display passed test-case-name
+           else
+               display failed test-case-name 
+                   "| expected 010.4500, got <" decimal-value-1 ">"
+               move 4 to retcode
+           end-if
+
+           move "It converts an empty decimal value to zeroes" 
+               to test-case-name
+           move "alpha,az,weasel," to input-record
+           perform 2050-break-out-delimited-values
+           if  decimal-value-1 = 000.0000 
+               display passed test-case-name
+           else
+               display failed test-case-name 
+                   "| expected 000.0000, got <" decimal-value-1 ">"
+               move 4 to retcode
+           end-if
+
+           display "================================================="
+
+           move retcode to return-code
+           goback.

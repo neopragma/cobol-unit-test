@@ -1,0 +1,14 @@
+# general
+
+*~
+*.lock
+*.DS_Store
+*.swp
+*.out
+
+# project specific
+
+target
+testprog
+testprog.cbl
+cicsresp

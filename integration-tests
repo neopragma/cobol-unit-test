@@ -1,0 +1,10 @@
+#!/bin/bash
+#===================================================================================
+# Run integration tests for convert.cbl
+#
+# Author: Dave Nicolette
+# Date:   19 Jul 2014
+#===================================================================================
+
+convert "$RESOURCE_DIR/input.txt" "$RESOURCE_DIR/output.txt"
+convert-test "$RESOURCE_DIR/expected.txt" "$RESOURCE_DIR/output.txt"

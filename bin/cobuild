@@ -1,0 +1,226 @@
+#!/bin/bash
+#================================================================================
+# Cobol program build with unit tests and integration tests.
+#
+# Usage:
+#
+# cobuild [options] mainprogram subprogram1 ... subprogramn
+#   -u, --unit           name of the unit test copybook file
+#   -n, --no-unit        indicates there is no unit test copybook
+#   -i, --integration    name of the integration test script
+#   -m, --no-integration indicates there is no integration test program
+#   -t, --testout        name of the file where test output is to be written
+#   -o, --target         name of the directory where the executable is to be moved
+#   -c  --continue       continue running the script if an error occurs (default is to end)
+#   -l, --lib            location of subroutine executables
+#   -h  --help           display help and take no other action
+#
+#
+#--------------------
+# Example 1:
+#
+# Run unit tests and put results in reports/myprog.out
+# Die if unit tests failed
+# Compile and put executable in pwd
+# Run integration test program and put results in reports/myprog.out
+# Die if integration tests failed
+# Move executable to ../bin
+#
+# cobuild \
+#   --unit unittests/myprog-ut \
+#   --integration inttests/myprog-it \
+#   --testout reports/myprog.out \
+#   --target ../bin \
+#   myprog.cbl ../../common/lib/subprog1.cob ../lib/subprog2.cbl
+#
+#--------------------
+# Example 2:
+#
+# Skip the unit test step
+# Skip the integration test step
+# Keep going even if an error occurs
+# Put the executable in directory ./temp
+#
+# cobuild -c -n -m -o temp myprog.cbl 
+#
+#--------------------
+# What the script does:
+#
+# 1. Compile.
+# 2. Execute with unit tests.
+# 3. Execute integration test program.
+# 4. Move executable to the project target directory.
+#
+# Author: Dave Nicolette
+# Date:   19 Jul 2014
+#================================================================================
+
+function show_help {
+    echo 'Cobol build script'
+    echo 'Usage:'
+    echo 'cobuild [options] mainprogram [subprogram1 [...subprogramn]]'
+    echo '  -c  --continue       continue running the script if an error occurs (default is to end)'
+    echo '  -h  --help           display help and take no other action'
+    echo '  -i, --integration    name of the integration test script'
+    echo '  -l, --lib            location of subroutine executables'
+    echo '  -m, --no-integration indicates there is no integration test program'
+    echo '  -n, --no-unit        indicates there is no unit test copybook'
+    echo '  -o, --target         name of the directory where the executable is to be moved'
+    echo '  -t, --testout        name of the file where test output is to be written (default is console)'
+    echo '  -u, --unitcopy       name of the unit test copybook file'
+}
+
+function conditionally_die {
+	if [ "$CONTINUE" == false ]; then
+	    echo "Terminating: $1"
+	    exit 1
+    else
+        echo "Continuing with errors: $1"
+	fi
+}
+
+function compile {
+    cobc -x "$@"
+    if [ "$?" -ne 0 ]; then
+        conditionally_die "There were compilation errors."
+    fi
+}
+
+function insert_unit_tests {
+    if [ "$UNITCOPY" == "false" ]; then
+        return
+    fi 
+    if [ ! -e "$UNITTESTS/$UNITCOPY" ]; then
+        echo "Could not find unit test copybook file named $UNITCOPY"
+        conditionally_die "Unable to continue."
+    fi
+
+    $(sed "/procedure division./a \           copy $UNITCOPY." $1 > testprog.cbl)
+    $(sed -i '/working-storage section./a \       77 retcode pic 9(4) value zero.' testprog.cbl)
+    $(sed -i '/working-storage section./a \       77 test-case-name pic x(60) value spaces.' testprog.cbl)
+    $(sed -i '/working-storage section./a \       77 passed pic x(11) value "     PASS: ".' testprog.cbl)
+    $(sed -i '/working-storage section./a \       77 failed pic x(11) value "**** FAIL: ".' testprog.cbl)
+    $(sed -i '/working-storage section./a \       77 expected pic x(256) value spaces.' testprog.cbl)
+    compile testprog.cbl
+}
+
+function run_unit_tests {
+    if [ "$TESTOUT" ]; then
+        ./testprog >> "$TESTOUT"
+    else
+        ./testprog
+    fi    
+}
+
+function run_integration_tests {
+    if [ "$INTEGRATION" == false ]; then
+        echo 'Skipping integration tests because --no-integration or -m was specified.'
+        return
+    fi
+    if [ "$TESTOUT" ]; then
+        "$INTEGRATION" >> "$TESTOUT"
+    else
+        "$INTEGRATION"
+    fi    
+}
+
+TEMP=`getopt -o chi:l:mno:t:u: --long continue,help,integration:,lib:,no-integration,no-unit,target:,testout:,unitcopy: \
+             -n 'javawrap' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+eval set -- "$TEMP"
+
+CONTINUE=false
+INTEGRATION=
+LIB=
+TARGET=./
+TESTOUT=
+UNITCOPY=
+GETHELP='If you are not sure what that means, try cobuild --help'
+
+while true; do
+  case "$1" in
+    -c | --continue ) CONTINUE=true; shift ;;
+    -h | --help ) show_help; exit 0 ;;
+    -i | --integration ) INTEGRATION="$2"; shift 2 ;;
+    -l | --lib ) LIB="$2"; shift 2 ;;
+    -m | --no-integration ) INTEGRATION=false; shift ;;
+    -n | --no-unit ) UNITCOPY=false; shift ;;
+    -o | --target ) TARGET="$2"; shift 2 ;;
+    -t | --testout ) TESTOUT="$2"; shift 2 ;;
+    -u | --unitcopy ) UNITCOPY="$2"; shift 2 ;;
+    -- ) shift; break ;;
+    * ) break ;;
+  esac
+done
+
+
+echo "Building $@..."
+if [ "$TESTOUT" ] && [ -e "$TESTOUT" ]; then
+    rm "$TESTOUT"
+fi
+
+#================================================================================
+# To encourage people to write unit tests and integration tests, we require that 
+# users explicitly specify that they do not have any automated tests rather than 
+# allowing this by default.
+#================================================================================
+
+if [ ! "$UNITCOPY" ]; then
+    echo 'Please specify the name of the copybook that contains your unit tests --unit filename'
+    echo 'or explicity specify --no-unit'
+    echo "$GETHELP"
+    exit 1
+fi 
+
+if [ ! "$INTEGRATION" ]; then
+    echo 'Please specify the name of the integration test program for your build --integration programname'
+    echo 'or explicity specify --no-integration'
+    echo "$GETHELP"
+    exit 1
+fi
+
+#================================================================================
+# Create a copy of the main program containing unit test code and execute it.
+#================================================================================
+
+insert_unit_tests "$@"
+compile "$@"
+if [ "$UNITCOPY" == false ]; then
+    echo "Skipping unit tests because --no-unit or -n was specified."
+else    
+  run_unit_tests "$@"
+  if [ "$?" -ne 0 ]; then
+    if [ "$TESTOUT" ]; then
+        MSG="$TESTOUT"
+    else
+        MSG="console output"
+    fi    
+    conditionally_die "There were unit test failures. See $MSG for details."
+  fi  
+fi
+
+#================================================================================
+# Run the specified integration test script.
+#================================================================================
+
+run_integration_tests "$@"
+if [ "$?" -ne 0 ]; then
+    if [ "$TESTOUT" ]; then
+        MSG="$TESTOUT"
+    else
+        MSG="console output"
+    fi    
+    conditionally_die "There were integration test failures. See $MSG for details."
+fi
+
+#================================================================================
+# Move the executable to the target directory
+#================================================================================
+
+executable_name=$(echo "$1" | awk -F/ '$0=$NF' | awk -F'.' '{print $1}')
+echo "Moving $1 executable to $TARGET"
+mv "$executable_name" "$TARGET"
+
+exit 0

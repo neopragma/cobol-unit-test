@@ -1,0 +1,2 @@
+Arizona                       ALPHA                Weasel         0104500
+Alaska                        BETA                 Ferret         0038750

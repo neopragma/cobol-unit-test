@@ -1,0 +1,5 @@
+project_dir="$HOME/projects/cobol-unit-test"
+export PATH="$project_dir:$project_dir/target:$project_dir/bin:$PATH"
+export COBCPY="$project_dir/src/main/cobol/copybooks"
+export UNITTESTS="$project_dir/src/test/cobol/unit-tests"
+export RESOURCE_DIR="$project_dir/src/test/resources"
