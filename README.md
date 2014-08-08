@@ -115,7 +115,6 @@ There are several different ways programmers can obtain date and time values fro
 We can refactor code that uses these mechanisms to perform a separate paragraph instead, like this:
 
 ```
-<pre class="code box">
       *    (original)
            ACCEPT [variable] FROM DATE YYYYMMDD
 
