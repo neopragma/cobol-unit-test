@@ -1,4 +1,4 @@
-      **********************************************************************
+      ******************************************************************
       * Author:    Dave Nicolette
       * Date:      18 Jul 2014
       * Purpose:   Functional test driver for convert.cbl.
@@ -6,18 +6,20 @@
       *            sequential output file from 'convert' and compares
       *            them record by record.
       *
-      * Usage:     convert-test expected-output-filename actual-output-filename
-      **********************************************************************
+      * Usage:     convert-test expected-output-file actual-output-file
+      ******************************************************************
        identification division.
        program-id. convert-test.
        environment division.
        input-output section.
        file-control.
-
-           select expected-result-file assign to expected-result-filename
+  
+           select expected-result-file 
+               assign to expected-result-filename
                organization is line sequential.
 
-           select actual-result-file assign to actual-result-filename
+           select actual-result-file 
+               assign to actual-result-filename
                organization is line sequential.
 
        data division.
@@ -66,8 +68,10 @@
                into expected-result-filename actual-result-filename
            end-unstring
 
-           if  expected-result-filename = spaces or actual-result-filename = spaces
-               display 'Usage: convert expected-result-filename actual-result-filename'
+           if  expected-result-filename = spaces 
+           or actual-result-filename = spaces
+               display 'Usage: convert expected-result-filename' 
+                   ' actual-result-filename'
                goback
            end-if
            .
@@ -76,7 +80,7 @@
            open input expected-result-file
            open input actual-result-file
 
-           display "============================================================"
+           display "==================================================="
            display " Functional tests for convert.cbl"
            display " Expected output file: " expected-result-filename
            display " Actual output file:   " actual-result-filename
@@ -85,12 +89,15 @@
                until test-fail or end-of-expected or end-of-actual
 
            if  test-fail
-               display test-status function substitute(status-message; "LINE"; expected-line-number)
+               display test-status 
+               function substitute
+                   (status-message; "LINE"; expected-line-number)
            else
-               display test-status "Actual result matches expected result"    
+               display test-status "Actual result matches"
+                   " expected result"    
            end-if
 
-           display "============================================================"
+           display "==================================================="
 
            close expected-result-file
            close actual-result-file
@@ -118,17 +125,20 @@
 
            if  end-of-expected and not end-of-actual
                set test-fail to true
-               move "More records than expected were written" to status-message
+               move "More records than expected were written" 
+                 to status-message
            end-if
 
            if  not end-of-expected and end-of-actual
                set test-fail to true
-               move "Fewer records than expected were written" to status-message
+               move "Fewer records than expected were written" 
+                 to status-message
            end-if
 
            if  expected-result-record not = actual-result-record
                set test-fail to true
-               move "Files do not match starting at line LINE" to status-message
+               move "Files do not match starting at line LINE" 
+                 to status-message
            end-if
            .
  

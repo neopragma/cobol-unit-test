@@ -1,0 +1,21 @@
+      ******************************************************************
+      *  Current date and time fields.
+      ******************************************************************
+       01  filler                     pic  x value 'Y'.
+           88  set-current-date              value 'Y'.
+           88  do-not-set-current-date       value 'N'.
+       01  ws-current-date-fields.
+           05  ws-current-date.
+               10  ws-current-year    pic  9(4).
+               10  ws-current-month   pic  9(2).
+                   88  february
+                       value 2.
+                   88  30-day-month
+                       value 4 6 9 11.
+               10  ws-current-day     pic  9(2).
+           05  ws-current-time.
+               10  ws-current-hour    pic  9(2).
+               10  ws-current-minute  pic  9(2).
+               10  ws-current-second  pic  9(2).
+               10  ws-current-ms      pic  9(2).
+           05  ws-diff-from-gmt       pic S9(4).

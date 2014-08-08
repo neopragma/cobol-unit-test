@@ -1,0 +1,49 @@
+      * Unit tests for invdate.cbl
+
+           display spaces
+           display "================================================="
+           display "invdate.cbl unit tests"
+       
+           move zero to retcode
+           set do-not-set-current-date to true
+
+           move "It determines the next invoice date in a 30-day month" 
+               to test-case-name
+           move "20150405" to ws-current-date
+           move "20150430" to expected
+           perform assert-result
+       
+           move "It determines the next invoice date in a 31-day month" 
+               to test-case-name
+           move "20150705" to ws-current-date
+           move "20150731" to expected
+           perform assert-result
+       
+           move "It determines the next invoice date in Feb, non leap"
+               to test-case-name
+           move "20150205" to ws-current-date
+           move "20150228" to expected
+           perform assert-result
+       
+           move "It determines the next invoice date in Feb, leap"
+               to test-case-name
+           move "20160205" to ws-current-date
+           move "20160229" to expected
+           perform assert-result
+
+           display "================================================="
+
+           move retcode to return-code
+           goback.
+
+       assert-result.
+           perform 2000-next-invoice-date
+           if ws-next-invoice-date = expected
+               display passed test-case-name
+           else 
+               display failed test-case-name 
+                   "| expected <" expected 
+                   ">, got <" ws-next-invoice-date ">"
+               move 4 to retcode
+           end-if
+           .           

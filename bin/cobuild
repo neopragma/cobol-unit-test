@@ -155,7 +155,7 @@ while true; do
   esac
 done
 
-
+echo
 echo "Building $@..."
 if [ "$TESTOUT" ] && [ -e "$TESTOUT" ]; then
     rm "$TESTOUT"
