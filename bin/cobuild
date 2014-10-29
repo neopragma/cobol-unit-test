@@ -221,6 +221,7 @@ fi
 
 executable_name=$(echo "$1" | awk -F/ '$0=$NF' | awk -F'.' '{print $1}')
 echo "Moving $1 executable to $TARGET"
-mv "$executable_name" "$TARGET"
+mkdir -p "$TARGET"
+mv "$executable_name" "$TARGET/."
 
 exit 0
