@@ -1,0 +1,4 @@
+           05  state-name-out   pic x(30).
+           05  text-out-1       pic x(12).
+           05  text-out-2       pic x(24).
+           05  decimal-out-1    pic 9(3)V9(4). 

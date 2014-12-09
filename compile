@@ -1,0 +1,48 @@
+#!/bin/bash
+#================================================================================
+# Build ZUTZCPC.CBL - Z390 compatible unit test framework for batch COBOL.
+#================================================================================
+. envvars
+
+export COBCPY="$MAINCPY:$TESTCPY"
+
+function show_help {
+	echo 'GNU COBOL compile script'
+	echo "Version $VERSION"
+	echo 'Usage: compile [options] program-name-without-suffix [subprogram-names]'
+	echo '    -h --help     Display usage help (this text) and exit'
+	echo '    -t --test     Source is in the project test directory (not main)'
+}
+
+TEST=false
+
+TEMP=`getopt -o ht --long help,test \
+             -n 'javawrap' -- "$@"`
+
+if [ $? != 0 ] ; then show_help >&2 ; exit 0 ; fi
+
+eval set -- "$TEMP"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h | --help ) show_help; exit 0 ;;
+    -t | --test ) TEST=true; shift ;;
+    -- ) shift; break ;;
+    * ) break ;;
+  esac
+done
+
+if [ $# -eq 0 ]
+  then
+    show_help
+    exit 0
+fi
+
+if [ $TEST == true ]; then
+	SOURCE="$TESTSRC"
+else
+    SOURCE="$MAINSRC"
+fi	
+
+cobc -x "$SOURCE/$1.CBL"
+mv "$1" "$TARGET/."

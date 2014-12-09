@@ -1,0 +1,85 @@
+      * UNIT TESTS FOR FIZZBUZZ.CBL
+           
+           DISPLAY SPACES
+           DISPLAY '==================================================='
+           DISPLAY 'UNIT TESTS FOR FIZZBUZZ.CBL'
+
+           MOVE 'IT RETURNS FIZZ FOR THE NUMBER 3 (DIVISIBLE BY 3)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZ' TO UT-EXPECTED
+           MOVE 3 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS FIZZ FOR THE NUMBER 6 (DIVISIBLE BY 3)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZ' TO UT-EXPECTED
+           MOVE 6 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS FIZZ FOR THE NUMBER 12 (DIVISIBLE BY 3)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZ' TO UT-EXPECTED
+           MOVE 12 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS BUZZ FOR THE NUMBER 5 (DIVISIBLE BY 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'BUZZ' TO UT-EXPECTED
+           MOVE 5 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS BUZZ FOR THE NUMBER 25 (DIVISIBLE BY 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'BUZZ' TO UT-EXPECTED
+           MOVE 25 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS BUZZ FOR THE NUMBER 10 (DIVISIBLE BY 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'BUZZ' TO UT-EXPECTED
+           MOVE 100 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS FIZZBUZZ FOR THE NUMBER 15 (DIV BY 3 AND 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZBUZZ' TO UT-EXPECTED
+           MOVE 15 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS FIZZBUZZ FOR THE NUMBER 30 (DIV BY 3 AND 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZBUZZ' TO UT-EXPECTED
+           MOVE 30 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS FIZZBUZZ FOR THE NUMBER 45 (DIV BY 3 AND 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE 'FIZZBUZZ' TO UT-EXPECTED
+           MOVE 45 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           MOVE 'IT RETURNS 4 FOR THE NUMBER 4 (NOT DIV BY 3 OR 5)' 
+               TO UT-TEST-CASE-NAME
+           MOVE '0004' TO UT-EXPECTED
+           MOVE 4 TO CURRENT-NUMBER
+           PERFORM UT-CHECK
+
+           DISPLAY '==================================================='
+
+           MOVE UT-RETCODE TO RETURN-CODE
+           GOBACK
+           .
+       UT-CHECK.
+           PERFORM 1000-PROCESS-NUMBER
+           MOVE CURRENT-RESULT TO UT-ACTUAL
+           IF UT-ACTUAL IS EQUAL TO UT-EXPECTED
+               DISPLAY UT-PASSED UT-TEST-CASE-NAME
+           ELSE 
+               DISPLAY UT-FAILED UT-TEST-CASE-NAME 
+               DISPLAY '    EXPECTED <' UT-EXPECTED '>'
+               DISPLAY '      ACTUAL <' UT-ACTUAL '>'
+               MOVE 4 TO UT-RETCODE
+           END-IF             
+           .     
+       UT-CHECK-END.
+           .       

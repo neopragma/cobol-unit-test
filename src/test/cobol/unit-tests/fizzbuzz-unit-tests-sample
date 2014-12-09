@@ -1,0 +1,60 @@
+*> Unit tests for fizzbuzz.cbl
+
+     display spaces
+     display "============================================================"
+     display "fizzbuzz.cbl unit tests"
+
+     move "It returns 'Fizz' for the number 3 (divisible by 3)" to test-case-name
+     move 3 to current-number
+     perform 1000-process-number
+     if current-result = "Fizz"
+         display passed test-case-name
+     else 
+         display failed test-case-name "| expected <Fizz>, got <" current-result ">"
+         move 4 to retcode
+     end-if
+
+     move "It returns 'Fizz' for the number 12 (divisible by 3)" to test-case-name
+     move 12 to current-number
+     perform 1000-process-number
+     if current-result = "Fizz"
+         display passed test-case-name
+     else 
+         display failed test-case-name "| expected <Fizz>, got <" current-result ">"
+         move 4 to retcode
+     end-if
+
+     move "It returns 'Buzz' for the number 5 (divisible by 5)" to test-case-name
+     move 5 to current-number
+     perform 1000-process-number
+     if current-result = "Buzz"
+         display passed test-case-name
+     else 
+         display failed test-case-name "| expected <Buzz>, got <" current-result ">"
+         move 4 to retcode
+     end-if
+
+     move "It returns 'Buzz' for the number 20 (divisible by 5)" to test-case-name
+     move 20 to current-number
+     perform 1000-process-number
+     if current-result = "Buzz"
+         display passed test-case-name
+     else 
+         display failed test-case-name "| expected <Buzz>, got <" current-result ">"
+         move 4 to retcode
+     end-if
+
+     move "It returns 'FizzBuzz' for the number 15 (divisible by both 3 and 5)" to test-case-name
+     move 15 to current-number
+     perform 1000-process-number
+     if current-result = "FizzBuzz"
+         display passed test-case-name
+     else 
+         display failed test-case-name "| expected <FizzBuzz>, got <" current-result ">"
+         move 4 to retcode
+     end-if
+
+     display "============================================================"
+
+     move retcode to return-code
+     goback.
