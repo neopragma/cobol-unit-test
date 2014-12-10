@@ -66,7 +66,7 @@ Object-oriented languages work differently. For instance, in Java, this sort of 
            protected String phoneNumber = null;
 ```
 
-This declares a name that represents a _reference_ (an object that contains a pointer to another object) to an object of class ```java.lang.String```. The location of the object in memory and how the Java runtime manages it are not visible to the programmer. In fact, due to string interning, many variables in many objects may refer to the same String object in memory. Conversely, the same reference may point to different Strig objects at different points during a program's execution. The sample declaration assigns an initial value of ```null``` to the reference, which means it does not point to an object (its pointer contains binary zeroes).
+This declares a name that represents a _reference_ (an object that contains a pointer to another object) to an object of class ```java.lang.String```. The location of the object in memory and how the Java runtime manages it are not visible to the programmer. In fact, due to string interning, many variables in many objects may refer to the same String object in memory. Conversely, the same reference may point to different String objects at different points during a program's execution. The sample declaration assigns an initial value of ```null``` to the reference, which means it does not point to an object (its pointer contains binary zeroes).
 
 In Cobol, there is no reference object and no pointer. ```PHONE-NUMBER``` is just a chunk of virtual storage. Its virtual storage address remains the same as long as the program is loaded in memory.
 
@@ -222,11 +222,23 @@ This executes the code under test (in this case, just the paragraph ```2000-SPEA
            PERFORM 2000-SPEAK
 ```
 
-This copies the result (a field i ```WORKING-STORAGE```) to the ```UT-ACTUAL``` field (part of the unit test framework) so that paragraph ```UT-CHECK``` can compare it to the expected output in ```UT-EXPECTED```, and then performs ```UT-CHECK```:
+This copies the result (a field in ```WORKING-STORAGE```) to the ```UT-ACTUAL``` field (part of the unit test framework) so that paragraph ```UT-CHECK``` can compare it to the expected output in ```UT-EXPECTED```, and then performs ```UT-CHECK```:
 
 ```
            MOVE WS-MESSAGE TO UT-ACTUAL
            PERFORM UT-CHECK
+```
+
+The output from these unit tests looks like this:
+
+```
+===================================================
+UNIT TESTS FOR SAMPLE.CBL
+     PASS: IT RETURNS HELLO, WORLD! AS GREETING                                            
+**** FAIL: IT RETURNS GOODBYE, CRUEL WORLD! AS FAREWELL                                    
+    EXPECTED <GOODBYE, CRUEL WORLD!    >
+      ACTUAL <SEE YOU LATER, ALLIGATOR!>
+===================================================
 ```
 
 The same pattern can be repeated as many times as necessary to provide adequate unit test coverage. There is no need to create and populate files or databases or to have live connectivity to external systems. You just set up ```WORKING-STORAGE``` the way it needs to look and perform a paragraph. 
