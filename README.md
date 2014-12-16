@@ -68,6 +68,17 @@ Run all the provided examples.
 ./run-examples
 ```
 
+The sample programs are:
+
+* SAMPLE - minimal unit test code to demonstrate basic usage of the framework.
+* CONVERT - convert a CSV file into a fixed-format file.
+* FIZZBUZZ - the classic FizzBuzz exercise.
+* INVDATE - calculate the date of the last day of the month.
+
+The unit test framework comprises:
+
+* ZUTZCPC - copies a source program and inserts a COPY statement at the top of the WORKING-STORAGE section containing unit test related field definitions, and another COPY statement at the top of the PROCEDURE DIVISION containing the unit test cases.
+
 ## Project context
 
 People might argue that we can use Cobol differently than we do in this project. Here is some context to explain why we aren't doing so.
