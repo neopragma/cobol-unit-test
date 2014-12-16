@@ -3,6 +3,9 @@
       * VSAM MOCKING FRAMEWORK CALL BLOCK
       *****************************************************************
            05  FILLER                    PIC  X(08) VALUE 'VMFBLOCK'. 
+           05  VMF-FUNCTION                   PIC  X(01) VALUE SPACES.
+               88  VMF-FUNCTION-INITIALIZE    VALUE 'I'.
+               88  VMF-FUNCTION-MOCK          VALUE 'M'.
            05  VMF-RETURN-CODE                PIC  X(02) VALUE SPACES.
                88  VMF-RETURN-CODE-UNDEFINED  VALUE SPACES.
                88  VMF-OK                     VALUE '00'.
@@ -13,9 +16,8 @@
                88  VMF-MISSING-FILE-NAME      VALUE '05'.
                88  VMF-MISSING-KEY-VALUE      VALUE '06'.
                88  VMF-INTERNAL-ERROR         VALUE '99'.
-           05  VMF-ACTION                     PIC  X(02) VALUE SPACES.
+           05  VMF-ACTION                PIC  X(02) VALUE SPACES.
                88  VMF-ACTION-UNDEFINED       VALUE SPACES.
-               88  VMF-ACTION-INITIALIZE      VALUE '00'.
                88  VMF-ACTION-OPEN-INPUT      VALUE '01'.
                88  VMF-ACTION-OPEN-OUTPUT     VALUE '02'.
                88  VMF-ACTION-OPEN-IO         VALUE '03'.
@@ -58,8 +60,8 @@
       * RETURNED TO CALLER     
            05  FILLER                    PIC  X(08) VALUE 'VSAMSTAT'.    
            05  VMF-VSAM-STATUS                PIC  X(02) VALUE SPACES.
-               88  VMF-FILE-STATUS-UNDEFINED     VALUE SPACES.
-               88  VMF-STATUS-OK                 VALUE '00' '97'.
+               88  VMF-STATUS-UNDEFINED          VALUE SPACES.
+               88  VMF-STATUS-OK                 VALUE '00'.
                88  VMF-STATUS-DUPLICATE-KEY      VALUE '02' '22'.
                88  VMF-STATUS-WRONG-LENGTH-REC   VALUE '04'.
                88  VMF-STATUS-FILE-NOT-FOUND     VALUE '05' '35'.
@@ -94,5 +96,6 @@
                    88  VMF-UPGRADE-ERROR      VALUE 5.
       *            VALUES DEPEND ON VMF-VSAM-RETURN-CODE                   
                10  VMF-VSAM-FEEDBACK-CODE     PIC S9(04).
+                   88  VMF-FEEDBACK-OK        VALUE 0.
            05  FILLER                    PIC  X(08) VALUE '=RECORD='.
            05  VMF-RECORD                PIC  X(8192).

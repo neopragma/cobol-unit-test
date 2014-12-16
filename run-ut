@@ -24,31 +24,41 @@ function run_unit_tests {
     echo "TESTPRG=$TESTPRG"
     echo "TESTNAME=$TESTNAME"
     echo "UTSTCFG=$UTSTCFG"
+    echo "COBCPY=$COBCPY"
+    echo "COB_LIBRARY_PATH=$COB_LIBRARY_PATH"
   fi
 
   "$TARGET/ZUTZCPC"
   if [ $? -eq 0 ]; then
-    compile --test "$TESTNAME"
-    "$TARGET/$TESTNAME"
+    if [ $SUBPROGRAM == true ]; then
+      compile -ts "$TESTNAME"
+      mv "$TARGET/TESTPRG.so" "$TARGET/$PROGRAM.so"
+      "$TARGET/$DRIVER"
+    else  
+      compile -t "$TESTNAME"
+      "$TARGET/$TESTNAME"
+    fi  
   fi			
 }
 
 function show_help {
 	echo 'Run unit test cases for a batch Cobol program'
-	echo 'Usage: run ut [options] config-file-name program-name-without-suffix [subprogram-names]'
-	echo '    -h --help     Display usage help (this text) and exit'
-    echo '    -v  --version Display the version of the unit test framework'
+	echo 'Usage: run ut [options] config-file-name program-name-without-suffix [test-driver-program-name]'
+  echo '    -d | --debug      Echo debugging information'
+	echo '    -h | --help       Display usage help (this text) and exit'
+  echo '    -s | --subprogram Compile the program under test as a subprogram'
+  echo '                      (requires test-driver-program-name)'
+  echo '    -v | --version Display the version of the unit test framework'
 }
 
 function show_version {
 	echo "Cobol batch unit test framework $VERSION"
 }
 
-CONFIG="$1"
-PROGRAM="$2"
 DEBUG=false
+SUBPROGRAM=false
 
-TEMP=`getopt -o dhv --long debug,help,version \
+TEMP=`getopt -o dhsv --long debug,help,subprogram,version \
              -n 'javawrap' -- "$@"`
 
 if [ $? != 0 ] ; then show_help >&2 ; exit 0 ; fi
@@ -57,7 +67,9 @@ eval set -- "$TEMP"
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    -d | --debug ) DEBUG=true; shift ;;
     -h | --help ) show_help; exit 0 ;;
+    -s | --subprogram ) SUBPROGRAM=true; shift ;;
     -v | --version ) show_version; exit 0 ;;
     -- ) shift; break ;;
     * ) break ;;
@@ -69,6 +81,10 @@ if [ $# -eq 0 ]
     show_help
     exit 0
 fi
+
+CONFIG="$1"
+PROGRAM="$2"
+DRIVER="$3"
 
 run_unit_tests
 exit 0

@@ -12,11 +12,9 @@
        01  FILE-METADATA.
            05  METADATA OCCURS 10 INDEXED BY METADATA-INDEX.
                10  FILE-NAME              PIC  X(44).
-               10  FILE-TYPE              PIC  X(01).
-               10  FILE-ACCESS            PIC  X(01).
-               10  FILE-RECORD-TYPE       PIC  X(01).
-               10  FILE-KEY-LENGTH        PIC S9(08) COMP.
-               10  FILE-STATE             PIC  X(02).
+               10  FILE-ACTION            PIC  X(02).
+               10  FILE-STATUS            PIC  X(02).
+               10  FILE-RECORD            PIC  X(8192).
        LINKAGE SECTION.
        01  VMF-BLOCK.
            COPY VMFBLOCK.
@@ -26,7 +24,7 @@
            DISPLAY '**** IN VSAMMOCK ****'
 
            EVALUATE TRUE
-               WHEN VMF-ACTION-INITIALIZE
+               WHEN VMF-FUNCTION-INITIALIZE
                     PERFORM 0100-INITIALIZE
            END-EVALUATE
 

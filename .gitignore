@@ -9,6 +9,4 @@
 # project specific
 
 target
-testprog
-testprog.cbl
-cicsresp
+*TESTPRG*

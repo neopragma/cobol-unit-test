@@ -16,9 +16,9 @@
 # TESTRSC      Path to the test resources directory
 # TARGET       Path to the target binary directory (.so & executables)
 # COBCPY       Used by GNU Cobol to locate copybooks
+# COB_LIBRARY_PATH Used by GNU Cobol to locate .so files
 #=====================================================================
 
-export PATH=".:$PATH"
 export VERSION="0.1.0 Dec 16 2014"
 export PROJECT="$HOME/projects/cobol-unit-test"
 export MAINSRC="$PROJECT/src/main/cobol"
@@ -29,4 +29,6 @@ export MAINRSC="$PROJECT/src/main/resources"
 export TESTRSC="$PROJECT/src/test/resources"
 export TARGET="$PROJECT/target"
 export COBCPY="$MAINCPY:$TESTCPY"
+export COB_LIBRARY_PATH="$TARGET"
+export PATH="$PROJCT:$TARGET:$PATH"
 
