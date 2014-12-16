@@ -4,6 +4,17 @@ The goal of the project is to enable isolated unit testing of individual paragra
 
 This setup depends on [GNU Cobol](http://sourceforge.net/projects/open-cobol/).
 
+## Design goals
+
+* Support fine-grained automated unit testing of Cobol programs (individual paragraphs).
+* Enable test-driven development of Cobol code targeted to the zOS platform in isolation from the mainframe (for instance, on a laptop).
+* Ensure source-level compatibility across zOS, Unix, Linux, and Windows platforms.
+* Require no modification of production code to enable unit testing.
+* Enable developers to write tests in plain vanilla Cobol, or at worst to learn special statements that follow familiar Cobol conventions.
+* Support batch main programs.
+* Support CICS programs.
+* Support called subprograms.
+
 ## Setup
 
 If you are loading this on a system configured using https://github.com/neopragma/provision-cobol-dev-ubuntu, then clone this repo as follows:
@@ -89,7 +100,7 @@ There is such a thing as [object-oriented Cobol](http://www.cobolstandard.info/w
 
 ### We're not talking about *nix and Windows development
 
-GNU Cobol is well-suited to *nix and Windows software development. This project is based on GNU Cobol, but its goal is not to target *nix and Windows systems. We aim to provide tools for mainframe programmers to enable offline automated unit testing and test-driven development of applications that will be hosted on a mainframe system. Compatibility with legacy mainframe Cobol syntax and style is key. Therefore, features of GNU Cobol that are compelling in their own right, but that are not compatible with mainframe Cobol, are not of interest for this project. In fact, the reason to use GNU Cobol for this project is mainly that Cobol support in the [Z390 Portable Mainframe Assembler and Emulator](www.z390.org) project doesn't seem to be fully baked. 
+GNU Cobol is well-suited to *nix and Windows software development. This project is based on GNU Cobol, but its goal is not to target *nix and Windows systems. We aim to provide tools for mainframe programmers to enable offline automated unit testing and test-driven development of applications that will be hosted on a mainframe system. Compatibility with legacy mainframe Cobol syntax and style is key. Therefore, features of GNU Cobol that are compelling in their own right, but that are not compatible with mainframe Cobol, are not of interest for this project. 
 
 ## Culture and automated unit testing in Cobol
 
@@ -368,3 +379,93 @@ Now our unit test code can set up the preconditions for a date/time-dependent te
 The framework doesn't address the case when we want to test a single step (executing a Cobol program) from a jobstream. It turns out to be fairly straightforward to set up test jobstreams using IBM utilities, in particular [SuperC](http://www-01.ibm.com/support/knowledgecenter/SSLTBW_2.1.0/com.ibm.zos.v2r1.f54u200/chap8.htm). This enables us to test single job steps in isolation on-platform.
 
 If you need to automate the same level of testing off-platform, you can create fake input files and &quot;expected&quot; output files for your program, and then write a test script that populates the files appropriately, executes your program, and compares the actual and expected output files. You can use a ```diff``` utility or roll your own compare program or script. So, there's no need for a special framework to support functional testing.
+
+### Design goals / development ideas
+
+In March, 2011, one Paul Russell posted [a question on stackoverflow](http://stackoverflow.com/questions/5502850/is-there-a-workable-approach-to-use-test-driven-development-in-a-cobol-applicati) inquiring about practical unit testing tools for mainframe Cobol applications. He proposed a list of functional requirements for such a tool. We think his list of requirements is excellent. Here is his list, with our comments relating the requirements to this project.
+
+* Must allow an integration test to exercise an entire cobol program.
+
+It's pretty easy to set up integration tests without any need for an additional testing framework, both on-platform and off-platform. Automated integration testing is definitely desirable, but we don't think there is a need for the unit testing framework to support it explicitly. On-platform, it's straightforward to set up test jobs that prepare expected output files using IBM utilities and/or Rexx, Sas, EasyTrieve, etc., and to compare actual and expected output files using SuperC, other utilities, or custom programs. Off-platform, it's equally straightforward to set up expected output files and to run integration-level tests using a *nix shell language or Windows .bat files. Test output that goes to standard output (via Cobol DISPLAY) can be redirected to a file using a DD statement on-platform, or command-line redirection off-platform, to provide simple reporting. 
+
+* Must allow tests to self-certify their results (i.e. make assertions a la xUnit)
+
+We are using plain Cobol conditional statements to assert results. This does not use the xUnit convention of throwing an exception when the assertion is false, but it is conceptually similar. We think this approach keeps the test code consistent with plain vanilla Cobol, which is a design goal of this project that also aligns with Paul's suggested requirement (below) that developers should not have to learn another programming language just to write tests.
+
+* Must support both batch mode and CICS cobol.
+
+The current version of this project supports batch programs only. We do plan to include mocking support to enable offline unit testing of CICS programs without the need for a real or emulated CICS runtime environment. That functionality is not in place yet.
+
+* Should allow a unit test to exercise individual paragraphs within a cobol program by manipulating working storage before/after invoking the code under test.
+
+This was the primary driving factor in starting the project. We are not aware of any other Cobol unit testing framework that supports this. 
+
+* Should provide an ability to automatically execute a series of tests (suite) and report on the overall result.
+
+There is no explicit concept of a test suite in this project. It's easy enough to script a series of test runs using a *nix shell script, Windows .bat file, Rexx, Sas, or plain old JCL. It's been quite some time since we've seen anyone using the "suite" feature of an xUnit tool. Not sure it's valuable. One way to achieve a similar result is to nest COPY statements in the unit test copybooks. One could think of the top-level copybook as the "suite," although the framework itself does not have that concept built in.
+
+* Should support the use of test data fixtures that are set up before a test and torn down afterwards.
+
+This project supports fixtures in a sense, because the programmer can write plain Cobol code in the unit test cases that perform the same function as fixtures. We are considering adding "before" and "after" functionality similar to that supported in unit test frameworks for other languages. On the other hand, one could just write paragraphs in the unit test copybook that perform the same functions.
+
+* Should cleanly separate test from production code.
+
+One of the design goals of this project is to leave the production code completely untouched. We do this by running a precompiler that copies the program under test and inserts the unit test cases into the source of the copy. Unit tests are executed by running the copy of the program under test.
+
+* Should offer a typical test to production code ratio of circa 1:1 (i.e. writing tests shouldn't multiply the amount of code written by so much that the overall cost of maintenance goes up instead of down)
+
+The test to production code ratio is up to the developer, and is not a feature of the testing framework (for _any_ testing framework). In general, people do write more test code than production code because there must be one test case for each path through any given routine. A ratio of 1:1 could be a red flag indicating inadequate test coverage. But this is contextual.
+
+* Should not require COBOL developers to learn another programming language, unless this conflicts directly with the above requirement.
+
+One of the design goals of this project is to allow unit test code to be written in plain vanilla Cobol. The framework should insert code into the test copy of the program under test automatically, so that the developer need not be concerned with the underlying implementation details.
+
+* Could support code coverage reporting.
+
+We have not considered this feature up to now, but it is worth thinking about.
+
+* Could encourage [the] adoption of different design patterns within the code itself in order to make code easier to test.
+
+In early use of pre-alpha versions, we noticed immediately that people tended to structure their production code more cleanly when they used the framework for test-first development. We think this is a characteristic of the test-driven approach rather than a feature of testing frameworks.
+
+In addition to the functional requirements that Paul suggests, we want to support the following:
+
+* Mock VSAM file access.
+* Mock EXEC CICS commands.
+* Mock EXEC SQL commands.
+
+At the unit test level, code should be isolated from all external dependencies. This includes the local filesystem, databases, and any remote resources. A test is not really a "unit" test if it is possible for the test to fail for any reason other than its assertions not being satisfied. 
+
+## Alternatives
+
+### COBOL UNIT
+
+This is an open source project that appears to have changed ownership at least a couple of times. There are no files to download from SourceForge, so we could assess the product only by reading its documentation. It appears to be designed to test entire Cobol programs that are written as callable subprograms. It is necessary to call the program under test, passing arguments to it, and then to check the returned values. To assert results, one must call the COBOL UNIT framework to ask it to perform assertions. The available assertions are equality for character data and equality for numeric data. Apparently, that's all it can do. Looks pretty clunky to use. It's unclear how active the project is. 
+
+Links
+
+* [COBOL UNIT at SourceForge](http://cobolunit.sourceforge.net/)
+* [COBOL UNIT at Google Sites](https://sites.google.com/site/cobolunit/)
+* [Tutorial on Google Code](https://sites.google.com/site/cobolunit/)
+
+### Z390 Portable Mainframe Assembler and Emulator
+
+Initially, this project was based on the Z390 Portable Mainframe Assembler and Emulator. This is an open source project maintained by a group of extremely knowledgeable, long-time mainframe experts. The emulator is written in Java, and emulates the machine instruction set. The assembler is very good. Unfortunately, the zCOBOL support is not fully baked, and proved to be unsuitable for our needs. 
+
+The emulator project team ultimately wants to have working versions of CICS and working VSAM support as well as full support for zCOBOL and assembly language programming. Our goal is not to have these zOS facilities actually working under emulation, but rather to mock or stub them to enable isolated unit testing. To achieve seamless compatibility between on-platform and off-platform environments, the emulator seemed to be a good choice as the base platform for the unit test framework. This didn't prove out, however. We switched to GNU Cobol. But this is still a very interesting project in its own right. In fact, we used it to build [a unit test framework for mainframe assembly language](https://github.com/neopragma/z390-assembly-unit-test). Great fun. Probably a limited market.
+
+Links
+
+* [Z390 Portable Mainframe Assembler and Emulator](www.z390.org)
+
+### Enterprise-class tools
+
+IBM's Rational Development and Test Environment (RD&T) comprises a very interesting a useful collection of tools built by IBM and/or acquired through purchases. The environment can support any sort of manual or automated testing from the integration level upward, and has facilities for virtualizing a range of services such as MQ Series queues, CICS LINKs, VSAM accesses, and DB2 calls. 
+
+* [Rational Development and Test Environment](http://www-03.ibm.com/software/products/en/ratideveandtestenviforsystz)
+
+Compuware's Hiperstation is another enterprise-class alternative that supports integration and performance test automation. It also offers some security-related test features. 
+
+* [Compuware Hiperstation](http://www.compuware.com/en_us/mainframe-solutions/products/hiperstation-automated-mainframe-testing.html)
+
+These tools, and possibly others competing in the same space, are useful for large-scale automated testing - system testing, integration testing, end-to-end functional testing, etc. Our goal in this project is to support fine-grained unit testing for Cobol, as well as enabling developers to work off-platform with no network dependencies. Enterprise-class tools are designed to operate within an IT shop. They do not operate in an isolated mode that a developer could use on his/her laptop.
