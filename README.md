@@ -1,6 +1,6 @@
-# Cobol unit testing framework for batch programs
+# Cobol unit testing framework for mainframe batch programs
 
-This is a unit testing framework for batch Cobol programs. The goal is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. 
+The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. Production source code should be identical on all supported platforms. 
 
 This setup depends on [GNU Cobol](http://sourceforge.net/projects/open-cobol/).
 
@@ -13,15 +13,60 @@ cd ~/projects
 clone https://github.com/neopragma/cobol-unit-test
 ```
 
-Run the build script like this:
-
-```shell
-cd ~/projects/cobol-unit-test
-source envvars
-build
-``` 
-
 If you are configuring the software yourself, then start by installing [GNU Cobol](http://sourceforge.net/projects/open-cobol/). I haven't set this up on any other platforms, so I can't help you with configuration issues that may arise.
+
+## Description
+
+The unit test "framework" copies the program under test and inserts a copybook at the top of WORKING-STORAGE and another at the top of PROCEDURE DIVISION containing unit test code. It then runs the copy of the program, which executes the isolated unit test cases without running the program from start to finish.
+
+### Directory structure
+
+```
+README.md                          This file.
+envvars                            Environment variable settings. Sourced by bash scripts.
+compile                            Bash script to compile a program.
+run-ut                             Run the unit tests for a program.
+run-examples                       Run all the unit test examples provided with the project.
+target/                            Destination directory for compiled programs (.so and executable).
+src/
+  |
+  +-- main/
+  |     |
+  |     +-- cobol/                 "Production" source code.
+  |     |     |
+  |     |     +-- copy/            "Production" copy library.
+  |     |
+  |     +-- resources/             "Production" resource files.
+  |
+  +-- test/  
+        |
+        +-- cobol/                 Test source code.
+        |     |
+        |     +-- unit-tests/      Unit test copy files.
+        |
+        +-- resources/             Test resource files, including unit test configuraiton files.
+  
+```
+
+### Examples
+
+Compile the program ```SAMPLE```, located at ```src/main/cobol/SAMPLE.CBL
+
+```sh
+./compile SAMPLE
+```
+
+Run the unit tests for ```SAMPLE```. Configuration file is ```src/test/resources/SAMPLEC``` and unit tests are in ```src/test/cobol/unit-tests/SAMPLET```.
+
+```sh
+./run-ut SAMPLEC SAMPLE
+```
+
+Run all the provided examples.
+
+```sh
+./run-examples
+```
 
 ## Project context
 

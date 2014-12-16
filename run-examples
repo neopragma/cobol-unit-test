@@ -1,7 +1,10 @@
 #!/bin/bash
 #================================================================================
-# Build all programs in project cobol-unit-test
+# Run all the examples
+#
 #================================================================================
 
-build-convert
-build-invdate
+./run-ut SAMPLEC SAMPLE
+./run-ut FIZZBUZC FIZZBUZZ
+./run-ut CONVERTC CONVERT
+./run-ut INVDATEC INVDATE

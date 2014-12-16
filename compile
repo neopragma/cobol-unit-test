@@ -12,11 +12,13 @@ function show_help {
 	echo 'Usage: compile [options] program-name-without-suffix [subprogram-names]'
 	echo '    -h --help     Display usage help (this text) and exit'
 	echo '    -t --test     Source is in the project test directory (not main)'
+  echo '    -s --subprogram Generate a callable subprogram (not an executable)'
 }
 
 TEST=false
+SUBPROGRAM=false
 
-TEMP=`getopt -o ht --long help,test \
+TEMP=`getopt -o hst --long help,subprogram,test \
              -n 'javawrap' -- "$@"`
 
 if [ $? != 0 ] ; then show_help >&2 ; exit 0 ; fi
@@ -26,6 +28,7 @@ eval set -- "$TEMP"
 while [ $# -gt 0 ]; do
   case "$1" in
     -h | --help ) show_help; exit 0 ;;
+    -s | --subprogram ) SUBPROGRAM=true; shift ;;
     -t | --test ) TEST=true; shift ;;
     -- ) shift; break ;;
     * ) break ;;
@@ -44,5 +47,19 @@ else
     SOURCE="$MAINSRC"
 fi	
 
-cobc -x "$SOURCE/$1.CBL"
-mv "$1" "$TARGET/."
+if [ $SUBPROGRAM == true ]; then
+  SUFFIX='.so'
+  cobc "$SOURCE/$1.CBL"
+else   
+  SUFFIX=
+  cobc -x "$SOURCE/$1.CBL"
+fi
+
+
+if [ $? -eq 0 ]
+  then
+    mv "${1}${SUFFIX}" "$TARGET/."
+    exit 0
+  else
+    exit 1  
+fi

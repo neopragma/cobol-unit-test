@@ -10,13 +10,11 @@
        ENVIRONMENT DIVISION.
        DATA DIVISION.
        WORKING-STORAGE SECTION.
-            COPY ZUTZCWS     .
            COPY DATETIME.
-       01  WS-NEXT-INVOICE-DATE PIC X(8).
+       01  WS-NEXT-INVOICE-DATE PIC X(8).   
        01  WS-QUOTIENT          PIC S9(4) COMP.
-       01  WS-REMAINDER         PIC S9(4) COMP.
+       01  WS-REMAINDER         PIC S9(4) COMP. 
        PROCEDURE DIVISION.
-            COPY INVDATET    .
 
        0000-MAIN.
 
@@ -32,15 +30,15 @@
            PERFORM 2000-NEXT-INVOICE-DATE
            .
 
-       2000-NEXT-INVOICE-DATE.
+       2000-NEXT-INVOICE-DATE.  
            EVALUATE TRUE
-               WHEN FEBRUARY
+               WHEN FEBRUARY 
                     PERFORM 2100-HANDLE-FEBRUARY
                WHEN 30-DAY-MONTH
                     MOVE 30 TO WS-CURRENT-DAY
-               WHEN OTHER
+               WHEN OTHER 
                     MOVE 31 TO WS-CURRENT-DAY
-           END-EVALUATE
+           END-EVALUATE              
            MOVE WS-CURRENT-DATE TO WS-NEXT-INVOICE-DATE
            .
 
@@ -53,8 +51,8 @@
                MOVE 29 TO WS-CURRENT-DAY
            ELSE
                MOVE 28 TO WS-CURRENT-DAY
-           END-IF
+           END-IF            
            .
 
        9999-END.
-           .
+           .     

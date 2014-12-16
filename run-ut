@@ -6,6 +6,8 @@
 # unit tests and another for the unit tests themselves, which are expected
 # to be defined in a copybook. Then the script compiles the resulting test
 # program and executes it. Output goes to stdout.
+#
+# 
 #================================================================================
 
 function run_unit_tests {
@@ -17,12 +19,12 @@ function run_unit_tests {
   export TESTNAME=TESTPRG
   export UTSTCFG="$TESTRSC/$CONFIG"
 
-  echo "SRCPRG=$SRCPRG"
-  echo "TESTPRG=$TESTPRG"
-  echo "TESTNAME=$TESTNAME"
-  echo "UTSTCFG=$UTSTCFG"
-
-
+  if [ $DEBUG == true ]; then
+    echo "SRCPRG=$SRCPRG"
+    echo "TESTPRG=$TESTPRG"
+    echo "TESTNAME=$TESTNAME"
+    echo "UTSTCFG=$UTSTCFG"
+  fi
 
   "$TARGET/ZUTZCPC"
   if [ $? -eq 0 ]; then
@@ -44,8 +46,9 @@ function show_version {
 
 CONFIG="$1"
 PROGRAM="$2"
+DEBUG=false
 
-TEMP=`getopt -o hv --long help,version \
+TEMP=`getopt -o dhv --long debug,help,version \
              -n 'javawrap' -- "$@"`
 
 if [ $? != 0 ] ; then show_help >&2 ; exit 0 ; fi

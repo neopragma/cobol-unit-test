@@ -1,0 +1,4 @@
+           05  STATE-NAME-OUT   PIC X(30).
+           05  TEXT-OUT-1       PIC X(12).
+           05  TEXT-OUT-2       PIC X(24).
+           05  DECIMAL-OUT-1    PIC 9(3)V9(4). 

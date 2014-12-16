@@ -1,0 +1,49 @@
+      * UNIT TESTS FOR INVDATE.CBL
+
+           DISPLAY SPACES
+           DISPLAY "================================================="
+           DISPLAY "INVDATE.CBL UNIT TESTS"
+       
+           MOVE ZERO TO UT-RETCODE
+           SET DO-NOT-SET-CURRENT-DATE TO TRUE
+
+           MOVE "IT DETERMINES THE NEXT INVOICE DATE IN A 30-DAY MONTH" 
+               TO UT-TEST-CASE-NAME
+           MOVE "20150405" TO WS-CURRENT-DATE
+           MOVE "20150430" TO UT-EXPECTED
+           PERFORM ASSERT-RESULT
+       
+           MOVE "IT DETERMINES THE NEXT INVOICE DATE IN A 31-DAY MONTH" 
+               TO UT-TEST-CASE-NAME
+           MOVE "20150705" TO WS-CURRENT-DATE
+           MOVE "20150731" TO UT-EXPECTED
+           PERFORM ASSERT-RESULT
+       
+           MOVE "IT DETERMINES THE NEXT INVOICE DATE IN FEB, NON LEAP"
+               TO UT-TEST-CASE-NAME
+           MOVE "20150205" TO WS-CURRENT-DATE
+           MOVE "20150228" TO UT-EXPECTED
+           PERFORM ASSERT-RESULT
+       
+           MOVE "IT DETERMINES THE NEXT INVOICE DATE IN FEB, LEAP"
+               TO UT-TEST-CASE-NAME
+           MOVE "20160205" TO WS-CURRENT-DATE
+           MOVE "20160229" TO UT-EXPECTED
+           PERFORM ASSERT-RESULT
+
+           DISPLAY "================================================="
+
+           MOVE UT-RETCODE TO RETURN-CODE
+           GOBACK.
+
+       ASSERT-RESULT.
+           PERFORM 2000-NEXT-INVOICE-DATE
+           IF WS-NEXT-INVOICE-DATE = UT-EXPECTED
+               DISPLAY UT-PASSED UT-TEST-CASE-NAME
+           ELSE 
+               DISPLAY UT-FAILED UT-TEST-CASE-NAME 
+                   "| UT-EXPECTED <" UT-EXPECTED 
+                   ">, GOT <" WS-NEXT-INVOICE-DATE ">"
+               MOVE 4 TO UT-RETCODE
+           END-IF
+           .           

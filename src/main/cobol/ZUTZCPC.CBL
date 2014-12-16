@@ -3,8 +3,6 @@
       *****************************************************************
       * PRECOMPILER TO COPY A SOURCE FILE TO A TEMPORARY TEST FILE AND
       * INSERT UNIT TEST CODE INTO THE COPY.
-      *
-      * 1. NO SUPPORT FOR 'EVALUATE'
       *****************************************************************       
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
