@@ -322,7 +322,7 @@ To automate unit tests for an entire application on-platform, you can create a m
 
 To run the unit tests, the build script executes the copy of the program that has the unit test cases copied into its Procedure Division.
 
-### Isolation from the system date and time
+## Isolation from the system date and time
 
 There is often a need to set up test cases that depend on a specific date and time. When the code under test obtains the current date and time from the system, these tests are fragile because the date and time values will be different in each run. We need a way to set a specific system date and time so that the test cases will be repeatable. This is true for all programming languages, and is not a unique issue for testing Cobol programs.
 
@@ -380,7 +380,7 @@ The framework doesn't address the case when we want to test a single step (execu
 
 If you need to automate the same level of testing off-platform, you can create fake input files and &quot;expected&quot; output files for your program, and then write a test script that populates the files appropriately, executes your program, and compares the actual and expected output files. You can use a ```diff``` utility or roll your own compare program or script. So, there's no need for a special framework to support functional testing.
 
-### Design goals / development ideas
+## Design goals / development ideas
 
 In March, 2011, one Paul Russell posted [a question on stackoverflow](http://stackoverflow.com/questions/5502850/is-there-a-workable-approach-to-use-test-driven-development-in-a-cobol-applicati) inquiring about practical unit testing tools for mainframe Cobol applications. He proposed a list of functional requirements for such a tool. We think his list of requirements is excellent. Here is his list, with our comments relating the requirements to this project.
 
@@ -460,7 +460,7 @@ Links
 
 ### Enterprise-class tools
 
-IBM's Rational Development and Test Environment (RD&T) comprises a very interesting a useful collection of tools built by IBM and/or acquired through purchases. The environment can support any sort of manual or automated testing from the integration level upward, and has facilities for virtualizing a range of services such as MQ Series queues, CICS LINKs, VSAM accesses, and DB2 calls. 
+IBM's Rational Development and Test Environment (RD&T) comprises a very interesting and useful collection of tools built by IBM and/or acquired through purchases. The environment can support any sort of manual or automated testing from the integration level upward, and has facilities for virtualizing a range of services such as MQ Series queues, CICS LINKs, VSAM accesses, and DB2 calls. 
 
 * [Rational Development and Test Environment](http://www-03.ibm.com/software/products/en/ratideveandtestenviforsystz)
 
