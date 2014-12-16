@@ -22,35 +22,35 @@ The unit test "framework" copies the program under test and inserts a copybook a
 ### Directory structure
 
 ```
-README.md                          This file.
-envvars                            Environment variable settings. Sourced by bash scripts.
-compile                            Bash script to compile a program.
-run-ut                             Run the unit tests for a program.
-run-examples                       Run all the unit test examples provided with the project.
-target/                            Destination directory for compiled programs (.so and executable).
+README.md                     This file.
+envvars                       Environment variable settings. Sourced by bash scripts.
+compile                       Bash script to compile a program.
+run-ut                        Run the unit tests for a program.
+run-examples                  Run all the unit test examples provided with the project.
+target/                       Destination directory for compiled programs (.so and executable).
 src/
   |
   +-- main/
   |     |
-  |     +-- cobol/                 "Production" source code.
+  |     +-- cobol/            "Production" source code.
   |     |     |
-  |     |     +-- copy/            "Production" copy library.
+  |     |     +-- copy/       "Production" copy library.
   |     |
-  |     +-- resources/             "Production" resource files.
+  |     +-- resources/        "Production" resource files.
   |
   +-- test/  
         |
-        +-- cobol/                 Test source code.
+        +-- cobol/            Test source code.
         |     |
-        |     +-- unit-tests/      Unit test copy files.
+        |     +-- unit-tests/ Unit test copy files.
         |
-        +-- resources/             Test resource files, including unit test configuraiton files.
+        +-- resources/        Test resource files, including unit test configuraiton files.
   
 ```
 
 ### Examples
 
-Compile the program ```SAMPLE```, located at ```src/main/cobol/SAMPLE.CBL
+Compile the program ```SAMPLE```, located at ```src/main/cobol/SAMPLE.CBL```
 
 ```sh
 ./compile SAMPLE
