@@ -1,4 +1,4 @@
-# Cobol unit testing framework for mainframe batch programs
+# Cobol unit testing framework for mainframe programs
 
 The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. Production source code should be identical on all supported platforms. 
 
