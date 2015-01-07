@@ -12,17 +12,6 @@
            05  WS-MESSAGE-TYPE          PIC X(08) VALUE SPACES.
            05  WS-MESSAGE               PIC X(40) VALUE SPACES.
        PROCEDURE DIVISION.
-           PERFORM 0100-INITIALIZE
-           PERFORM 1000-DO-STUFF
-           PERFORM 9000-HOUSEKEEPING
-           GOBACK
-           .
-
-       0100-INITIALIZE.
-           .
-
-       1000-DO-STUFF.
-           .
 
        2000-SPEAK.
            IF WS-MESSAGE-TYPE IS EQUAL TO 'GREETING'
@@ -32,9 +21,6 @@
                MOVE 'SEE YOU LATER, ALLIGATOR!' TO WS-MESSAGE  
            END-IF    
            .    
-
-       9000-HOUSEKEEPING.
-           .
 
        9999-END.
            .
