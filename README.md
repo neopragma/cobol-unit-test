@@ -8,6 +8,51 @@ Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki) for mor
 
 The unit test precompiler copies the program under test and inserts test code into the WORKING-STORAGE SECTION and PROCEDURE DIVISION. You can then run the copy of the program, which executes the isolated unit test cases without running the program from start to finish.
 
+## A brief sample
+
+```
+           TESTSUITE 'CONVERT COMMA-DELIMITED FILE TO FIXED FORMAT' 
+
+      *****************************************************************
+      * COBOL COMMENTS ARE IGNORED SO YOU CAN DO THIS SORT OF THING IF
+      * YOU PLEASE.
+      *****************************************************************  
+
+           MOCK FILE INPUT-FILE
+           MOCK FILE   OUTPUT-FILE
+
+           BEFORE-EACH
+           MOVE FOO TO BAR
+           MOVE ZERO TO WS-COUNT
+           END-BEFORE
+
+           AFTER-EACH
+           INITIALIZE WS-RESULTS-TABLE
+           END-AFTER
+
+           TESTCASE      'IT CONVERTS TEXT FIELD 1 TO UPPER CASE' 
+           MOVE 'something' TO TEXT-VALUE-1
+           PERFORM 2100-CONVERT-TEXT-FIELD-1
+           EXPECT TEXT-OUT-1 TO BE 'SOMETHING'
+```
+
+### Notes
+
+The precompiler recognizes certain keywords and substitutes test code, so that you need not code a lot of boilerplate code manually.
+
+TESTSUITE - Provides a description for a series of test cases. The description is echoed in the output from the test run.
+
+MOCK - declares a mock. Current version doesn't do anything with mocks. As a first step toward supporting mocks, the precompiler recognizes the MOCK keyword. This feature is currently under development. The initial focus is on mocking files in batch programs. Future plans include support for mocking EXEC CICS and EXEC SQL commands.
+
+BEFORE-EACH, AFTER-EACH - the precompiler copies these statements into paragraphs that are performed at the start and end of each test case.
+
+TESTCASE - identifies a test case. The description is echoed in the output of the test run.
+
+EXPECT - asserts an expected result. Current version only supports an equality check for PIC X items. 
+
+The precompiler ignores Cobol-style comment lines.
+
+
 ### Directory structure
 
 ```
