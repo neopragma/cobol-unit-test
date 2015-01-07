@@ -4,7 +4,7 @@
 #
 #================================================================================
 
-./run-ut SAMPLEC SAMPLE
-./run-ut FIZZBUZC FIZZBUZZ
-./run-ut CONVERTC CONVERT
-./run-ut INVDATEC INVDATE
+./run-ut SAMPLEC SAMPLE SAMPLET
+./run-ut FIZZBUZC FIZZBUZZ FIZZBUZT
+./run-ut CONVERTC CONVERT CONVERTT
+./run-ut INVDATEC INVDATE INVDATET

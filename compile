@@ -10,15 +10,17 @@ function show_help {
 	echo 'GNU COBOL compile script'
 	echo "Version $VERSION"
 	echo 'Usage: compile [options] program-name-without-suffix [subprogram-names]'
-	echo '    -h --help     Display usage help (this text) and exit'
-	echo '    -t --test     Source is in the project test directory (not main)'
-  echo '    -s --subprogram Generate a callable subprogram (not an executable)'
+  echo '    -c | --clean  Delete the existing executable before compiling'
+	echo '    -h | --help     Display usage help (this text) and exit'
+	echo '    -t | --test     Source is in the project test directory (not main)'
+  echo '    -s | --subprogram Generate a callable subprogram (not an executable)'
 }
 
+CLEAN=false
 TEST=false
 SUBPROGRAM=false
 
-TEMP=`getopt -o hst --long help,subprogram,test \
+TEMP=`getopt -o chst --long clean,help,subprogram,test \
              -n 'javawrap' -- "$@"`
 
 if [ $? != 0 ] ; then show_help >&2 ; exit 0 ; fi
@@ -27,6 +29,7 @@ eval set -- "$TEMP"
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    -c | --clean ) CLEAN=true; shift ;;
     -h | --help ) show_help; exit 0 ;;
     -s | --subprogram ) SUBPROGRAM=true; shift ;;
     -t | --test ) TEST=true; shift ;;
@@ -41,22 +44,28 @@ if [ $# -eq 0 ]
     exit 0
 fi
 
-if [ $TEST == true ]; then
+if [ $TEST == true ]; then              # compile test source
 	SOURCE="$TESTSRC"
 else
-    SOURCE="$MAINSRC"
+  SOURCE="$MAINSRC"                     # compile production source
 fi	
 
-if [ $SUBPROGRAM == true ]; then
+if [ $SUBPROGRAM == true ]; then        # make a dynamic link module
   SUFFIX='.so'
-  cobc "$SOURCE/$1.CBL"
-else   
+  COBOPTS='-m'
+else                                    # make an executable
   SUFFIX=
-  cobc -x "$SOURCE/$1.CBL"
+  COBOPTS='-x'
 fi
 
+                                        # remove existing output file, if any
+if [ $CLEAN == true ] && [ -e "$TARGET/${1}${SUFFIX}" ]; then
+    rm "$TARGET/${1}${SUFFIX}"
+fi  
 
-if [ $? -eq 0 ]
+cobc "$COBOPTS" "$SOURCE/$1.CBL"        # compile, assemble, link w/ selected options
+
+if [ $? -eq 0 ]                         # copy output file to target directory
   then
     mv "${1}${SUFFIX}" "$TARGET/."
     exit 0

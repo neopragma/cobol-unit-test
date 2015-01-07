@@ -19,7 +19,7 @@
 # COB_LIBRARY_PATH Used by GNU Cobol to locate .so files
 #=====================================================================
 
-export VERSION="0.1.0 Dec 16 2014"
+export VERSION="0.2.0 Jan 5 2015"
 export PROJECT="$HOME/projects/cobol-unit-test"
 export MAINSRC="$PROJECT/src/main/cobol"
 export TESTSRC="$PROJECT/src/test/cobol"

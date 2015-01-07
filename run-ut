@@ -1,13 +1,12 @@
 #!/bin/bash
 #================================================================================
-# Run unit tests for program $1
+# Run unit tests
 #
-# ZUTZCPC will a COPY statements for WORKING-STORAGE entries pertaining to
-# unit tests and another for the unit tests themselves, which are expected
-# to be defined in a copybook. Then the script compiles the resulting test
-# program and executes it. Output goes to stdout.
+# $1 Test configuration file name
+# $2 Program to be tested (without suffix)
+# $3 Unit test cases copy file
+# $4 Test driver program name
 #
-# 
 #================================================================================
 
 function run_unit_tests {
@@ -18,12 +17,14 @@ function run_unit_tests {
   export TESTPRG="$TESTSRC/TESTPRG.CBL"
   export TESTNAME=TESTPRG
   export UTSTCFG="$TESTRSC/$CONFIG"
+  export UTESTS="$TESTCPY/$UNITTESTS"
 
   if [ $DEBUG == true ]; then
     echo "SRCPRG=$SRCPRG"
     echo "TESTPRG=$TESTPRG"
     echo "TESTNAME=$TESTNAME"
     echo "UTSTCFG=$UTSTCFG"
+    echo "UTESTS=$UTESTS"
     echo "COBCPY=$COBCPY"
     echo "COB_LIBRARY_PATH=$COB_LIBRARY_PATH"
   fi
@@ -43,7 +44,11 @@ function run_unit_tests {
 
 function show_help {
 	echo 'Run unit test cases for a batch Cobol program'
-	echo 'Usage: run ut [options] config-file-name program-name-without-suffix [test-driver-program-name]'
+	echo 'Usage: run ut [options]' 
+  echo '           config-file-name' 
+  echo '           program-name-without-suffix'
+  echo '           unit-test-copy-file-name' 
+  echo '           [test-driver-program-name]'
   echo '    -d | --debug      Echo debugging information'
 	echo '    -h | --help       Display usage help (this text) and exit'
   echo '    -s | --subprogram Compile the program under test as a subprogram'
@@ -84,7 +89,8 @@ fi
 
 CONFIG="$1"
 PROGRAM="$2"
-DRIVER="$3"
+UNITTESTS="$3"
+DRIVER="$4"
 
 run_unit_tests
 exit 0
