@@ -1,0 +1,40 @@
+           TESTSUITE 'DEMONSTRATE FILE MOCKS' 
+
+      *****************************************************************
+      * UNIT TESTS TO DEMONSTRATE MOCKING FEATURES OF ZUTZCPC.
+      *****************************************************************  
+
+           BEFORE-EACH
+               MOVE SPACES TO INPUT-RECORD
+           END-BEFORE    
+
+           AFTER-EACH
+               MOVE SPACES TO INPUT-RECORD
+           END-AFTER    
+
+           MOCK
+               FILE INPUT-FILE
+               ON READ STATUS IS '47'
+           END-MOCK    
+
+           MOCK
+               FILE INPUT-FILE 
+               ON OPEN STATUS FILE-NOT-FOUND
+           END-MOCK    
+
+           MOCK
+               FILE INPUT-FILE 
+               ON OPEN STATUS OK
+           END-MOCK    
+
+           TESTCASE 'IT MOCKS READING AFTER EOF'
+           PERFORM 0200-READ-INPUT-FILE
+           EXPECT WS-INPUT-FILE-STATUS TO BE '47'    
+
+           TESTCASE 'IT MOCKS FILE-NOT-FOUND ON OPEN INPUT' 
+           PERFORM 0100-OPEN-INPUT
+           EXPECT WS-INPUT-FILE-STATUS TO BE '35'
+
+           TESTCASE 'IT MOCKS SUCCESSFUL FILE OPEN INPUT' 
+           PERFORM 0100-OPEN-INPUT
+           EXPECT WS-INPUT-FILE-STATUS TO BE '00'

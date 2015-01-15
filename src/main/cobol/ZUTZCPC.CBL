@@ -68,9 +68,6 @@
            05  FILLER                    PIC X(249).       
 
        WORKING-STORAGE SECTION.
-
-       01  WS-TRAP PIC S9(04) VALUE ZERO.
-
       *****************************************************************
       * Saved information about files that are accessed by the program
       * under test. If any MOCKs are declared in the test cases, we
@@ -78,16 +75,19 @@
       * information in the first pass of ORIGINAL-SOURCE so that we
       * won't have to pass the file multiple times.
       *
-      * WS-INTERNAL-FILE-NAME is declared in the SELECT statement.
+      * WS-INTERNAL-FILENAME is declared in the SELECT statement.
       * WS-RECORD-FIELD contains the name of the first record area
       * declared under the FD statement.
       * WS-FILE-STATUS-FIELD contains the name of the FILE STATUS
       * field declared in the SELECT statement.
       *****************************************************************
-       01  WS-FILE-INFORMATION.
+       01  FILLER.
            05  WS-MAX-FILES                  PIC 9(02) VALUE 10.
+       01  FILLER                            PIC X(01) VALUE SPACE.
+           88  FILENAME-MATCHED              VALUE 'Y', FALSE SPACE.
+       01  WS-FILE-INFORMATION.
            05  WS-FILE-INFO OCCURS 10 INDEXED BY FILE-IX.
-               10  WS-INTERNAL-FILE-NAME     PIC X(31).
+               10  WS-INTERNAL-FILENAME     PIC X(31).
                10  WS-RECORD-FIELD           PIC X(31).
                10  WS-FILE-STATUS-FIELD      PIC X(31).
 
@@ -97,10 +97,13 @@
       * found in the unit TEST-CASES file. The data are then used to
       * substitute fake code in the TEST-SOURCE file.
       *****************************************************************
-       01  WS-MOCKS.
+       01  FILLER.
            05  FILLER                    PIC X.
                88  MOCK-SYNTAX-ERROR          VALUE 'Y', FALSE SPACE.
+           05  FILLER                    PIC X.
+               88  MOCK-MATCHED          VALUE 'Y', FALSE SPACE.
            05  WS-MAX-MOCKS              PIC 9(02) VALUE 10.
+       01  WS-MOCKS.
            05  WS-MOCK OCCURS 10 INDEXED BY MOCK-IX.
                10  WS-MOCK-TYPE          PIC X(04).
                    88  MOCK-FILE         VALUE 'FILE', FALSE SPACES.
@@ -111,7 +114,7 @@
                10  WS-MOCK-FILE-DATA REDEFINES WS-MOCK-DATA.        
                    15  WS-MOCK-FILENAME      PIC X(20).    
                    15  WS-MOCK-OPERATION     PIC X(20).  
-                   15  WS-MOCK-FILE-STATUS   PIC 9(02).
+                   15  WS-MOCK-FILE-STATUS   PIC X(02).
                    15  FILLER                PIC X(104).
                10  WS-MOCK-CICS-DATA REDEFINES WS-MOCK-DATA.
                    15  WS-MOCK-CICS-RESOURCE PIC X(08).
@@ -124,7 +127,9 @@
                    15  WS-MOCK-SQL-CODE      PIC S9(08) COMP.
                    15  WS-MOCK-SQL-STATE     PIC S9(08) COMP.
                    15  FILLER                PIC X(118).
+       01  FILLER.            
            05  WS-MAX-STATUS-MNEMONICS       PIC 9(02) VALUE 4.
+           05  WS-PREVIOUS                   PIC 9(02) VALUE 0.
            05  WS-MOCK-FILE-STATUS-MNEMONICS.
                10  FILLER PIC X(20) VALUE 'OK'.
                10  FILLER PIC X(02) VALUE '00'.
@@ -140,18 +145,35 @@
                    15  WS-MOCK-FILE-STATUS-VALUE     PIC X(02).        
 
 
+      *****************************************************************
+      * Specifications for parsing I/O statements from the
+      * ORIGINAL-SOURCE file.
+      *
+      * WS-VALID-FILE-OPERATION identifies an operation keyword such
+      *     as READ or CLOSE.
+      * WS-NEXT-TOKEN-TO-GET gives the number of tokens to extract
+      *     after the I/O verb to find the next interesting item in 
+      *     the source statement.
+      *****************************************************************
        01  WS-MAX-VALID-FILE-OPERATIONS      PIC 9(02) VALUE 6.
        01  WS-VALID-FILE-OPERATIONS.
            05  FILLER PIC X(07) VALUE 'CLOSE'.
+           05  FILLER PIC X(01) VALUE '1'.
            05  FILLER PIC X(07) VALUE 'DELETE'.
+           05  FILLER PIC X(01) VALUE '1'.
            05  FILLER PIC X(07) VALUE 'OPEN'.
+           05  FILLER PIC X(01) VALUE '2'.
            05  FILLER PIC X(07) VALUE 'READ'.
+           05  FILLER PIC X(01) VALUE '1'.
            05  FILLER PIC X(07) VALUE 'REWRITE'.
+           05  FILLER PIC X(01) VALUE '1'.
            05  FILLER PIC X(07) VALUE 'WRITE'.
+           05  FILLER PIC X(01) VALUE '1'.
        01  FILLER REDEFINES WS-VALID-FILE-OPERATIONS.
-           05  WS-VALID-FILE-OPERATION 
-               OCCURS 6 TIMES 
-               INDEXED BY VALID-FILE-OPERATION-IX PIC X(07). 
+           05  FILLER OCCURS 6 TIMES 
+                      INDEXED BY VALID-FILE-OPERATION-IX. 
+               10  WS-VALID-FILE-OPERATION PIC X(07).
+               10  WS-NEXT-TOKEN-TO-GET    PIC 9(01).
                    
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -233,12 +255,17 @@
            05  WS-READ                   PIC X(04) VALUE 'READ'.
            05  WS-WRITE                  PIC X(05) VALUE 'WRITE'.
            05  WS-MOVE                   PIC X(05) VALUE 'MOVE '.
+           05  WS-TO                     PIC X(04) VALUE ' TO '.
+           05  CON-ASTERISK              PIC X(01) VALUE '*'.
+           05  CON-SPACER                PIC X(11) VALUE SPACES.
            05  WS-PARA-END               PIC X(12) 
                                          VALUE '           .'.
            05  WS-BEFORE-PARA-HEADER     PIC X(17) 
                                          VALUE '       UT-BEFORE.'.
            05  WS-AFTER-PARA-HEADER      PIC X(17) 
                                          VALUE '       UT-AFTER.'.
+           05  CON-INCR-TESTCASE-COUNT-STMT PIC X(80) VALUE
+               '           ADD 1 TO UT-TEST-CASE-COUNT'.
 
       *****************************************************************
       * File status codes
@@ -361,11 +388,6 @@
 
        LINKAGE SECTION.
 
-      * refactor
-      * 5. organize paragraphs in top-down functional sequence
-      * 6. separate setup for token parsing for each input file
-
-
        PROCEDURE DIVISION.
       *****************************************************************
       * Paragraph organization:
@@ -413,7 +435,7 @@
                WHEN FD-STATEMENT
                     PERFORM 2300-PROCESS-FD
                WHEN CHECK-FOR-IO-STATEMENTS
-                    PERFORM 2500-CHECK-FOR-IO-STATEMENT                  
+                    PERFORM 2500-CHECK-FOR-IO-STATEMENT
                WHEN OTHER
                     PERFORM 9460-COPY-ORIGINAL-LINE         
            END-EVALUATE         
@@ -443,19 +465,18 @@
       *    Look for SELECT INTERNAL-FILE-NAME     
 
            PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
-           MOVE TOKEN(TOKEN-IX) TO WS-INTERNAL-FILE-NAME(FILE-IX)
+           MOVE TOKEN(TOKEN-IX) TO WS-INTERNAL-FILENAME(FILE-IX)
            SET TOKEN-IX UP BY 1
 
       *    Optional FILE STATUS [IS] may be on the current line or on
       *    any subsequent line up to the next period.
 
            PERFORM UNTIL END-OF-STATEMENT
-               PERFORM 7800-PERIOD-ON-THIS-LINE
+               PERFORM 7700-PERIOD-ON-THIS-LINE
                IF END-OF-STATEMENT
                    CONTINUE
                ELSE
-               MOVE KEYWORD-START TO KEYWORD-OFFSET
-               MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
+               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
                MOVE 'FILE STATUS' TO KEYWORD-TO-MATCH
                MOVE 11 TO KEYWORD-MATCH-LENGTH   
                PERFORM 7400-MATCH-KEYWORD
@@ -470,7 +491,7 @@
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
                        PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
                    END-IF
-                   PERFORM 7900-STRIP-PERIOD    
+                   PERFORM 7800-STRIP-PERIOD    
                    MOVE TOKEN(TOKEN-IX) TO WS-FILE-STATUS-FIELD(FILE-IX)
                ELSE
                    PERFORM 9240-READ-AND-COPY-ORIG-SOURCE
@@ -494,13 +515,13 @@
       *    Look for file name to match with the SELECT file name     
 
            PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
-           PERFORM 7900-STRIP-PERIOD
+           PERFORM 7800-STRIP-PERIOD
 
       *    Find the entry in the file information table for this file
 
            PERFORM VARYING FILE-IX FROM 1 BY 1 
                UNTIL FILE-IX GREATER THAN WS-MAX-FILES
-               OR WS-INTERNAL-FILE-NAME(FILE-IX) EQUAL TOKEN(TOKEN-IX)
+               OR WS-INTERNAL-FILENAME(FILE-IX) EQUAL TOKEN(TOKEN-IX)
            END-PERFORM
            
       *    Find the name of the default record field on the next line
@@ -510,7 +531,7 @@
            MOVE 11 TO KEYWORD-OFFSET
            MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
            PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
-           PERFORM 7900-STRIP-PERIOD
+           PERFORM 7800-STRIP-PERIOD
            MOVE TOKEN(TOKEN-IX) TO WS-RECORD-FIELD(FILE-IX)
            .
 
@@ -556,43 +577,173 @@
       * ORIGINAL-SOURCE file, and MOCK specifications have been
       * collected from the TEST-CASES file, before this paragraph is
       * performed.
+      *
+      * Limitations of the current implementation: 
+      * - It will identify an I/O statement only if the I/O verb is the 
+      *   first token on the line.
+      * - It doesn't handle I/O statements that span more than one
+      *   line in the source file.
+      * - It doesn't handle FILE STATUS fields declared PIC X.
+      * - It doesn't handle FILE STATUS fields specified in the I/O
+      *   statement itself; only the one named in the SELECT, if any.
+      * - It doesn't handle READ INTO.
+      * - It doesn't handle WRITE FROM. 
+      * - It should automatically mock OPEN and CLOSE statements for 
+      *   any file that has other mocks specified; it currently handles
+      *   only the statement that it has just found.
+      * - It should update the specification for an existing MOCK if
+      *   the same file and operation are specified in subsequent MOCKs
+      *   to provide different behaviors.
       *****************************************************************
            SET SUPPRESS-COPY-SOURCE TO FALSE
            SET TOKEN-IX TO 1
-           SET KEYWORD-MATCHED TO FALSE
-           MOVE KEYWORD-START TO KEYWORD-OFFSET
-           MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
+           PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
+           PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
+                   UNTIL VALID-FILE-OPERATION-IX IS GREATER THAN
+                         WS-MAX-VALID-FILE-OPERATIONS
+                      OR KEYWORD-MATCHED   
+               IF TOKEN(TOKEN-IX) IS EQUAL TO
+                       WS-VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
+                   SET KEYWORD-MATCHED TO TRUE    
+               END-IF                    
+           END-PERFORM
 
-           MOVE ORIGINAL-LINE TO LINE-TO-PARSE
-           SET SCANNING-ORIGINAL-SOURCE TO TRUE
-           SET SCANNING-TEST-CASES TO FALSE
-
-
-      *     PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
-      *             UNTIL VALID-FILE-OPERATION-IX IS GREATER THAN
-      *                   WS-MAX-VALID-FILE-OPERATIONS
-      *                OR KEYWORD-MATCHED   
-      *         PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
-      *         IF TOKEN(TOKEN-IX) IS EQUAL TO
-      *                 WS-VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
-      *             SET KEYWORD-MATCHED TO TRUE    
-      *         END-IF                    
-      *     END-PERFORM
+           IF KEYWORD-MATCHED 
+               PERFORM 2510-IO-KEYWORD-MATCHED
+           ELSE
+               SET SUPPRESS-COPY-SOURCE TO FALSE   
+           END-IF
 
            IF SUPPRESS-COPY-SOURCE
-               CONTINUE
+               SET SUPPRESS-COPY-SOURCE TO FALSE
            ELSE
                PERFORM 9460-COPY-ORIGINAL-LINE
-           END-IF  
+           END-IF        
            .
 
+       2510-IO-KEYWORD-MATCHED.
+      *****************************************************************
+      * An I/O verb was found in ORIGINAL-SOURCE.
+      * Next token is the file name.
+      *****************************************************************
+           SET TOKEN-IX UP BY 1
+           SET VALID-FILE-OPERATION-IX DOWN BY 1
+           PERFORM 
+               WS-NEXT-TOKEN-TO-GET(VALID-FILE-OPERATION-IX) TIMES
+               PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           END-PERFORM
+
+           PERFORM 2520-FIND-CORR-FILE-MOCK
+           IF MOCK-MATCHED
+               PERFORM 2530-FIND-CORR-FILE-INFO
+           ELSE
+               SET SUPPRESS-COPY-SOURCE TO FALSE    
+           END-IF        
+           .
+
+       2520-FIND-CORR-FILE-MOCK.
+      *****************************************************************
+      * Found an I/O statement in ORIGINAL-SOURCE. See if a MOCK was
+      * specified for this filename.
+      *****************************************************************
+           SET MOCK-MATCHED TO FALSE
+           PERFORM VARYING MOCK-IX FROM WS-MAX-MOCKS BY -1
+                   UNTIL MOCK-IX IS LESS THAN 1
+                      OR MOCK-MATCHED
+
+               IF MOCK-FILE(MOCK-IX) 
+               AND WS-MOCK-OPERATION(MOCK-IX) EQUAL TOKEN(1)
+               AND WS-MOCK-FILENAME(MOCK-IX) EQUAL TOKEN(2)
+                   SET MOCK-MATCHED TO TRUE
+                   SET MOCK-IX UP BY 1
+               ELSE
+                   SET SUPPRESS-COPY-SOURCE TO FALSE    
+               END-IF               
+
+           END-PERFORM            
+           .
+
+       2530-FIND-CORR-FILE-INFO.
+      *****************************************************************
+      * Found an I/O statement for which a MOCK was specified.
+      * Look up the file info captured from the SELECT and FD.
+      *****************************************************************
+           SET FILENAME-MATCHED TO FALSE
+           PERFORM VARYING FILE-IX FROM 1 BY 1
+                   UNTIL FILE-IX IS GREATER THAN WS-MAX-FILES
+                      OR FILENAME-MATCHED
+               IF WS-INTERNAL-FILENAME(FILE-IX) IS EQUAL TO
+                       WS-MOCK-FILENAME(MOCK-IX)
+                   SET FILENAME-MATCHED TO TRUE
+                   SET FILE-IX DOWN BY 1      
+               END-IF
+           END-PERFORM    
+                   
+           IF FILENAME-MATCHED
+               INITIALIZE GENERATED-SOURCE-STATEMENTS
+               SET STATEMENT-IX TO 1
+
+               IF WS-MOCK-RECORD(MOCK-IX) IS NOT EQUAL TO SPACES
+                   PERFORM 2540-GEN-MOCK-RECORD
+               END-IF
+
+               IF WS-MOCK-FILE-STATUS(MOCK-IX) NOT EQUAL SPACES
+                   PERFORM 2550-GEN-MOCK-FILE-STATUS
+               END-IF
+
+               PERFORM 9465-COMMENT-ORIGINAL-LINE
+               PERFORM 9440-WRITE-GENERATED-STATEMENTS
+
+           ELSE
+               SET SUPPRESS-COPY-SOURCE TO FALSE
+
+      * TO DO: display warning message here. MOCK was specified that
+      *        doesn't correspond with any SELECT statement in the
+      *        program. Not an error, because if they're doing TDD
+      *        they might write the test case before writing the
+      *        SELECT statement. But display a warning in case it's
+      *        a typo.
+           END-IF        
+           .
+
+       2540-GEN-MOCK-RECORD.
+      *****************************************************************
+      * File MOCK specifies a record value to be written to the
+      * record field. Generate the source in TEST-SOURCE to do this.
+      *****************************************************************
+           STRING
+               CON-SPACER              DELIMITED BY SIZE
+               WS-MOVE                 DELIMITED BY SIZE
+               WS-MOCK-RECORD(MOCK-IX) DELIMITED BY SIZE
+               WS-TO                   DELIMITED BY SIZE
+               WS-RECORD-FIELD(FILE-IX) DELIMITED BY SPACE
+                   INTO GENERATED-SOURCE-STATEMENT (STATEMENT-IX)
+           END-STRING
+           SET SUPPRESS-COPY-SOURCE TO TRUE
+           .
+
+       2550-GEN-MOCK-FILE-STATUS.
+      *****************************************************************
+      * File MOCK specifies a FILE STATUS value to be written to the
+      * file status field. Generate source in TEST-SOURCE to do this.
+      *****************************************************************
+           STRING
+               CON-SPACER                    DELIMITED BY SIZE
+               WS-MOVE                       DELIMITED BY SIZE
+               WS-MOCK-FILE-STATUS(MOCK-IX)  DELIMITED BY SIZE
+               WS-TO                         DELIMITED BY SIZE
+               WS-FILE-STATUS-FIELD(FILE-IX) DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT (STATEMENT-IX)
+           END-STRING
+           SET SUPPRESS-COPY-SOURCE TO TRUE
+           .
 
       *****************************************************************
       * 4xxx- 5xxx-
       * Parse the TEST-CASES file and insert test code into the
       * PROCEDURE DIVISION of TEST-SOURCE.
       *****************************************************************
-
 
        4000-INSERT-TEST-CODE.
       *****************************************************************
@@ -679,7 +830,7 @@
       *     PERFORM UT-ASSERT-EQUAL
       *****************************************************************
        4300-PROCESS-KEYWORD-EXPECT.
-           PERFORM 7700-ADJUST-OFFSETS
+           PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'TO BE ' TO KEYWORD-TO-MATCH
@@ -690,7 +841,7 @@
                MOVE KEYWORD-TO-MATCH TO TOKEN(TOKEN-IX)
                SUBTRACT 1 FROM KEYWORD-OFFSET
                SET TOKEN-IX UP BY 1
-               PERFORM 7700-ADJUST-OFFSETS
+               PERFORM 7600-ADJUST-OFFSETS
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
            ELSE
                DISPLAY 'SYNTAX IS:'
@@ -759,6 +910,12 @@
            ELSE
                SET GENERATE-PERFORM-AFTER TO TRUE
            END-IF
+
+           MOVE CON-INCR-TESTCASE-COUNT-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1    
+
+
 
            STRING 
                    WS-MOVE           DELIMITED BY SIZE
@@ -832,8 +989,7 @@
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-BEFORE' TO KEYWORD-TO-MATCH
                MOVE 10 TO KEYWORD-MATCH-LENGTH
-               MOVE KEYWORD-START TO KEYWORD-OFFSET
-               MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
+               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
@@ -870,8 +1026,7 @@
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-AFTER' TO KEYWORD-TO-MATCH
                MOVE 9 TO KEYWORD-MATCH-LENGTH
-               MOVE KEYWORD-START TO KEYWORD-OFFSET
-               MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
+               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
@@ -896,7 +1051,11 @@
       * substituted to simulate interaction with the mocked item
       * when references are encountered in ORIGINAL-SOURCE.
       *****************************************************************
+           SET MOCK-IX UP BY 1
            SET MOCK-SYNTAX-ERROR TO FALSE
+
+      * Next token will be the type of mock
+
            ADD 4 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            EVALUATE TRUE
@@ -908,8 +1067,6 @@
                DISPLAY MSG-MOCK-SYNTAX-1    
                DISPLAY MSG-MOCK-SYNTAX-2   
                DISPLAY MSG-MOCK-SYNTAX-3
-           ELSE
-               SET MOCK-IX UP BY 1    
            END-IF
            .
 
@@ -934,31 +1091,20 @@
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            MOVE TOKEN(TOKEN-IX) TO WS-MOCK-FILENAME(MOCK-IX)
 
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: FILENAME ' 
-                WS-MOCK-FILENAME(MOCK-IX)
-      *---------------------------------------------------------------
+      * Next token must be 'ON', as in 'ON REWRITE do such-and-such'
 
            SET TOKEN-IX UP BY 1
            PERFORM 9350-READ-TEST-CASES
            MOVE KEYWORD-START TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: WANT ON, GOT <' 
-               TOKEN(TOKEN-IX) '>'
-      *---------------------------------------------------------------
-
            IF TOKEN(TOKEN-IX) IS NOT EQUAL TO 'ON'
                SET MOCK-SYNTAX-ERROR TO TRUE
            END-IF    
+
+      * Next token must be an I/O operation such as READ or WRITE.
+
            ADD 1 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: WANT OPERATION, GOT <'
-               TOKEN(TOKEN-IX) '>'
-      *---------------------------------------------------------------
 
            SET MOCK-SYNTAX-ERROR TO TRUE
            PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
@@ -969,51 +1115,35 @@
                    SET MOCK-SYNTAX-ERROR TO FALSE
                    MOVE TOKEN(TOKEN-IX) TO WS-MOCK-OPERATION(MOCK-IX)
                END-IF            
-           END-PERFORM        
+           END-PERFORM       
 
-      *---------------------------------------------------------------
-           IF MOCK-SYNTAX-ERROR
-               DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: OPERATION ' 
-                   TOKEN(TOKEN-IX) ' WAS NOT RECOGNIZED'
-           ELSE
-               DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: OPERATION ' 
-                   TOKEN(TOKEN-IX) ' WAS RECOGNIZED AS VALID'
-           END-IF                                       
-      *---------------------------------------------------------------
+      * Optional syntactic sugar 'IS' may or may not be next.
 
            SET TOKEN-IX UP BY 1
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: '
-               'WANT RETURN OR STATUS, GOT <'
-               TOKEN(TOKEN-IX) '>'
-      *---------------------------------------------------------------
-
            SET TOKEN-IX UP BY 1           
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: '
-               'MAY BE OPTIONAL "IS", GOT <'
-               TOKEN(TOKEN-IX) '>'
-      *---------------------------------------------------------------
-
            IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
            END-IF    
 
-      *---------------------------------------------------------------
-           DISPLAY '4900-PROCESS-MOCK-FILE-SPEC: '
-               'SHOULD BE PAST "IS", GOT <'
-               TOKEN(TOKEN-IX) '>'
-      *---------------------------------------------------------------
+           COMPUTE WS-PREVIOUS = 
+               TOKEN-IX - 1 
+           END-COMPUTE
 
            EVALUATE TRUE
-               WHEN TOKEN(TOKEN-IX - 1) IS EQUAL TO 'RETURN'
+
+      * If the last token was RETURN, then the current token is a
+      * record value. 
+
+               WHEN TOKEN(WS-PREVIOUS) IS EQUAL TO 'RETURN'
                     MOVE TOKEN(TOKEN-IX) 
                       TO WS-MOCK-RECORD(MOCK-IX)
-               WHEN TOKEN(TOKEN-IX - 1) IS EQUAL TO 'STATUS'
+
+      * If the last token was STATUS, then the current token is a
+      * FILE STATUS value. 
+
+               WHEN TOKEN(WS-PREVIOUS) IS EQUAL TO 'STATUS'
                     PERFORM VARYING MOCK-STATUS-IX FROM 1 BY 1
                             UNTIL MOCK-STATUS-IX IS GREATER THAN
                                   WS-MAX-STATUS-MNEMONICS 
@@ -1022,9 +1152,12 @@
                                       (MOCK-STATUS-IX)
                     END-PERFORM
                     IF MOCK-STATUS-IX IS GREATER THAN 
-                            WS-MAX-STATUS-MNEMONICS                   
-                        MOVE TOKEN(TOKEN-IX)
-                            TO WS-MOCK-FILE-STATUS(MOCK-IX)
+                            WS-MAX-STATUS-MNEMONICS
+                        PERFORM 7900-STRIP-QUOTES
+                        STRING 
+                            TOKEN(TOKEN-IX) DELIMITED BY SPACE
+                            INTO WS-MOCK-FILE-STATUS(MOCK-IX)
+                        END-STRING
                     ELSE
                         MOVE WS-MOCK-FILE-STATUS-VALUE(MOCK-STATUS-IX)
                             TO WS-MOCK-FILE-STATUS(MOCK-IX)
@@ -1033,16 +1166,7 @@
                     SET MOCK-SYNTAX-ERROR TO TRUE
            END-EVALUATE      
 
-      *---------------------------------------------------------------
-           DISPLAY 'WS-MOCK-FILENAME(MOCK-IX) <' 
-                    WS-MOCK-FILENAME(MOCK-IX) '>'
-           DISPLAY 'WS-MOCK-OPERATION(MOCK-IX) <' 
-                    WS-MOCK-OPERATION(MOCK-IX) '>'
-           DISPLAY 'WS-MOCK-FILE-STATUS(MOCK-IX) <'
-                    WS-MOCK-FILE-STATUS(MOCK-IX) '>'   
-           DISPLAY 'WS-MOCK-RECORD(MOCK-IX) <'
-                    WS-MOCK-RECORD(MOCK-IX) '>'                
-      *---------------------------------------------------------------
+      * MOCK specifications must end with END-MOCK
                         
            SET TOKEN-IX UP BY 1
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
@@ -1056,6 +1180,9 @@
       *****************************************************************
 
        7100-NEXT-TOKEN-TEST-CASES.
+      *****************************************************************
+      * Extract the next token from TEST-CASES.
+      *****************************************************************
            MOVE TEST-CASE-LINE TO LINE-TO-PARSE
            SET SCANNING-TEST-CASES TO TRUE
            SET SCANNING-ORIGINAL-SOURCE TO FALSE
@@ -1063,6 +1190,9 @@
            .
 
        7200-NEXT-TOKEN-ORIGINAL-SOURCE.
+      *****************************************************************
+      * Extract the next token from ORIGINAL-SOURCE.
+      *****************************************************************
            MOVE ORIGINAL-LINE TO LINE-TO-PARSE
            SET SCANNING-ORIGINAL-SOURCE TO TRUE
            SET SCANNING-TEST-CASES TO FALSE
@@ -1141,7 +1271,16 @@
            END-PERFORM    
            .    
 
-       7700-ADJUST-OFFSETS.
+       7500-INITIALIZE-KEYWORD-SEARCH.
+      *****************************************************************
+      * Position pointers for first keyword/token search on a line.
+      *****************************************************************
+           SET KEYWORD-MATCHED TO FALSE
+           MOVE KEYWORD-START TO KEYWORD-OFFSET
+           MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
+           .
+
+       7600-ADJUST-OFFSETS.
       *****************************************************************
       * Position pointers for next keyword/token search.
       *****************************************************************
@@ -1154,7 +1293,7 @@
            END-COMPUTE    
            .
 
-       7800-PERIOD-ON-THIS-LINE.
+       7700-PERIOD-ON-THIS-LINE.
       *****************************************************************
       * See if there is a period on the current input line.
       *****************************************************************
@@ -1167,11 +1306,22 @@
            END-IF
            .            
 
-       7900-STRIP-PERIOD.
+       7800-STRIP-PERIOD.
       *****************************************************************
       * Remove periods from the current token.
       *****************************************************************
            INSPECT TOKEN(TOKEN-IX) REPLACING ALL '.' BY ' '
+           .    
+
+       7900-STRIP-QUOTES.
+      *****************************************************************
+      * Remove single and double quotes from the current token.
+      *****************************************************************
+           IF TOKEN(TOKEN-IX)(1:1) IS EQUAL TO '"' OR "'"
+               INSPECT TOKEN(TOKEN-IX) REPLACING ALL '"' BY SPACE
+               INSPECT TOKEN(TOKEN-IX) REPLACING ALL "'" BY SPACE
+               MOVE TOKEN(TOKEN-IX)(2:79) TO TOKEN(TOKEN-IX)(1:79)
+           END-IF    
            .    
 
       *****************************************************************
@@ -1197,7 +1347,7 @@
        8200-INITIALIZE-MOCK-HANDLING.        
            INITIALIZE WS-MOCKS
            SET CHECK-FOR-IO-STATEMENTS TO FALSE
-           SET MOCK-IX TO 1
+           SET MOCK-IX TO 0
            SET FILE-IX TO 1
            .
 
@@ -1474,28 +1624,37 @@
            END-PERFORM        
            .
 
+       9450-WRITE-COPY-LINE.
       *****************************************************************
       * Insert a line into TEST-SOURCE containing a COPY statement.
       *****************************************************************
-       9450-WRITE-COPY-LINE.
            MOVE WS-COPY-LINE TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
            .
 
+       9460-COPY-ORIGINAL-LINE.
       *****************************************************************
       * Copy a line from ORIGINAL-SOURCE to TEST-SOURCE unchanged.
       *****************************************************************
-       9460-COPY-ORIGINAL-LINE.
            MOVE ORIGINAL-LINE TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
            .
 
+       9465-COMMENT-ORIGINAL-LINE.
+      *****************************************************************
+      * Comment the current ORIGINAL-SOURCE line and copy it.
+      *****************************************************************
+           MOVE CON-ASTERISK TO ORIGINAL-LINE(7:1)
+           MOVE ORIGINAL-LINE TO TEST-LINE
+           PERFORM 9420-WRITE-TEST-LINE
+           .
+
+       9470-WRITE-BEFORE-PARAGRAPH.
       *****************************************************************
       * Write the UT-BEFORE paragraph into the TEST-SOURCE file.
       * This contains the statements specified in the BEFORE-EACH
       * block of the TEST-CASES file, if any.
       *****************************************************************
-       9470-WRITE-BEFORE-PARAGRAPH.
            MOVE WS-BEFORE-PARA-HEADER TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
            PERFORM VARYING BEFORE-EACH-IX FROM 1 BY 1
