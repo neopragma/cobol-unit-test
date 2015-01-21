@@ -99,7 +99,7 @@ Compile the program ```SAMPLE```, located at ```src/main/cobol/SAMPLE.CBL```
 Run the unit tests for ```SAMPLE```. Configuration file is ```src/test/resources/SAMPLEC``` and unit tests are in ```src/test/cobol/unit-tests/SAMPLET```.
 
 ```sh
-./run-ut SAMPLEC SAMPLET
+./run-ut SAMPLEC SAMPLE SAMPLET
 ```
 
 Run all the provided examples.
@@ -110,10 +110,11 @@ Run all the provided examples.
 
 The sample programs are:
 
-* SAMPLE - minimal unit test code to demonstrate basic usage of the framework.
+* SAMPLE - minimal unit test code for a "Hello, World!" program.
 * CONVERT - convert a CSV file into a fixed-format file.
 * FIZZBUZZ - the classic FizzBuzz exercise.
 * INVDATE - calculate the date of the last day of the month.
+* MOCKDEMO - demonstration of mocking batch file access.
 
 The unit test framework comprises:
 
