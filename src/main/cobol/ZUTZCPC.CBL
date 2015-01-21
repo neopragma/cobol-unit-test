@@ -131,6 +131,7 @@
        01  FILLER.            
            05  MAX-STATUS-MNEMONICS       PIC 9(02) VALUE 4.
            05  PREVIOUS-ENTRY             PIC 9(02) VALUE 0.
+           05  TEMP-SUB                   PIC 9(02) VALUE 0.
            05  MOCK-FILE-STATUS-MNEMONICS.
                10  FILLER PIC X(20) VALUE 'OK'.
                10  FILLER PIC X(02) VALUE '00'.
@@ -726,7 +727,9 @@
                       OR KEYWORD-MATCHED   
                IF TOKEN(TOKEN-IX) IS EQUAL TO
                        VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
-                   SET KEYWORD-MATCHED TO TRUE    
+                   SET KEYWORD-MATCHED TO TRUE   
+      * Keep index set to this entry for subsequent processing
+                   SET VALID-FILE-OPERATION-IX DOWN BY 1 
                END-IF                    
            END-PERFORM
 
@@ -751,7 +754,7 @@
       * Filename is next
 
            SET TOKEN-IX UP BY 1
-           SET VALID-FILE-OPERATION-IX DOWN BY 1
+
            PERFORM 
                NEXT-TOKEN-TO-GET(VALID-FILE-OPERATION-IX) TIMES
                PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
@@ -759,7 +762,7 @@
 
            PERFORM 2520-FIND-CORR-FILE-MOCK
            IF MOCK-MATCHED
-               PERFORM 2530-FIND-CORR-FILE-INFO
+               PERFORM 2540-FIND-CORR-FILE-INFO
            ELSE
                SET SUPPRESS-COPY-SOURCE TO FALSE    
            END-IF        
@@ -781,13 +784,13 @@
                    SET MOCK-MATCHED TO TRUE
                    SET MOCK-IX UP BY 1
                ELSE
-                   SET SUPPRESS-COPY-SOURCE TO FALSE    
+                   SET SUPPRESS-COPY-SOURCE TO FALSE
                END-IF               
 
            END-PERFORM            
            .
 
-       2530-FIND-CORR-FILE-INFO.
+       2540-FIND-CORR-FILE-INFO.
       *****************************************************************
       * Found an I/O statement for which a MOCK was specified.
       * Generate code in TEST-SOURCE to substitute mock functionality
@@ -806,7 +809,7 @@
            END-PERFORM    
                    
            IF FILENAME-MATCHED
-               PERFORM 2540-GEN-MOCK-STATEMENTS
+               PERFORM 2550-GEN-MOCK-STATEMENTS
            ELSE
                SET SUPPRESS-COPY-SOURCE TO FALSE
 
@@ -819,7 +822,7 @@
            END-IF        
            .
 
-       2540-GEN-MOCK-STATEMENTS.
+       2550-GEN-MOCK-STATEMENTS.
       *****************************************************************
       * Generate code in TEST-SOURCE to substitute mock behavior for
       * the real I/O functionality.
@@ -1258,9 +1261,7 @@
       * FILE have already been processed. The next expected token is
       * the filename.
       *****************************************************************
-
            SET MOCK-FILE(MOCK-IX) TO TRUE
-      
            MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
            SET STATEMENT-IX TO 1
            MOVE '           SET UT-FIND-FILE-MOCK TO TRUE'
@@ -1306,7 +1307,7 @@
                        VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
                    SET MOCK-SYNTAX-ERROR TO FALSE
                    MOVE TOKEN(TOKEN-IX) TO MOCK-OPERATION(MOCK-IX)
-      
+
                    MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
                    PERFORM 7950-ENCLOSE-IN-QUOTES
                    SET STATEMENT-IX UP BY 1    
