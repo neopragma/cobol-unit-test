@@ -18,22 +18,28 @@ The unit test precompiler copies the program under test and inserts test code in
       * YOU PLEASE.
       *****************************************************************  
 
-           MOCK FILE INPUT-FILE
-           MOCK FILE   OUTPUT-FILE
-
            BEFORE-EACH
-           MOVE FOO TO BAR
-           MOVE ZERO TO WS-COUNT
+               MOVE FOO TO BAR
+               MOVE ZERO TO WS-COUNT
            END-BEFORE
 
            AFTER-EACH
-           INITIALIZE WS-RESULTS-TABLE
+               INITIALIZE WS-RESULTS-TABLE
            END-AFTER
 
-           TESTCASE      'IT CONVERTS TEXT FIELD 1 TO UPPER CASE' 
-           MOVE 'something' TO TEXT-VALUE-1
-           PERFORM 2100-CONVERT-TEXT-FIELD-1
-           EXPECT TEXT-OUT-1 TO BE 'SOMETHING'
+           TESTCASE 'IT CONVERTS TEXT FIELD 1 TO UPPER CASE' 
+               MOVE 'something' TO TEXT-VALUE-1
+               PERFORM 2100-CONVERT-TEXT-FIELD-1
+               EXPECT TEXT-OUT-1 TO BE 'SOMETHING'
+
+           TESTCASE 'IT HANDLES FILE NOT FOUND GRACEFULLY'
+               MOCK
+                   FILE INPUT-FILE 
+                   ON OPEN STATUS FILE-NOT-FOUND
+               END-MOCK    
+               PERFORM 0100-OPEN-INPUT
+               EXPECT WS-INPUT-FILE-STATUS TO BE '35'
+               EXPECT WS-FRIENDLY-MESSAGE TO BE 'SORRY, COULDN''T FIND INPUT-FILE'
 ```
 
 ### Notes

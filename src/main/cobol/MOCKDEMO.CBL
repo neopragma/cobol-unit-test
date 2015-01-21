@@ -47,12 +47,6 @@
            READ INPUT-FILE
            .    
 
-       0300-READ-INTO.
-      *     READ INPUT-FILE
-      *         INTO WS-INPUT-RECORD
-      *     END-READ
-           .
-
        0500-WRITE-OUTPUT-FILE.
            WRITE OUTPUT-RECORD
            .
