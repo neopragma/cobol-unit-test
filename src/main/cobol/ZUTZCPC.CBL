@@ -1,6 +1,10 @@
        IDENTIFICATION DIVISION.
        PROGRAM-ID.  ZUTZCPC.
       *****************************************************************
+      * This work is licensed under a Creative Commons 
+      * Attribution-ShareAlike 4.0 International license.
+      * See http://creativecommons.org/licenses/by-sa/4.0/.
+      *
       * Precompiler to copy a source file to a temporary test file and
       * insert unit test code into the copy.
       *
