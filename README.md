@@ -48,7 +48,7 @@ The precompiler recognizes certain keywords and substitutes test code, so that y
 
 TESTSUITE - Provides a description for a series of test cases. The description is echoed in the output from the test run.
 
-MOCK - declares a mock. Current version doesn't do anything with mocks. As a first step toward supporting mocks, the precompiler recognizes the MOCK keyword. This feature is currently under development. The initial focus is on mocking files in batch programs. Future plans include support for mocking EXEC CICS and EXEC SQL commands.
+MOCK - declares a mock. Current version has very basic support for mocking batch file I/O. This feature is currently under active development.
 
 BEFORE-EACH, AFTER-EACH - the precompiler copies these statements into paragraphs that are performed at the start and end of each test case.
 
