@@ -1,0 +1,14 @@
+           TESTSUITE 'DEMONSTRATE UNIT TESTING A CALLED SUBPROGRAM' 
+
+      *****************************************************************
+      * UNIT TESTS TO DEMONSTRATE MOCKING FEATURES OF ZUTZCPC.
+      *****************************************************************  
+
+           TESTCASE 'IT RETURNS VALUE A TO THE CALLER'
+           PERFORM 1000-RETURN-VALUE-A
+           EXPECT LS-ARG-2 TO BE 'This is value A'    
+
+           TESTCASE 'IT RETURNS VALUE B TO THE CALLER'
+           PERFORM 1000-RETURN-VALUE-A
+           EXPECT LS-ARG-2 TO BE 'This is value A'    
+

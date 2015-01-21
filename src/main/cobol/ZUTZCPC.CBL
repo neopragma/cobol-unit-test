@@ -298,6 +298,8 @@
                                             VALUE '       UT-AFTER.'.
            05  INIT-PARAGRAPH-HEADER        PIC X(22) 
                                         VALUE '       UT-INITIALIZE.'.
+           05  END-PARAGRAPH-HEADER         PIC X(22) 
+                                        VALUE '       UT-END.'.
            05  INCR-TESTCASE-COUNT-STMT     PIC X(80) VALUE
                '           ADD 1 TO UT-TEST-CASE-COUNT'.
            05  SET-MOCK-STMT                PIC X(80) VALUE
@@ -2000,7 +2002,12 @@
                PERFORM 9420-WRITE-TEST-LINE
            END-PERFORM
            MOVE PARAGRAPH-END-MARKER TO TEST-LINE
-           PERFORM 9420-WRITE-TEST-LINE        
+           PERFORM 9420-WRITE-TEST-LINE      
+
+           MOVE END-PARAGRAPH-HEADER TO TEST-LINE
+           PERFORM 9420-WRITE-TEST-LINE
+           MOVE PARAGRAPH-END-MARKER TO TEST-LINE
+           PERFORM 9420-WRITE-TEST-LINE
            .
 
        9490-CLOSE-TEST-SOURCE.
