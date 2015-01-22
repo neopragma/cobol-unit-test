@@ -56,6 +56,8 @@ TESTCASE - identifies a test case. The description is echoed in the output of th
 
 EXPECT - asserts an expected result. Current version only supports an equality check for PIC X items. 
 
+VERIFY - verifies that a mock was accessed the expected number of times.
+
 The precompiler ignores Cobol-style comment lines.
 
 
