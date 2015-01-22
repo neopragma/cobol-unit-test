@@ -302,6 +302,7 @@
            05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
            05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
            05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
+           05  COPY-KEYWORD                 PIC X(04) VALUE 'COPY'.
            05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
            05  READ-VERB                    PIC X(04) VALUE 'READ'.
            05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
@@ -358,6 +359,8 @@
       * Indicators, flags, switches, etc.
       *****************************************************************
        01  FILLER.
+           05  FILLER                    PIC X VALUE SPACE.
+               88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
                88  IS-FIRST-TOKEN              VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
@@ -653,7 +656,7 @@
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
                        PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
                    END-IF
-                   PERFORM 7800-STRIP-PERIOD    
+                   PERFORM 7800-STRIP-PERIOD   
                    MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
                    PERFORM 7950-ENCLOSE-IN-QUOTES
 
@@ -1889,9 +1892,9 @@
 
        7800-STRIP-PERIOD.
       *****************************************************************
-      * Remove periods from the current token.
+      * Remove period-space from the current token.
       *****************************************************************
-           INSPECT TOKEN(TOKEN-IX) REPLACING ALL '.' BY ' '
+           INSPECT TOKEN(TOKEN-IX) REPLACING ALL '. ' BY '  '
            .    
 
        7900-STRIP-QUOTES.
@@ -1929,6 +1932,7 @@
        8000-INITIALIZE.
            PERFORM 8100-LOAD-CONFIG-SETTINGS
            PERFORM 8200-INITIALIZE-MOCK-HANDLING
+           SET BEYOND-PROCEDURE-HEADER TO FALSE
            .
 
        8100-LOAD-CONFIG-SETTINGS.
@@ -2012,7 +2016,7 @@
                     MOVE ORIGINAL-SOURCE-STATUS 
                          TO MSG-ORIGINAL-SOURCE-STATUS
                     MOVE OPEN-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
-                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-ERROR     
+                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-ERROR   
            END-EVALUATE
            .
 
@@ -2023,13 +2027,29 @@
 
        9250-READ-ORIGINAL-SOURCE.
            READ ORIGINAL-SOURCE
-           IF ORIGINAL-SOURCE-STATUS-OK OR ORIGINAL-SOURCE-END-OF-FILE
-               CONTINUE
-           ELSE
-               MOVE ORIGINAL-SOURCE-STATUS TO MSG-ORIGINAL-SOURCE-STATUS
-               MOVE READ-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
-               DISPLAY MSG-ORIGINAL-SOURCE-ERROR               
-           END-IF
+           EVALUATE TRUE
+               WHEN ORIGINAL-SOURCE-STATUS-OK
+                    CONTINUE
+               WHEN ORIGINAL-SOURCE-END-OF-FILE
+                    SET IS-FIRST-TOKEN TO FALSE
+                    PERFORM VARYING TEMP-SUB FROM 12 BY 1
+                            UNTIL TEMP-SUB GREATER THAN KEYWORD-END
+                        IF TEST-LINE(TEMP-SUB:1) EQUAL '.'
+                            SET IS-FIRST-TOKEN TO TRUE
+                        END-IF
+                    END-PERFORM
+                    IF NOT IS-FIRST-TOKEN
+                        WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
+                    END-IF            
+               WHEN OTHER
+                    MOVE ORIGINAL-SOURCE-STATUS 
+                         TO MSG-ORIGINAL-SOURCE-STATUS
+                    MOVE READ-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
+                    DISPLAY MSG-ORIGINAL-SOURCE-ERROR  
+                    PERFORM 9290-CLOSE-ORIGINAL-SOURCE
+                    PERFORM 9490-CLOSE-TEST-SOURCE
+                    GOBACK    
+           END-EVALUATE
            .
 
        9290-CLOSE-ORIGINAL-SOURCE.
@@ -2096,6 +2116,25 @@
            .
 
        9420-WRITE-TEST-LINE.
+           IF BEYOND-PROCEDURE-HEADER
+               PERFORM 9421-CHECK-FOR-COPY-STMT
+               IF IS-FIRST-TOKEN
+                   CONTINUE
+               ELSE    
+      * Not a paragraph header         
+                   IF TEST-LINE(8:4) IS EQUAL TO SPACES 
+                       INSPECT TEST-LINE REPLACING ALL '. ' BY ' '
+                   ELSE
+      * A paragraph header             
+                      MOVE TEST-LINE TO TEMP-STATEMENT
+                      WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
+                      MOVE TEMP-STATEMENT TO TEST-LINE    
+                   END-IF    
+               END-IF
+           END-IF
+           IF TEST-LINE(8:13) IS EQUAL TO 'PROCEDURE DIV'
+               SET BEYOND-PROCEDURE-HEADER TO TRUE
+           END-IF    
            WRITE TEST-LINE
            EVALUATE TRUE
                WHEN TEST-SOURCE-STATUS-OK
@@ -2106,6 +2145,20 @@
                     DISPLAY MSG-TEST-SOURCE-ERROR
            END-EVALUATE
            .    
+
+       9421-CHECK-FOR-COPY-STMT.
+           SET IS-FIRST-TOKEN TO FALSE
+           PERFORM VARYING TEMP-SUB FROM 12 BY 1
+                   UNTIL TEMP-SUB IS GREATER THAN KEYWORD-END
+               IF TEST-LINE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
+                   IF TEST-LINE(TEMP-SUB:4) 
+                          IS EQUAL TO COPY-KEYWORD
+                      SET IS-FIRST-TOKEN TO TRUE    
+                   END-IF
+                   MOVE KEYWORD-END TO TEMP-SUB
+               END-IF                       
+           END-PERFORM
+           .           
 
       *****************************************************************
       * Insert test code resulting from parsing unit test keywords.
@@ -2214,6 +2267,7 @@
            .
 
        9490-CLOSE-TEST-SOURCE.
+           CLOSE TEST-SOURCE
            .    
 
        9999-END.

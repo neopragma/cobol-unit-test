@@ -4,9 +4,26 @@
 #
 #================================================================================
 
+echo 'SAMPLE tests...'
 ./run-ut SAMPLEC SAMPLE SAMPLET
+
+echo 'FIZZBUZZ tests...'
 ./run-ut FIZZBUZC FIZZBUZZ FIZZBUZT
+
+echo 'VIZZBUZZ (classic) tests...'
+./run-ut FIZZBUZC VIZZBUZZ FIZZBUZT
+
+echo 'CONVERT tests...'
 ./run-ut CONVERTC CONVERT CONVERTT
+
+echo 'CONVER2 (classic) tests...'
+./run-ut CONVERTC CONVER2 CONVERTT
+
+echo 'INVDATE tests...'
 ./run-ut INVDATEC INVDATE INVDATET
+
+echo 'MOCKDEMO tests...'
 ./run-ut MOCKDEMC MOCKDEMO MOCKDEMT
+
+echo 'SUBPROG tests...'
 ./run-ut -s SUBPROGC SUBPROG SUBPROGT SUBPROGD
