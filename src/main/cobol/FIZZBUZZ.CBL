@@ -38,7 +38,15 @@
        0000-MAIN.
 
            PERFORM 0500-INITIALIZE
-           PERFORM 1000-PROCESS-NUMBER
+           PERFORM
+               VARYING CURRENT-NUMBER 
+               FROM STARTING-NUMBER BY 1
+               UNTIL CURRENT-NUMBER GREATER THAN ENDING-NUMBER
+
+               PERFORM 1000-PROCESS-NUMBER
+               DISPLAY 'Result for ' CURRENT-NUMBER
+                       ' is ' CURRENT-RESULT
+           END-PERFORM    
            GOBACK
            .
 
