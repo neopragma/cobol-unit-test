@@ -396,26 +396,7 @@
       * Error messages
       *****************************************************************
        01  ERROR-MESSAGES.
-           05  TEXT-UNIT-TEST-CONFIG-FILE      PIC X(27)
-               VALUE 'CONFIGURATION FILE UTSTCFG '.
-           05  TEXT-ORIGINAL-SOURCE-FILE       PIC X(21)
-               VALUE 'ORIGINAL SOURCE FILE '.
-           05  TEXT-TEST-CASES-FILE            PIC X(23)
-               VALUE 'TEST CASES FILE UTESTS '.
-           05  TEXT-TEST-SOURCE-FILE           PIC X(24)
-               VALUE 'TEST SOURCE OUTPUT FILE '.
-           05  TEXT-NOT-FOUND                  PIC X(09)
-               VALUE 'NOT FOUND'.    
-           05  TEXT-UNREADABLE                 PIC X(26)
-               VALUE 'CAN''T BE OPENED FOR INPUT'.    
-           05  TEXT-UNWRITABLE                 PIC X(27)
-               VALUE 'CAN''T BE OPENED FOR OUTPUT'.    
-           05  TEXT-IO-ERROR.
-               10  FILLER                      PIC X(23)
-               VALUE 'I/O ERROR, FILE STATUS '.
-               10  MSG-FILE-STATUS             PIC X(02) VALUE '??'.
-           05  TEXT-ON                         PIC X(04) VALUE ' ON '.
-
+ 
            05  ERROR-MESSAGE-LINE              PIC X(80) VALUE SPACES.
 
            05  MSG-ORIGINAL-SOURCE-NOT-FOUND.
@@ -428,7 +409,7 @@
                10  FILLER PIC X(76) VALUE
                'ORIGINAL SOURCE FILE SRCPRG CAN''T BE OPENED FOR INPUT'.
 
-           05  MSG-ORIGINAL-SOURCE-FILE-ERROR.
+           05  MSG-ORIGINAL-SOURCE-ERROR.
                10  FILLER PIC X(06) VALUE '003-E '.
                10  FILLER PIC X(36) VALUE
                    'ORIGINAL SOURCE FILE SRCPRG STATUS '.
@@ -447,7 +428,7 @@
                10  FILLER PIC X(80) VALUE
                'UNIT TEST FILE UTESTS CAN''T BE OPENED FOR INPUT'.
 
-           05  MSG-TEST-CASES-FILE-ERROR.
+           05  MSG-TEST-CASES-ERROR.
                10  FILLER PIC X(06) VALUE '006-E '.
                10  FILLER                   PIC X(30) VALUE
                    'UNIT TEST FILE UTESTS STATUS '.
@@ -501,7 +482,45 @@
                10  MSG-FILE-MOCK-MOMATCH-FILENAME PIC X(65).             
            05  MSG-FILE-MOCK-NOMATCH-3.
                10  FILLER PIC X(15) VALUE '    OPERATION: '.
-               10  MSG-FILE-MOCK-MOMATCH-OPERATION PIC X(64).             
+               10  MSG-FILE-MOCK-MOMATCH-OPERATION PIC X(64).     
+
+           05  MSG-CONFIG-FILE-NOT-FOUND.
+               10  FILLER PIC X(06) VALUE '010-E '.
+               10  FILLER PIC X(74) VALUE
+               'CONFIGURATION FILE UTSTCFG NOT FOUND'.            
+
+           05  MSG-CONFIG-FILE-UNREADABLE.
+               10  FILLER PIC X(06) VALUE '011-E '.
+               10  FILLER PIC X(74) VALUE
+               'CONFIGURATION FILE UTSTCFG CAN''T BE OPENED FOR INPUT'.            
+
+           05  MSG-CONFIG-FILE-ERROR.
+               10  FILLER PIC X(06) VALUE '012-E '.
+               10  FILLER                   PIC X(35) VALUE
+                   'CONFIGURATION FILE UTSTCFG STATUS '.
+               10  MSG-CONFIG-FILE-STATUS    PIC 9(02).
+               10  FILLER                   PIC X(04) VALUE ' ON '.
+               10  MSG-CONFIG-FILE-OPERATION PIC X(04).
+               10  FILLER                   PIC X(29) VALUE SPACES.
+
+           05  MSG-TEST-SOURCE-NOT-FOUND.
+               10  FILLER PIC X(06) VALUE '013-E '.
+               10  FILLER PIC X(76) VALUE
+               'TEST SOURCE FILE TESTPRG NOT FOUND'.
+
+           05  MSG-TEST-SOURCE-UNWRITABLE.
+               10  FILLER PIC X(06) VALUE '014-E '.
+               10  FILLER PIC X(80) VALUE
+               'TEST SOURCE FILE TESTPRG CAN''T BE OPENED FOR OUTPUT'.
+
+           05  MSG-TEST-SOURCE-ERROR.
+               10  FILLER PIC X(06) VALUE '014-E '.
+               10  FILLER                   PIC X(33) VALUE
+                   'TEST SOURCE FILE TESTPRG STATUS '.
+               10  MSG-TEST-SOURCE-STATUS    PIC 9(02).
+               10  FILLER                   PIC X(04) VALUE ' ON '.
+               10  MSG-TEST-SOURCE-OPERATION PIC X(04).
+               10  FILLER                   PIC X(31) VALUE SPACES.
 
        LINKAGE SECTION.
 
@@ -1951,33 +1970,14 @@
                WHEN UNIT-TEST-CONFIG-STATUS-OK
                     CONTINUE
                WHEN UNIT-TEST-CONFIG-NOT-FOUND
-                    STRING 
-                        TEXT-UNIT-TEST-CONFIG-FILE DELIMITED BY SIZE
-                        TEXT-NOT-FOUND             DELIMITED BY SIZE
-                        TEXT-ON                    DELIMITED BY SIZE
-                        OPEN-VERB                    DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-CONFIG-FILE-NOT-FOUND
                WHEN UNIT-TEST-CONFIG-NOT-READABLE
-                    STRING 
-                        TEXT-UNIT-TEST-CONFIG-FILE DELIMITED BY SIZE
-                        TEXT-UNREADABLE            DELIMITED BY SIZE
-                        TEXT-ON                    DELIMITED BY SIZE
-                        OPEN-VERB                    DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-CONFIG-FILE-UNREADABLE
                WHEN OTHER
-                    MOVE UNIT-TEST-CONFIG-STATUS TO MSG-FILE-STATUS
-                    STRING 
-                        TEXT-UNIT-TEST-CONFIG-FILE DELIMITED BY SIZE
-                        TEXT-IO-ERROR              DELIMITED BY SIZE
-                        TEXT-ON                    DELIMITED BY SIZE
-                        OPEN-VERB                    DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    MOVE UNIT-TEST-CONFIG-STATUS TO
+                         MSG-CONFIG-FILE-STATUS
+                    MOVE OPEN-VERB TO MSG-CONFIG-FILE-OPERATION
+                    DISPLAY THIS-PROGRAM MSG-CONFIG-FILE-ERROR    
            END-EVALUATE
            .
 
@@ -1986,15 +1986,9 @@
            IF UNIT-TEST-CONFIG-STATUS-OK OR UNIT-TEST-CONFIG-END-OF-FILE
                CONTINUE
            ELSE
-               MOVE UNIT-TEST-CONFIG-STATUS TO MSG-FILE-STATUS
-               STRING 
-                   TEXT-UNIT-TEST-CONFIG-FILE DELIMITED BY SIZE
-                   TEXT-IO-ERROR              DELIMITED BY SIZE
-                   TEXT-ON                    DELIMITED BY SIZE
-                   READ-VERB                    DELIMITED BY SIZE
-                   INTO ERROR-MESSAGE-LINE
-               END-STRING
-               DISPLAY ERROR-MESSAGE-LINE
+               MOVE UNIT-TEST-CONFIG-STATUS TO MSG-CONFIG-FILE-STATUS
+               MOVE READ-VERB TO MSG-CONFIG-FILE-OPERATION
+               DISPLAY THIS-PROGRAM MSG-CONFIG-FILE-ERROR
            END-IF
            .
 
@@ -2011,33 +2005,14 @@
                WHEN ORIGINAL-SOURCE-STATUS-OK
                     CONTINUE
                WHEN ORIGINAL-SOURCE-NOT-FOUND
-                    STRING 
-                        TEXT-ORIGINAL-SOURCE-FILE DELIMITED BY SIZE
-                        TEXT-NOT-FOUND            DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-NOT-FOUND
                WHEN ORIGINAL-SOURCE-NOT-READABLE
-                    STRING 
-                        TEXT-ORIGINAL-SOURCE-FILE DELIMITED BY SIZE
-                        TEXT-UNREADABLE           DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-UNREADABLE
                WHEN OTHER
-                    MOVE ORIGINAL-SOURCE-STATUS TO MSG-FILE-STATUS
-                    STRING 
-                        TEXT-ORIGINAL-SOURCE-FILE DELIMITED BY SIZE
-                        TEXT-IO-ERROR             DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    MOVE ORIGINAL-SOURCE-STATUS 
+                         TO MSG-ORIGINAL-SOURCE-STATUS
+                    MOVE OPEN-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
+                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-ERROR     
            END-EVALUATE
            .
 
@@ -2051,15 +2026,9 @@
            IF ORIGINAL-SOURCE-STATUS-OK OR ORIGINAL-SOURCE-END-OF-FILE
                CONTINUE
            ELSE
-               MOVE ORIGINAL-SOURCE-STATUS TO MSG-FILE-STATUS
-               STRING 
-                   TEXT-ORIGINAL-SOURCE-FILE DELIMITED BY SIZE
-                   TEXT-IO-ERROR             DELIMITED BY SIZE
-                   TEXT-ON                   DELIMITED BY SIZE
-                   READ-VERB                   DELIMITED BY SIZE
-                   INTO ERROR-MESSAGE-LINE
-               END-STRING
-               DISPLAY ERROR-MESSAGE-LINE
+               MOVE ORIGINAL-SOURCE-STATUS TO MSG-ORIGINAL-SOURCE-STATUS
+               MOVE READ-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
+               DISPLAY MSG-ORIGINAL-SOURCE-ERROR               
            END-IF
            .
 
@@ -2076,33 +2045,13 @@
                WHEN TEST-CASES-STATUS-OK
                     CONTINUE
                WHEN TEST-CASES-FILE-NOT-FOUND
-                    STRING 
-                        TEXT-TEST-CASES-FILE      DELIMITED BY SIZE
-                        TEXT-NOT-FOUND            DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-TEST-CASES-NOT-FOUND
                WHEN TEST-CASES-NOT-READABLE
-                    STRING 
-                        TEXT-TEST-CASES-FILE      DELIMITED BY SIZE
-                        TEXT-UNREADABLE           DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-TEST-CASES-UNREADABLE
                WHEN OTHER
-                    MOVE TEST-CASES-STATUS TO MSG-FILE-STATUS
-                    STRING 
-                        TEXT-TEST-CASES-FILE      DELIMITED BY SIZE
-                        TEXT-IO-ERROR             DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    MOVE TEST-CASES-STATUS TO MSG-TEST-CASES-STATUS
+                    MOVE OPEN-VERB TO MSG-TEST-CASES-OPERATION
+                    DISPLAY MSG-TEST-CASES-ERROR
            END-EVALUATE
            .
 
@@ -2115,14 +2064,9 @@
            OR TEST-CASES-EXHAUSTED
                CONTINUE
            ELSE
-               STRING 
-                   TEXT-TEST-CASES-FILE      DELIMITED BY SIZE
-                   TEXT-IO-ERROR             DELIMITED BY SIZE
-                   TEXT-ON                   DELIMITED BY SIZE
-                   READ-VERB                   DELIMITED BY SIZE
-                   INTO ERROR-MESSAGE-LINE
-               END-STRING
-               DISPLAY ERROR-MESSAGE-LINE
+               MOVE TEST-CASES-STATUS TO MSG-TEST-CASES-STATUS
+               MOVE OPEN-VERB TO MSG-TEST-CASES-OPERATION
+               DISPLAY MSG-TEST-CASES-ERROR
            END-IF
            .
 
@@ -2141,33 +2085,13 @@
                WHEN TEST-SOURCE-STATUS-OK
                     CONTINUE
                WHEN TEST-SOURCE-FILE-NOT-FOUND
-                    STRING 
-                        TEXT-TEST-SOURCE-FILE     DELIMITED BY SIZE
-                        TEXT-NOT-FOUND            DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-TEST-SOURCE-NOT-FOUND
                WHEN TEST-SOURCE-NOT-WRITABLE
-                    STRING 
-                        TEXT-TEST-SOURCE-FILE     DELIMITED BY SIZE
-                        TEXT-UNWRITABLE           DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    DISPLAY THIS-PROGRAM MSG-TEST-SOURCE-UNWRITABLE            
                WHEN OTHER
-                    MOVE TEST-SOURCE-STATUS TO MSG-FILE-STATUS
-                    STRING 
-                        TEXT-TEST-SOURCE-FILE     DELIMITED BY SIZE
-                        TEXT-IO-ERROR             DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        OPEN-VERB                   DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    MOVE TEST-SOURCE-STATUS TO MSG-TEST-SOURCE-STATUS
+                    MOVE WRITE-VERB TO MSG-TEST-SOURCE-OPERATION
+                    DISPLAY MSG-TEST-SOURCE-ERROR
            END-EVALUATE
            .
 
@@ -2177,15 +2101,9 @@
                WHEN TEST-SOURCE-STATUS-OK
                     CONTINUE
                WHEN OTHER
-                    MOVE TEST-SOURCE-STATUS TO MSG-FILE-STATUS
-                    STRING 
-                        TEXT-TEST-SOURCE-FILE     DELIMITED BY SIZE
-                        TEXT-IO-ERROR             DELIMITED BY SIZE
-                        TEXT-ON                   DELIMITED BY SIZE
-                        WRITE-VERB                  DELIMITED BY SIZE
-                        INTO ERROR-MESSAGE-LINE
-                    END-STRING
-                    DISPLAY ERROR-MESSAGE-LINE
+                    MOVE TEST-SOURCE-STATUS TO MSG-TEST-SOURCE-STATUS
+                    MOVE WRITE-VERB TO MSG-TEST-SOURCE-OPERATION
+                    DISPLAY MSG-TEST-SOURCE-ERROR
            END-EVALUATE
            .    
 
