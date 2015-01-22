@@ -296,6 +296,7 @@
            05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
            05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
            05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
+           05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
            05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
            05  READ-VERB                    PIC X(04) VALUE 'READ'.
            05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
@@ -410,36 +411,90 @@
 
            05  ERROR-MESSAGE-LINE              PIC X(80) VALUE SPACES.
 
-           05  MSG-ORIGINAL-SOURCE-NOT-FOUND  PIC X(80) VALUE
-               'ORIGINAL SOURCE FILE NOT FOUND'.
-           05  MSG-ORIGINAL-SOURCE-UNREADABLE PIC X(80) VALUE
-               'ORIGINAL SOURCE FILE CAN''T BE OPENED FOR INPUT'.
+           05  MSG-ORIGINAL-SOURCE-NOT-FOUND.
+               10  FILLER PIC X(06) VALUE '001-E '.  
+               10  FILLER PIC X(74) VALUE
+                   'ORIGINAL SOURCE FILE SRCPRG NOT FOUND'.
+
+           05  MSG-ORIGINAL-SOURCE-UNREADABLE.
+               10  FILLER PIC X(06) VALUE '002-E '.
+               10  FILLER PIC X(76) VALUE
+               'ORIGINAL SOURCE FILE SRCPRG CAN''T BE OPENED FOR INPUT'.
+
            05  MSG-ORIGINAL-SOURCE-FILE-ERROR.
-               10  FILLER                   PIC X(34) VALUE
-                   'ORIGINAL SOURCE FILE STATUS '.
+               10  FILLER PIC X(06) VALUE '003-E '.
+               10  FILLER PIC X(36) VALUE
+                   'ORIGINAL SOURCE FILE SRCPRG STATUS '.
                10  MSG-ORIGINAL-SOURCE-STATUS    PIC 9(02).
                10  FILLER                   PIC X(04) VALUE ' ON '.
                10  MSG-ORIGINAL-SOURCE-OPERATION PIC X(04).
-               10  FILLER                   PIC X(36) VALUE SPACES.
+               10  FILLER                   PIC X(28) VALUE SPACES.
 
-           05  MSG-TEST-CASES-NOT-FOUND  PIC X(80) VALUE
-               'UNIT TEST COPY FILE UTESTS NOT FOUND'.
-           05  MSG-TEST-CASES-UNREADABLE PIC X(80) VALUE
-               'UNIT TEST COPY FILE UTESTS CAN''T BE OPENED FOR INPUT'.
+           05  MSG-TEST-CASES-NOT-FOUND.
+               10  FILLER PIC X(06) VALUE '004-E '.
+               10  FILLER PIC X(76) VALUE
+               'UNIT TEST FILE UTESTS NOT FOUND'.
+
+           05  MSG-TEST-CASES-UNREADABLE.
+               10  FILLER PIC X(06) VALUE '005-E '.
+               10  FILLER PIC X(80) VALUE
+               'UNIT TEST FILE UTESTS CAN''T BE OPENED FOR INPUT'.
+
            05  MSG-TEST-CASES-FILE-ERROR.
-               10  FILLER                   PIC X(34) VALUE
-                   'UNIT TEST COPY FILE UTESTS STATUS '.
+               10  FILLER PIC X(06) VALUE '006-E '.
+               10  FILLER                   PIC X(30) VALUE
+                   'UNIT TEST FILE UTESTS STATUS '.
                10  MSG-TEST-CASES-STATUS    PIC 9(02).
                10  FILLER                   PIC X(04) VALUE ' ON '.
                10  MSG-TEST-CASES-OPERATION PIC X(04).
-               10  FILLER                   PIC X(36) VALUE SPACES.
+               10  FILLER                   PIC X(34) VALUE SPACES.
 
-           05  MSG-MOCK-SYNTAX-1              PIC X(80) VALUE
-               'MOCK FILE [filename]'. 
+           05  MSG-MOCK-SYNTAX-1.
+               10  FILLER PIC X(06) VALUE '007-E '.
+               10  FILLER PIC X(76) VALUE
+               'UNABLE TO PARSE MOCK STATEMENT (UNIT TEST FILE UTESTS)'.    
            05  MSG-MOCK-SYNTAX-2              PIC X(80) VALUE
-               '  ON [operation] RETURN|STATUS [value]'. 
+               '    MOCK FILE [filename]'. 
            05  MSG-MOCK-SYNTAX-3              PIC X(80) VALUE
-               'END-MOCK'. 
+               '      ON [operation] RETURN|STATUS [value]'. 
+           05  MSG-MOCK-SYNTAX-4              PIC X(80) VALUE
+               '    END-MOCK'. 
+
+           05  MSG-VERIFY-SYNTAX-1.
+               10  FILLER PIC X(06) VALUE '008-E '.
+               10  FILLER PIC X(40) VALUE
+               'UNABLE TO PARSE VERIFY STATEMENT (UNIT T'.    
+               10  FILLER PIC X(36) VALUE
+               'EST FILE UTESTS)'.
+           05  MSG-VERIFY-SYNTAX-2.
+               10  FILLER PIC X(40) VALUE
+               '    VERIFY mock-type mock-ident-values H'.        
+               10  FILLER PIC X(36) VALUE
+               'APPENED count TIME[S]'.
+           05  MSG-VERIFY-SYNTAX-3.
+               10  FILLER PIC X(80) VALUE 'Examples:'.
+           05  MSG-VERIFY-SYNTAX-4.
+               10  FILLER PIC X(80) VALUE
+               '    VERIFY FILE INPUT-FILE OPEN HAPPENED 3 TIMES'.                
+           05  MSG-VERIFY-SYNTAX-5.
+               10  FILLER PIC X(80) VALUE
+               '    VERIFY FILE INPUT-FILE OPEN HAPPENED ONCE'.                
+           05  MSG-VERIFY-SYNTAX-6.
+               10  FILLER PIC X(80) VALUE
+               '    VERIFY FILE INPUT-FILE OPEN NEVER HAPPENED'.     
+
+           05  MSG-FILE-MOCK-NOMATCH-1.
+               10  FILLER PIC X(06) VALUE '009-W'.
+               10  FILLER PIC X(40) VALUE
+                   'A FILE MOCK WAS SPECIFIED THAT DOESN''T '.     
+               10  FILLER PIC X(36) VALUE
+                   'MATCH ANY SELECT STATEMENT'.
+           05  MSG-FILE-MOCK-NOMATCH-2.
+               10  FILLER PIC X(15) VALUE '    FILENAME: '.
+               10  MSG-FILE-MOCK-MOMATCH-FILENAME PIC X(65).             
+           05  MSG-FILE-MOCK-NOMATCH-3.
+               10  FILLER PIC X(15) VALUE '    OPERATION: '.
+               10  MSG-FILE-MOCK-MOMATCH-OPERATION PIC X(64).             
 
        LINKAGE SECTION.
 
@@ -817,13 +872,13 @@
                PERFORM 2550-GEN-MOCK-STATEMENTS
            ELSE
                SET SUPPRESS-COPY-SOURCE TO FALSE
-
-      * TO DO: display warning message here. MOCK was specified that
-      *        doesn't correspond with any SELECT statement in the
-      *        program. Not an error, because if they're doing TDD
-      *        they might write the test case before writing the
-      *        SELECT statement. But display a warning in case it's
-      *        a typo.
+               MOVE MOCK-FILENAME(MOCK-IX) 
+                    TO MSG-FILE-MOCK-MOMATCH-FILENAME
+               MOVE MOCK-OPERATION(MOCK-IX)
+                    TO MSG-FILE-MOCK-MOMATCH-OPERATION
+               DISPLAY MSG-FILE-MOCK-NOMATCH-1
+               DISPLAY MSG-FILE-MOCK-NOMATCH-2
+               DISPLAY MSG-FILE-MOCK-NOMATCH-3
            END-IF        
            .
 
@@ -1104,8 +1159,6 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1    
 
-
-
            STRING 
                    MOVE-VERB           DELIMITED BY SIZE
                    TOKEN(2)          DELIMITED BY SIZE
@@ -1256,6 +1309,7 @@
                DISPLAY MSG-MOCK-SYNTAX-1    
                DISPLAY MSG-MOCK-SYNTAX-2   
                DISPLAY MSG-MOCK-SYNTAX-3
+               DISPLAY MSG-MOCK-SYNTAX-4
            END-IF
            .
 
@@ -1452,13 +1506,7 @@
            IF KEYWORD-MATCHED
                PERFORM 5020-VERIFY-FILE-MOCK
            ELSE
-               DISPLAY 'SYNTAX IS:'
-               DISPLAY '    VERIFY FILE filename operation [HAPPENED]'
-                       ' count [TIME[S]]'
-               DISPLAY '    VERIFY FILE filename operation [HAPPENED]'
-                       ' ONCE'        
-               DISPLAY '    VERIFY FILE filename operation NEVER'
-                       ' [HAPPENED]'
+               PERFORM 5030-DISPLAY-VERIFY-SYNTAX-ERR
            END-IF
            .
 
@@ -1482,20 +1530,25 @@
            PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
 
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-           IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
+           IF TOKEN(TOKEN-IX) IS EQUAL TO NEVER-KEYWORD
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
-           END-IF
-           IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
-               MOVE 1 TO MOCK-TEST-COUNT
-           ELSE     
-               MOVE TOKEN(TOKEN-IX) TO MOCK-TEST-COUNT    
-               PERFORM 7100-NEXT-TOKEN-TEST-CASES
-               IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
-                   CONTINUE
-      *         ELSE
-      * Display syntax error message here
+               MOVE ZERO TO MOCK-TEST-COUNT
+           ELSE                   
+               IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
+                   PERFORM 7100-NEXT-TOKEN-TEST-CASES
                END-IF
-           END-IF    
+               IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
+                   MOVE 1 TO MOCK-TEST-COUNT
+               ELSE     
+                   MOVE TOKEN(TOKEN-IX) TO MOCK-TEST-COUNT    
+                   PERFORM 7100-NEXT-TOKEN-TEST-CASES
+                   IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
+                       CONTINUE
+                   ELSE
+                       PERFORM 5030-DISPLAY-VERIFY-SYNTAX-ERR
+                   END-IF
+               END-IF
+           END-IF        
 
       * Generate statements in TEST-SOURCE to do the verification
 
@@ -1564,6 +1617,14 @@
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
+       5030-DISPLAY-VERIFY-SYNTAX-ERR.    
+           DISPLAY MSG-VERIFY-SYNTAX-1
+           DISPLAY MSG-VERIFY-SYNTAX-2
+           DISPLAY MSG-VERIFY-SYNTAX-3
+           DISPLAY MSG-VERIFY-SYNTAX-4
+           DISPLAY MSG-VERIFY-SYNTAX-5
+           DISPLAY MSG-VERIFY-SYNTAX-6
+           .
 
        6100-GEN-LOOKUP-MOCK.
       *****************************************************************
