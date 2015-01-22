@@ -48,7 +48,7 @@
            .    
 
        0500-WRITE-OUTPUT-FILE.
-           WRITE OUTPUT-RECORD
+      *     WRITE OUTPUT-RECORD
            .
 
 

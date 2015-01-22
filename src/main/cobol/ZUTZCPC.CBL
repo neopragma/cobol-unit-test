@@ -109,6 +109,11 @@
                88  MOCK-MATCHED           VALUE 'Y', FALSE SPACE.
            05  MAX-MOCKS                  PIC 9(02) VALUE 10.
        01  MOCKS.
+           05  MOCK-TEST-COUNT            PIC 9(04).
+           05  MOCK-LOOKUP.
+               10  MOCK-LOOKUP-TYPE       PIC X(04).
+               10  MOCK-LOOKUP-FILENAME   PIC X(31).
+               10  MOCK-LOOKUP-OPERATION  PIC X(20).
            05  MOCK OCCURS 10 INDEXED BY MOCK-IX.
                10  MOCK-TYPE              PIC X(04).
                    88  MOCK-FILE          VALUE 'FILE', FALSE SPACES.
@@ -117,10 +122,10 @@
                10  MOCK-RECORD            PIC X(2048).    
                10  MOCK-DATA              PIC X(146).
                10  MOCK-FILE-DATA REDEFINES MOCK-DATA.        
-                   15  MOCK-FILENAME      PIC X(20).    
+                   15  MOCK-FILENAME      PIC X(31).    
                    15  MOCK-OPERATION     PIC X(20).  
                    15  MOCK-FILE-STATUS   PIC X(02).
-                   15  FILLER             PIC X(104).
+                   15  FILLER             PIC X(93).
                10  MOCK-CICS-DATA REDEFINES MOCK-DATA.
                    15  MOCK-CICS-RESOURCE PIC X(08).
                    15  MOCK-CICS-COMMAND  PIC X(30).
@@ -260,7 +265,7 @@
            05  KEYWORD-SEARCH-LIMIT   PIC 9(02) VALUE 0.
            05  KEYWORD-END            PIC 9(02) VALUE 72.
            05  KEYWORD-START          PIC 9(02) VALUE 12.
-           05  MAX-KEYWORDS           PIC 9(02) VALUE 6.
+           05  MAX-KEYWORDS           PIC 9(02) VALUE 7.
            05  KEYWORD-VALUES.
                10  FILLER PIC X(20) VALUE 'EXPECT'.
                10  FILLER PIC 9(02) VALUE 6.
@@ -274,8 +279,10 @@
                10  FILLER PIC 9(02) VALUE 10.     
                10  FILLER PIC X(20) VALUE 'MOCK'.
                10  FILLER PIC 9(02) VALUE 4.     
+               10  FILLER PIC X(20) VALUE 'VERIFY'.
+               10  FILLER PIC 9(02) VALUE 6.     
            05  KEYWORDS REDEFINES KEYWORD-VALUES.
-               10  KEYWORD OCCURS 6 INDEXED BY KEYWORD-IX.
+               10  KEYWORD OCCURS 7 INDEXED BY KEYWORD-IX.
                    15  KEYWORD-VALUE      PIC X(20).
                    15  KEYWORD-LENGTH     PIC 9(02).
 
@@ -286,12 +293,16 @@
            05  STATEMENT-OFFSET             PIC 9(02) VALUE 12.
            05  STATEMENT-LENGTH             PIC 9(02) VALUE 70.
            05  PROCEDURE-DIVISION-COPYBOOK  PIC X(08) VALUE 'ZUTZCPD'.
+           05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
+           05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
+           05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
            05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
            05  READ-VERB                    PIC X(04) VALUE 'READ'.
            05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
            05  MOVE-VERB                    PIC X(05) VALUE 'MOVE '.
            05  PERFORM-VERB                 PIC X(08) VALUE 'PERFORM '.
            05  TO-KEYWORD                   PIC X(04) VALUE ' TO '.
+           05  ZERO-KEYWORD                 PIC X(06) VALUE ' ZERO '.
            05  SINGLE-QUOTE                 PIC X(01) VALUE "'".
            05  COMMENT-MARKER               PIC X(01) VALUE '*'.
            05  STATEMENT-SPACER             PIC X(11) VALUE SPACES.
@@ -799,19 +810,9 @@
       * Found an I/O statement for which a MOCK was specified.
       * Generate code in TEST-SOURCE to substitute mock functionality
       * for the real I/O operation.
+      * MOCK-IX is already set.
       *****************************************************************
-           SET FILENAME-MATCHED TO FALSE
-           PERFORM VARYING FILE-IX FROM 1 BY 1
-                   UNTIL FILE-IX IS GREATER THAN MAX-FILES
-                      OR FILENAME-MATCHED
-
-               IF INTERNAL-FILENAME(FILE-IX) IS EQUAL TO
-                       MOCK-FILENAME(MOCK-IX)
-                   SET FILENAME-MATCHED TO TRUE
-                   SET FILE-IX DOWN BY 1      
-               END-IF
-           END-PERFORM    
-                   
+           PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
                PERFORM 2550-GEN-MOCK-STATEMENTS
            ELSE
@@ -847,6 +848,10 @@
            SET STATEMENT-IX UP BY 1
            MOVE '           IF UT-MOCK-FOUND' 
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           SET STATEMENT-IX UP BY 1
+           MOVE '           ADD 1 TO UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'   
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
 
            PERFORM 6300-GEN-SET-FILENAME-TO-FIND
            SET STATEMENT-IX UP BY 1
@@ -980,6 +985,8 @@
                    EVALUATE TRUE
                        WHEN TOKEN(1) IS EQUAL TO 'EXPECT'
                             PERFORM 4300-PROCESS-KEYWORD-EXPECT
+                       WHEN TOKEN(1) IS EQUAL TO 'VERIFY'
+                            PERFORM 5000-PROCESS-KEYWORD-VERIFY     
                        WHEN TOKEN(1) IS EQUAL TO 'TESTCASE'
                             PERFORM 4400-PROCESS-KEYWORD-TESTCASE  
                        WHEN TOKEN(1) IS EQUAL TO 'TESTSUITE'
@@ -995,37 +1002,40 @@
            END-PERFORM
            .    
 
+       4300-PROCESS-KEYWORD-EXPECT.
       *****************************************************************
       * EXPECT keyword was found. 
       *
-      * Convert
+      * Generate assertion code in TEST-SOURCE.
       *
-      *     EXPECT [actual] TO BE [expected]
-      *
-      * into
-      *
-      *     MOVE [actual] TO UT-ACTUAL
-      *     MOVE [expected] TO UT-EXPECTED
-      *     PERFORM UT-ASSERT-EQUAL
+      * EXPECT [actual-value] TO BE [expected-value]
       *****************************************************************
-       4300-PROCESS-KEYWORD-EXPECT.
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'TO BE ' TO KEYWORD-TO-MATCH
            MOVE 6 TO KEYWORD-MATCH-LENGTH
            PERFORM 7400-MATCH-KEYWORD
            IF KEYWORD-MATCHED
+               PERFORM 4320-EXPECT-EQUALITY
+           ELSE
+               DISPLAY 'SYNTAX IS:'
+               DISPLAY '    EXPECT [actual] TO BE [expected]'
+           END-IF
+           .
+
+       4320-EXPECT-EQUALITY.
+      *****************************************************************     
+      * Generate code in TEST-SOURCE to assert expected and actual
+      * results are equal.
+      *****************************************************************     
                SET TOKEN-IX UP BY 1
                MOVE KEYWORD-TO-MATCH TO TOKEN(TOKEN-IX)
                SUBTRACT 1 FROM KEYWORD-OFFSET
                SET TOKEN-IX UP BY 1
                PERFORM 7600-ADJUST-OFFSETS
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
-           ELSE
-               DISPLAY 'SYNTAX IS:'
-               DISPLAY '    EXPECT [actual] TO BE [expected]'
-           END-IF
 
            INITIALIZE GENERATED-SOURCE-STATEMENTS
            SET STATEMENT-IX TO 1
@@ -1340,10 +1350,22 @@
                TOKEN-IX - 1 
            END-COMPUTE
 
+      * Reset the access count for the 'new' mock
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER               DELIMITED BY SIZE
+               MOVE-VERB                      DELIMITED BY SIZE
+               ZERO-KEYWORD                   DELIMITED BY SIZE
+               TO-KEYWORD                     DELIMITED BY SIZE
+               'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
            EVALUATE TRUE
 
       * If the last token was RETURN, then the current token is a
-      * record value. 
+      * record value.
 
                WHEN TOKEN(PREVIOUS-ENTRY) IS EQUAL TO 'RETURN'
                     MOVE TOKEN(TOKEN-IX) 
@@ -1382,7 +1404,6 @@
                             TO MOCK-FILE-STATUS(MOCK-IX)
                     END-IF        
 
-
                     SET STATEMENT-IX UP BY 1
                     STRING
                         STATEMENT-SPACER          DELIMITED BY SIZE
@@ -1411,6 +1432,138 @@
 
            PERFORM 9440-WRITE-GENERATED-STATEMENTS
            .    
+
+       5000-PROCESS-KEYWORD-VERIFY.
+      *****************************************************************
+      * VERIFY keyword was found. 
+      *
+      * Generate assertion code in TEST-SOURCE.
+      *
+      * VERIFY FILE filename READ HAPPENED times TIMES
+      * VERIFY FILE filename WRITE NEVER HAPPENED
+      *****************************************************************
+           PERFORM 7600-ADJUST-OFFSETS
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+           INITIALIZE KEYWORD-MATCHED-INDICATOR
+           MOVE 'FILE ' TO KEYWORD-TO-MATCH
+           MOVE 5 TO KEYWORD-MATCH-LENGTH
+           PERFORM 7400-MATCH-KEYWORD
+           IF KEYWORD-MATCHED
+               PERFORM 5020-VERIFY-FILE-MOCK
+           ELSE
+               DISPLAY 'SYNTAX IS:'
+               DISPLAY '    VERIFY FILE filename operation [HAPPENED]'
+                       ' count [TIME[S]]'
+               DISPLAY '    VERIFY FILE filename operation [HAPPENED]'
+                       ' ONCE'        
+               DISPLAY '    VERIFY FILE filename operation NEVER'
+                       ' [HAPPENED]'
+           END-IF
+           .
+
+       5020-VERIFY-FILE-MOCK.
+      *****************************************************************
+      * Generate code for TEST-SOURCE to verify that a given file MOCK
+      * was accessed the expected number of times.
+      *****************************************************************
+           MOVE FILE-KEYWORD TO MOCK-LOOKUP-TYPE
+
+      * Expect next tokens to be 'FILE filename operation'
+
+           SUBTRACT 7 FROM KEYWORD-OFFSET
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-FILENAME
+
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-OPERATION
+
+           PERFORM 6500-LOOK-UP-FILE-MOCK
+           PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
+
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           END-IF
+           IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
+               MOVE 1 TO MOCK-TEST-COUNT
+           ELSE     
+               MOVE TOKEN(TOKEN-IX) TO MOCK-TEST-COUNT    
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+               IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
+                   CONTINUE
+      *         ELSE
+      * Display syntax error message here
+               END-IF
+           END-IF    
+
+      * Generate statements in TEST-SOURCE to do the verification
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
+           SET STATEMENT-IX TO ZERO
+           
+           PERFORM 6100-GEN-LOOKUP-MOCK
+           SET STATEMENT-IX UP BY 1
+           MOVE TEMP-STATEMENT 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           SET STATEMENT-IX UP BY 1
+           MOVE '           IF UT-MOCK-FOUND' 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           PERFORM 6200-GEN-LOOKUP-FILE    
+           SET STATEMENT-IX UP BY 1
+           MOVE TEMP-STATEMENT 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER                      DELIMITED BY SIZE
+               MOVE-VERB                             DELIMITED BY SIZE
+               MOCK-TEST-COUNT                       DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER                      DELIMITED BY SIZE
+               TO-KEYWORD                            DELIMITED BY SIZE
+               'UT-EXPECTED-ACCESSES'                DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER                      DELIMITED BY SIZE
+               MOVE-VERB                             DELIMITED BY SIZE
+               'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'    DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER                      DELIMITED BY SIZE
+               TO-KEYWORD                            DELIMITED BY SIZE
+               'UT-ACTUAL-ACCESSES'                  DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           SET STATEMENT-IX UP BY 1    
+           MOVE INCR-TESTCASE-COUNT-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           SET STATEMENT-IX UP BY 1
+           STRING
+               STATEMENT-SPACER                      DELIMITED BY SIZE
+               PERFORM-VERB                          DELIMITED BY SIZE
+               'UT-ASSERT-ACCESSES'                  DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           SET SUPPRESS-COPY-SOURCE TO TRUE        
+           .
+
 
        6100-GEN-LOOKUP-MOCK.
       *****************************************************************
@@ -1456,6 +1609,42 @@
            END-STRING               
            .
 
+       6400-LOOK-UP-FILE-INFO-FOR-MOCK.     
+      *****************************************************************
+      * MOCK-IX is pointing to a MOCK entry and we need to find the
+      * corresponding file information.
+      *****************************************************************
+           SET FILENAME-MATCHED TO FALSE
+           PERFORM VARYING FILE-IX FROM 1 BY 1
+                   UNTIL FILE-IX IS GREATER THAN MAX-FILES
+                      OR FILENAME-MATCHED
+
+               IF INTERNAL-FILENAME(FILE-IX) IS EQUAL TO
+                       MOCK-FILENAME(MOCK-IX)
+                   SET FILENAME-MATCHED TO TRUE
+                   SET FILE-IX DOWN BY 1      
+               END-IF
+           END-PERFORM                       
+           .
+
+       6500-LOOK-UP-FILE-MOCK.
+      *****************************************************************
+      * Set MOCK-IX to the entry that matches the type (FILE), the
+      * filename, and the I/O operation.
+      *****************************************************************
+           SET MOCK-MATCHED TO FALSE
+           PERFORM VARYING MOCK-IX FROM 1 BY 1
+                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
+                      OR MOCK-MATCHED
+
+               IF MOCK-LOOKUP-TYPE EQUAL MOCK-TYPE(MOCK-IX)
+               AND MOCK-LOOKUP-FILENAME EQUAL MOCK-FILENAME(MOCK-IX)
+               AND MOCK-LOOKUP-OPERATION EQUAL MOCK-OPERATION(MOCK-IX)
+                   SET MOCK-MATCHED TO TRUE
+                   SET MOCK-IX DOWN BY 1
+               END-IF    
+           END-PERFORM           
+           .
 
       *****************************************************************
       * 7xxx - Utility routines

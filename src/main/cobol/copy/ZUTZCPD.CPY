@@ -10,10 +10,10 @@
            MOVE UT-RETCODE TO RETURN-CODE
            GOBACK.
 
+       UT-ASSERT-EQUAL.
       *****************************************************************
       * COMPARE TWO PIC X FIELDS FOR EQUALITY.
       *****************************************************************
-       UT-ASSERT-EQUAL.
            MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER
            IF UT-ACTUAL IS EQUAL TO UT-EXPECTED
                ADD 1 TO UT-NUMBER-PASSED
@@ -30,10 +30,52 @@
            END-IF
            .
 
+       UT-ASSERT-ACCESSES.
+      *****************************************************************
+      * COMPARE THE NUMBER OF ACCESSES TO A MOCK WITH THE EXPECTED
+      * NUMBER OF ACCESSES.
+      *****************************************************************
+           MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER
+           MOVE UT-ACTUAL-ACCESSES TO UT-ACTUAL-ACCESSES-FMT
+           MOVE UT-EXPECTED-ACCESSES TO UT-EXPECTED-ACCESSES-FMT
+           IF UT-EXPECTED-ACCESSES IS EQUAL TO 1
+              MOVE SPACES TO UT-LABEL-EXPECTED-ACCESS-PLURAL
+           ELSE
+              MOVE UT-CONST-ES TO UT-LABEL-EXPECTED-ACCESS-PLURAL
+           END-IF      
+
+           IF UT-ACTUAL-ACCESSES IS EQUAL TO UT-EXPECTED-ACCESSES
+               ADD 1 TO UT-NUMBER-PASSED
+               DISPLAY UT-PASSED 
+                       UT-TEST-CASE-NUMBER '. ' 
+                      'VERIFY ' UT-EXPECTED-ACCESSES-FMT SPACE
+                      UT-LABEL-EXPECTED-ACCESS
+           ELSE 
+               ADD 1 TO UT-NUMBER-FAILED
+               STRING 
+                   UT-FAILED                      DELIMITED BY SIZE
+                   UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
+                   '. VERIFY ACCESSES TO '        DELIMITED BY SIZE
+                   UT-MOCK-OPERATION(UT-MOCK-IX)  DELIMITED BY SPACE
+                   ' ON '                         DELIMITED BY SIZE
+                   UT-MOCK-FILENAME(UT-MOCK-IX)   DELIMITED BY SPACE
+                   ' | EXPECTED '                 DELIMITED BY SIZE
+                   UT-EXPECTED-ACCESSES-FMT       DELIMITED BY SIZE
+                   SPACE                          DELIMITED BY SIZE
+                   UT-LABEL-EXPECTED-ACCESS       DELIMITED BY SPACE
+                   ', WAS '                       DELIMITED BY SIZE
+                   UT-ACTUAL-ACCESSES-FMT         DELIMITED BY SIZE
+                   INTO UT-DISPLAY-MESSAGE
+               END-STRING
+               DISPLAY UT-DISPLAY-MESSAGE
+               MOVE 4 TO UT-RETCODE
+           END-IF              
+           . 
+
+       UT-SET-MOCK.
       *****************************************************************
       * CREATE OR UPDATE A MOCK SPECIFICATION.
       *****************************************************************
-       UT-SET-MOCK.
            IF UT-FIND-FILE-MOCK
                PERFORM UT-SET-FILE-MOCK
            END-IF    

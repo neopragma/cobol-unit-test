@@ -1,7 +1,17 @@
       * TEST CODE INSERTED BY ZUTZCPC
        01  UT-FIELDS.
+           05  UT-CONST-ES               PIC X(02) VALUE 'ES'.
+           05  UT-LABEL-EXPECTED-ACCESS.
+               10  FILLER                PIC X(06) VALUE 'ACCESS'.
+               10  UT-LABEL-EXPECTED-ACCESS-PLURAL 
+                                         PIC X(02) VALUE SPACES.
+           05  UT-DISPLAY-MESSAGE        PIC X(256) VALUE SPACES.
            05  UT-EXPECTED               PIC X(60) VALUE SPACES.
            05  UT-ACTUAL                 PIC X(60) VALUE SPACES.
+           05  UT-EXPECTED-ACCESSES      PIC 9(04) VALUE ZERO.
+           05  UT-ACTUAL-ACCESSES        PIC 9(04) VALUE ZERO.
+           05  UT-EXPECTED-ACCESSES-FMT  PIC Z,ZZ9.
+           05  UT-ACTUAL-ACCESSES-FMT    PIC Z,ZZ9.
            05  UT-FAILED                 PIC X(11)  VALUE "**** FAIL: ".
            05  UT-PASSED                 PIC X(11)  VALUE "     PASS: ".
            05  UT-TEST-CASE-NAME         PIC X(80)  VALUE SPACES.
@@ -28,8 +38,9 @@
                    88  UT-MOCK-FILE          VALUE 'FILE', FALSE SPACES.
                    88  UT-MOCK-CICS          VALUE 'CICS', FALSE SPACES.
                    88  UT-MOCK-SQL           VALUE 'SQL',  FALSE SPACES.
-               10  UT-MOCK-RECORD            PIC X(2048).    
-               10  UT-MOCK-DATA              PIC X(2048).
+               10  UT-MOCK-ACCESS-COUNT    PIC 9(04) VALUE ZERO.
+               10  UT-MOCK-RECORD        PIC X(2048).    
+               10  UT-MOCK-DATA          PIC X(2048).
                10  UT-MOCK-FILE-DATA REDEFINES UT-MOCK-DATA.        
                    15  UT-MOCK-FILENAME      PIC X(31).    
                    15  UT-MOCK-OPERATION     PIC X(20).  
