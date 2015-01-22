@@ -11,7 +11,7 @@
       * -- Input --
       * ORIGINAL-SOURCE  The program to be tested
       * TEST-CASES       Unit test cases
-      * UNIT-TEST-CONFIG Names of files containing standard test code
+      * UNIT-TEST-CONFIG Names of files containing standard test codegg
       *
       * -- Output --
       * TEST-SOURCE    Copy of ORIGINAL-SOURCE with test code inserted
@@ -85,6 +85,10 @@
       * FILE-STATUS-FIELD-NAME contains the name of the FILE STATUS
       * field declared in the SELECT statement.
       *****************************************************************
+       01  FILLER.
+           05  THIS-PROGRAM PIC X(08) VALUE 'ZUTZCPC'.
+           05  FILLER PIC X(16) VALUE 'WORKING-STORAGE'.
+
        01  FILLER.
            05  MAX-FILES                     PIC 9(02) VALUE 10.
        01  FILLER                            PIC X(01) VALUE SPACE.
@@ -294,6 +298,7 @@
            05  STATEMENT-LENGTH             PIC 9(02) VALUE 70.
            05  PROCEDURE-DIVISION-COPYBOOK  PIC X(08) VALUE 'ZUTZCPD'.
            05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
+           05  MOCK-KEYWORD                 PIC X(04) VALUE 'MOCK'.
            05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
            05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
            05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
@@ -353,6 +358,8 @@
       * Indicators, flags, switches, etc.
       *****************************************************************
        01  FILLER.
+           05  FILLER                    PIC X VALUE SPACE.
+               88  IS-FIRST-TOKEN              VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
                88  END-OF-FILE                 VALUE 'Y'.   
            05  FILLER                    PIC X VALUE SPACE.
@@ -486,9 +493,9 @@
            05  MSG-FILE-MOCK-NOMATCH-1.
                10  FILLER PIC X(06) VALUE '009-W'.
                10  FILLER PIC X(40) VALUE
-                   'A FILE MOCK WAS SPECIFIED THAT DOESN''T '.     
+                   'A FILE MOCK WAS SPECIFIED THAT DOESN''T M'.     
                10  FILLER PIC X(36) VALUE
-                   'MATCH ANY SELECT STATEMENT'.
+                   'ATCH ANY SELECT STATEMENT'.
            05  MSG-FILE-MOCK-NOMATCH-2.
                10  FILLER PIC X(15) VALUE '    FILENAME: '.
                10  MSG-FILE-MOCK-MOMATCH-FILENAME PIC X(65).             
@@ -852,12 +859,11 @@
                AND MOCK-OPERATION(MOCK-IX) EQUAL TOKEN(1)
                AND MOCK-FILENAME(MOCK-IX) EQUAL TOKEN(2)
                    SET MOCK-MATCHED TO TRUE
-                   SET MOCK-IX UP BY 1
                ELSE
                    SET SUPPRESS-COPY-SOURCE TO FALSE
                END-IF               
-
            END-PERFORM            
+           SET MOCK-IX DOWN BY 1
            .
 
        2540-FIND-CORR-FILE-INFO.
@@ -867,6 +873,7 @@
       * for the real I/O operation.
       * MOCK-IX is already set.
       *****************************************************************
+           SET FILENAME-MATCHED TO FALSE
            PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
                PERFORM 2550-GEN-MOCK-STATEMENTS
@@ -876,9 +883,9 @@
                     TO MSG-FILE-MOCK-MOMATCH-FILENAME
                MOVE MOCK-OPERATION(MOCK-IX)
                     TO MSG-FILE-MOCK-MOMATCH-OPERATION
-               DISPLAY MSG-FILE-MOCK-NOMATCH-1
-               DISPLAY MSG-FILE-MOCK-NOMATCH-2
-               DISPLAY MSG-FILE-MOCK-NOMATCH-3
+               DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-1
+               DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-2
+               DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-3
            END-IF        
            .
 
@@ -1287,6 +1294,28 @@
 
        4800-PROCESS-KEYWORD-MOCK.
       *****************************************************************
+      * If the word 'MOCK' is not the first token on the line, then it
+      * is in the middle of a description (e.g. TESTCASE, TESTSUITE).
+      * In that case, ignore it.
+      *****************************************************************
+           SET IS-FIRST-TOKEN TO FALSE
+           PERFORM VARYING TEMP-SUB FROM 1 BY 1
+                   UNTIL TEMP-SUB IS GREATER THAN KEYWORD-END
+               IF TEST-CASE-LINE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
+                   IF TEST-CASE-LINE(TEMP-SUB:4) 
+                          IS EQUAL TO MOCK-KEYWORD
+                      SET IS-FIRST-TOKEN TO TRUE    
+                   END-IF
+                   MOVE KEYWORD-END TO TEMP-SUB
+               END-IF                       
+           END-PERFORM
+           IF IS-FIRST-TOKEN   
+               PERFORM 4810-PROCESS-MOCK-SPEC
+           END-IF    
+           .
+
+       4810-PROCESS-MOCK-SPEC.
+      *****************************************************************
       * MOCK keyword was found. 
       *
       * Save information about the MOCK so that code can be  
@@ -1306,10 +1335,10 @@
            END-EVALUATE
            SET SUPPRESS-COPY-SOURCE TO TRUE
            IF MOCK-SYNTAX-ERROR
-               DISPLAY MSG-MOCK-SYNTAX-1    
-               DISPLAY MSG-MOCK-SYNTAX-2   
-               DISPLAY MSG-MOCK-SYNTAX-3
-               DISPLAY MSG-MOCK-SYNTAX-4
+               DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-1    
+               DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-2   
+               DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-3
+               DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-4
            END-IF
            .
 
@@ -1618,12 +1647,12 @@
            .
 
        5030-DISPLAY-VERIFY-SYNTAX-ERR.    
-           DISPLAY MSG-VERIFY-SYNTAX-1
-           DISPLAY MSG-VERIFY-SYNTAX-2
-           DISPLAY MSG-VERIFY-SYNTAX-3
-           DISPLAY MSG-VERIFY-SYNTAX-4
-           DISPLAY MSG-VERIFY-SYNTAX-5
-           DISPLAY MSG-VERIFY-SYNTAX-6
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-1
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-2
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-3
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-4
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-5
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-6
            .
 
        6100-GEN-LOOKUP-MOCK.
@@ -1680,12 +1709,13 @@
                    UNTIL FILE-IX IS GREATER THAN MAX-FILES
                       OR FILENAME-MATCHED
 
-               IF INTERNAL-FILENAME(FILE-IX) IS EQUAL TO
+               IF INTERNAL-FILENAME(FILE-IX) IS GREATER THAN SPACES
+               AND INTERNAL-FILENAME(FILE-IX) IS EQUAL TO
                        MOCK-FILENAME(MOCK-IX)
                    SET FILENAME-MATCHED TO TRUE
-                   SET FILE-IX DOWN BY 1      
                END-IF
-           END-PERFORM                       
+           END-PERFORM 
+           SET FILE-IX DOWN BY 1                      
            .
 
        6500-LOOK-UP-FILE-MOCK.

@@ -12,6 +12,14 @@
                MOVE SPACES TO INPUT-RECORD
            END-AFTER    
 
+           TESTCASE 'IT MOCKS SUCCESSFUL FILE OPEN INPUT' 
+           MOCK
+               FILE INPUT-FILE 
+               ON OPEN STATUS OK
+           END-MOCK    
+           PERFORM 0100-OPEN-INPUT
+           EXPECT WS-INPUT-FILE-STATUS TO BE '00'
+
            TESTCASE 'IT MOCKS READING AFTER EOF'
            MOCK
                FILE INPUT-FILE
@@ -27,14 +35,6 @@
            END-MOCK    
            PERFORM 0100-OPEN-INPUT
            EXPECT WS-INPUT-FILE-STATUS TO BE '35'
-
-           TESTCASE 'IT MOCKS SUCCESSFUL FILE OPEN INPUT' 
-           MOCK
-               FILE INPUT-FILE 
-               ON OPEN STATUS OK
-           END-MOCK    
-           PERFORM 0100-OPEN-INPUT
-           EXPECT WS-INPUT-FILE-STATUS TO BE '00'
 
            TESTCASE 'IT MOCKS ERROR ON FILE OPEN INPUT' 
            MOCK
