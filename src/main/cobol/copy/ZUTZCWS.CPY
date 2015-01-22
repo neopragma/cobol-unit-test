@@ -6,8 +6,15 @@
                10  UT-LABEL-EXPECTED-ACCESS-PLURAL 
                                          PIC X(02) VALUE SPACES.
            05  UT-DISPLAY-MESSAGE        PIC X(256) VALUE SPACES.
+           05  FILLER                    PIC X(01) VALUE SPACES.
+               88  UT-COMPARE-DEFAULT    VALUE SPACE.
+               88  UT-COMPARE-NUMERIC    VALUE 'N', FALSE SPACES.
+           05  FILLER                    PIC X(01) VALUE SPACES.
+               88  UT-COMPARE-PASSED     VALUE 'Y', FALSE SPACES.    
            05  UT-EXPECTED               PIC X(60) VALUE SPACES.
            05  UT-ACTUAL                 PIC X(60) VALUE SPACES.
+           05  UT-EXPECTED-NUMERIC       PIC S9(08) VALUE ZERO.
+           05  UT-ACTUAL-NUMERIC         PIC S9(08) VALUE ZERO.
            05  UT-EXPECTED-ACCESSES      PIC 9(04) VALUE ZERO.
            05  UT-ACTUAL-ACCESSES        PIC 9(04) VALUE ZERO.
            05  UT-EXPECTED-ACCESSES-FMT  PIC Z,ZZ9.

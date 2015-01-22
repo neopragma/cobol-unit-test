@@ -12,10 +12,11 @@
 
        UT-ASSERT-EQUAL.
       *****************************************************************
-      * COMPARE TWO PIC X FIELDS FOR EQUALITY.
+      * COMPARE EXPECTED AND ACTUAL VALUES FOR EQUALITY.
       *****************************************************************
            MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER
-           IF UT-ACTUAL IS EQUAL TO UT-EXPECTED
+           PERFORM UT-COMPARE
+           IF UT-COMPARE-PASSED
                ADD 1 TO UT-NUMBER-PASSED
                DISPLAY UT-PASSED 
                        UT-TEST-CASE-NUMBER '. ' 
@@ -24,11 +25,31 @@
                ADD 1 TO UT-NUMBER-FAILED
                DISPLAY UT-FAILED 
                        UT-TEST-CASE-NUMBER '. ' 
-                       UT-TEST-CASE-NAME 
-                   "| EXPECTED <" UT-EXPECTED ">, GOT <" UT-ACTUAL ">"
+                       UT-TEST-CASE-NAME
+               IF UT-COMPARE-NUMERIC
+                   DISPLAY '    EXPECTED ' UT-EXPECTED-NUMERIC
+                           ', WAS ' UT-ACTUAL-NUMERIC
+               ELSE                     
+                   DISPLAY '    EXPECTED <' UT-EXPECTED 
+                           '>, GOT <' UT-ACTUAL '>'
+               END-IF            
                MOVE 4 TO UT-RETCODE
            END-IF
            .
+
+       UT-COMPARE.
+           SET UT-COMPARE-PASSED TO FALSE
+           IF UT-COMPARE-NUMERIC
+               IF UT-ACTUAL-NUMERIC IS EQUAL TO UT-EXPECTED-NUMERIC
+                   SET UT-COMPARE-PASSED TO TRUE
+               END-IF    
+           ELSE 
+               IF UT-ACTUAL IS EQUAL TO UT-EXPECTED
+                   SET UT-COMPARE-PASSED TO TRUE
+               END-IF    
+           END-IF        
+           .
+           
 
        UT-ASSERT-ACCESSES.
       *****************************************************************

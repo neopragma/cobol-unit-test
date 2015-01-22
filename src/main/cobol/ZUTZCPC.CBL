@@ -189,7 +189,9 @@
                10  VALID-FILE-OPERATION PIC X(07).
                10  NEXT-TOKEN-TO-GET    PIC 9(01).
                    
-       01  TEMP-STATEMENT               PIC X(80).            
+       01  FILLER.
+           05  TEMP-STATEMENT               PIC X(80).  
+
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
       * TEST-SOURCE file. 
@@ -297,19 +299,24 @@
            05  STATEMENT-OFFSET             PIC 9(02) VALUE 12.
            05  STATEMENT-LENGTH             PIC 9(02) VALUE 70.
            05  PROCEDURE-DIVISION-COPYBOOK  PIC X(08) VALUE 'ZUTZCPD'.
-           05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
-           05  MOCK-KEYWORD                 PIC X(04) VALUE 'MOCK'.
-           05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
-           05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
-           05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
            05  COPY-KEYWORD                 PIC X(04) VALUE 'COPY'.
-           05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
-           05  READ-VERB                    PIC X(04) VALUE 'READ'.
-           05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
-           05  MOVE-VERB                    PIC X(05) VALUE 'MOVE '.
-           05  PERFORM-VERB                 PIC X(08) VALUE 'PERFORM '.
+           05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
+           05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
+           05  MOCK-KEYWORD                 PIC X(04) VALUE 'MOCK'.
+           05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
+           05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
+           05  NUMERIC-KEYWORD              PIC X(07) VALUE 'NUMERIC'.
            05  TO-KEYWORD                   PIC X(04) VALUE ' TO '.
+           05  TRUE-KEYWORD                 PIC X(04) VALUE 'TRUE'.
            05  ZERO-KEYWORD                 PIC X(06) VALUE ' ZERO '.
+
+           05  MOVE-VERB                    PIC X(05) VALUE 'MOVE '.
+           05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
+           05  PERFORM-VERB                 PIC X(08) VALUE 'PERFORM '.
+           05  READ-VERB                    PIC X(04) VALUE 'READ'.
+           05  SET-VERB                     PIC X(03) VALUE 'SET'.
+           05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
+
            05  SINGLE-QUOTE                 PIC X(01) VALUE "'".
            05  COMMENT-MARKER               PIC X(01) VALUE '*'.
            05  STATEMENT-SPACER             PIC X(11) VALUE SPACES.
@@ -359,6 +366,9 @@
       * Indicators, flags, switches, etc.
       *****************************************************************
        01  FILLER.
+           05  FILLER                    PIC X VALUE SPACE.
+               88  DATATYPE-X                  VALUE SPACE.
+               88  DATATYPE-9                  VALUE '9'.
            05  FILLER                    PIC X VALUE SPACE.
                88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
@@ -517,7 +527,7 @@
                'TEST SOURCE FILE TESTPRG CAN''T BE OPENED FOR OUTPUT'.
 
            05  MSG-TEST-SOURCE-ERROR.
-               10  FILLER PIC X(06) VALUE '014-E '.
+               10  FILLER PIC X(06) VALUE '015-E '.
                10  FILLER                   PIC X(33) VALUE
                    'TEST SOURCE FILE TESTPRG STATUS '.
                10  MSG-TEST-SOURCE-STATUS    PIC 9(02).
@@ -1104,6 +1114,11 @@
            IF KEYWORD-MATCHED
                PERFORM 4320-EXPECT-EQUALITY
            ELSE
+
+      *----------------------------------------------------------------
+      * TODO This needs to be a standard format message MSG-etc
+      *----------------------------------------------------------------
+
                DISPLAY 'SYNTAX IS:'
                DISPLAY '    EXPECT [actual] TO BE [expected]'
            END-IF
@@ -1114,40 +1129,101 @@
       * Generate code in TEST-SOURCE to assert expected and actual
       * results are equal.
       *****************************************************************     
+           SET DATATYPE-X TO TRUE
+           SET TOKEN-IX UP BY 1
+           MOVE KEYWORD-TO-MATCH TO TOKEN(TOKEN-IX)
+           SUBTRACT 1 FROM KEYWORD-OFFSET
+           SET TOKEN-IX UP BY 1
+           PERFORM 7600-ADJUST-OFFSETS
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+           IF TOKEN(4) IS EQUAL TO NUMERIC-KEYWORD
                SET TOKEN-IX UP BY 1
-               MOVE KEYWORD-TO-MATCH TO TOKEN(TOKEN-IX)
-               SUBTRACT 1 FROM KEYWORD-OFFSET
-               SET TOKEN-IX UP BY 1
-               PERFORM 7600-ADJUST-OFFSETS
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
+               SET DATATYPE-9 TO TRUE
+           END-IF    
+
+
+      *----------------------------------------------------------------
+      *     DISPLAY 'TOKEN(1) ' TOKEN(1)
+      *     DISPLAY 'TOKEN(2) ' TOKEN(2)
+      *     DISPLAY 'TOKEN(3) ' TOKEN(3)
+      *     DISPLAY 'TOKEN(4) ' TOKEN(4)
+      *     DISPLAY 'TOKEN(5) ' TOKEN(5)
+      *----------------------------------------------------------------
+
 
            INITIALIZE GENERATED-SOURCE-STATEMENTS
            SET STATEMENT-IX TO 1
 
-           STRING 
-                   MOVE-VERB           DELIMITED BY SIZE
-                   TOKEN(2)          DELIMITED BY SPACE
-                   ' TO UT-ACTUAL'   DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
+
+           MOVE INCR-TESTCASE-COUNT-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
 
-           STRING 
-                   MOVE-VERB           DELIMITED BY SIZE
-                   TOKEN(4)          DELIMITED BY SIZE
-                   ' TO UT-EXPECTED'   DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-
-           STRING
-                   '    TO UT-EXPECTED' DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
+           IF DATATYPE-9
+               STRING
+                   MOVE-VERB            DELIMITED BY SIZE
+                   TOKEN(2)             DELIMITED BY SPACE
+                   TO-KEYWORD           DELIMITED BY SIZE
+                   'UT-ACTUAL-NUMERIC' DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+               STRING 
+                   MOVE-VERB             DELIMITED BY SIZE
+                   TOKEN(5)              DELIMITED BY SPACE
+                   TO-KEYWORD            DELIMITED BY SIZE
+                   'UT-EXPECTED-NUMERIC' DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+               STRING 
+                   SET-VERB              DELIMITED BY SIZE
+                   ' UT-COMPARE-NUMERIC' DELIMITED BY SIZE
+                   TO-KEYWORD            DELIMITED BY SIZE
+                   TRUE-KEYWORD          DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+           ELSE
+               STRING 
+                   MOVE-VERB            DELIMITED BY SIZE
+                   TOKEN(2)             DELIMITED BY SPACE
+                   TO-KEYWORD           DELIMITED BY SIZE
+                   'UT-ACTUAL'          DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+               STRING 
+                   MOVE-VERB             DELIMITED BY SIZE
+                   TOKEN(4)              DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+               STRING 
+                   STATEMENT-SPACER      DELIMITED BY SIZE
+                   TO-KEYWORD            DELIMITED BY SIZE
+                   'UT-EXPECTED'         DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+               STRING 
+                   SET-VERB              DELIMITED BY SIZE
+                   ' UT-COMPARE-DEFAULT' DELIMITED BY SIZE
+                   TO-KEYWORD            DELIMITED BY SIZE
+                   TRUE-KEYWORD          DELIMITED BY SIZE
+                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
+               END-STRING
+               SET STATEMENT-IX UP BY 1
+           END-IF    
 
            MOVE 'PERFORM UT-ASSERT-EQUAL'
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -1184,13 +1260,9 @@
                SET GENERATE-PERFORM-AFTER TO TRUE
            END-IF
 
-           MOVE INCR-TESTCASE-COUNT-STMT
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-           SET STATEMENT-IX UP BY 1    
-
            STRING 
-                   MOVE-VERB           DELIMITED BY SIZE
-                   TOKEN(2)          DELIMITED BY SIZE
+               MOVE-VERB           DELIMITED BY SIZE
+               TOKEN(2)            DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
            END-STRING
