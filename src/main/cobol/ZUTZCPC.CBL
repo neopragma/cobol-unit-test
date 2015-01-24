@@ -300,8 +300,12 @@
            05  STATEMENT-LENGTH             PIC 9(02) VALUE 70.
            05  PROCEDURE-DIVISION-COPYBOOK  PIC X(08) VALUE 'ZUTZCPD'.
            05  COPY-KEYWORD                 PIC X(04) VALUE 'COPY'.
+           05  ELSE-KEYWORD                 PIC X(04) VALUE 'ELSE'.
+           05  ENDIF-KEYWORD                PIC X(06) VALUE 'END-IF'.
+           05  FALSE-KEYWORD                PIC X(05) VALUE 'FALSE'.
            05  FILE-KEYWORD                 PIC X(04) VALUE 'FILE'.
            05  HAPPENED-KEYWORD             PIC X(08) VALUE 'HAPPENED'.
+           05  IS-KEYWORD                   PIC X(04) VALUE ' IS '.
            05  MOCK-KEYWORD                 PIC X(04) VALUE 'MOCK'.
            05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
            05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
@@ -310,6 +314,7 @@
            05  TRUE-KEYWORD                 PIC X(04) VALUE 'TRUE'.
            05  ZERO-KEYWORD                 PIC X(06) VALUE ' ZERO '.
 
+           05  IF-VERB                      PIC X(03) VALUE 'IF '.
            05  MOVE-VERB                    PIC X(05) VALUE 'MOVE '.
            05  OPEN-VERB                    PIC X(04) VALUE 'OPEN'.
            05  PERFORM-VERB                 PIC X(08) VALUE 'PERFORM '.
@@ -369,6 +374,7 @@
            05  FILLER                    PIC X VALUE SPACE.
                88  DATATYPE-X                  VALUE SPACE.
                88  DATATYPE-9                  VALUE '9'.
+               88  DATATYPE-88                 VALUE 'B'.
            05  FILLER                    PIC X VALUE SPACE.
                88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
@@ -1143,95 +1149,194 @@
                SET DATATYPE-9 TO TRUE
            END-IF    
 
-
-      *----------------------------------------------------------------
-      *     DISPLAY 'TOKEN(1) ' TOKEN(1)
-      *     DISPLAY 'TOKEN(2) ' TOKEN(2)
-      *     DISPLAY 'TOKEN(3) ' TOKEN(3)
-      *     DISPLAY 'TOKEN(4) ' TOKEN(4)
-      *     DISPLAY 'TOKEN(5) ' TOKEN(5)
-      *----------------------------------------------------------------
-
+           IF TOKEN(4) IS EQUAL TO TRUE-KEYWORD OR FALSE-KEYWORD
+               SET TOKEN-IX UP BY 1
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+               SET DATATYPE-88 TO TRUE
+           END-IF    
 
            INITIALIZE GENERATED-SOURCE-STATEMENTS
            SET STATEMENT-IX TO 1
-
 
            MOVE INCR-TESTCASE-COUNT-STMT
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
 
-           IF DATATYPE-9
-               STRING
-                   MOVE-VERB            DELIMITED BY SIZE
-                   TOKEN(2)             DELIMITED BY SPACE
-                   TO-KEYWORD           DELIMITED BY SIZE
-                   'UT-ACTUAL-NUMERIC' DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-               STRING 
-                   MOVE-VERB             DELIMITED BY SIZE
-                   TOKEN(5)              DELIMITED BY SPACE
-                   TO-KEYWORD            DELIMITED BY SIZE
-                   'UT-EXPECTED-NUMERIC' DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-               STRING 
-                   SET-VERB              DELIMITED BY SIZE
-                   ' UT-COMPARE-NUMERIC' DELIMITED BY SIZE
-                   TO-KEYWORD            DELIMITED BY SIZE
-                   TRUE-KEYWORD          DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-           ELSE
-               STRING 
-                   MOVE-VERB            DELIMITED BY SIZE
-                   TOKEN(2)             DELIMITED BY SPACE
-                   TO-KEYWORD           DELIMITED BY SIZE
-                   'UT-ACTUAL'          DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-               STRING 
-                   MOVE-VERB             DELIMITED BY SIZE
-                   TOKEN(4)              DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-               STRING 
-                   STATEMENT-SPACER      DELIMITED BY SIZE
-                   TO-KEYWORD            DELIMITED BY SIZE
-                   'UT-EXPECTED'         DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-               STRING 
-                   SET-VERB              DELIMITED BY SIZE
-                   ' UT-COMPARE-DEFAULT' DELIMITED BY SIZE
-                   TO-KEYWORD            DELIMITED BY SIZE
-                   TRUE-KEYWORD          DELIMITED BY SIZE
-                   INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                             (STATEMENT-OFFSET:STATEMENT-LENGTH)
-               END-STRING
-               SET STATEMENT-IX UP BY 1
-           END-IF    
-
-           MOVE 'PERFORM UT-ASSERT-EQUAL'
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           EVALUATE TRUE
+               WHEN DATATYPE-9
+                    PERFORM 4330-GENERATE-NUMERIC-COMPARE
+               WHEN DATATYPE-88
+                    PERFORM 4340-GENERATE-88-COMPARE     
+               WHEN OTHER
+                    PERFORM 4350-GENERATE-PIC-X-COMPARE
+           END-EVALUATE              
 
            PERFORM 9440-WRITE-GENERATED-STATEMENTS
            SET SUPPRESS-COPY-SOURCE TO TRUE
            .
+
+       4330-GENERATE-NUMERIC-COMPARE.
+
+           STRING
+               MOVE-VERB            DELIMITED BY SIZE
+               TOKEN(2)             DELIMITED BY SPACE
+               TO-KEYWORD           DELIMITED BY SIZE
+               'UT-ACTUAL-NUMERIC' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+           STRING 
+               MOVE-VERB             DELIMITED BY SIZE
+               TOKEN(5)              DELIMITED BY SPACE
+               TO-KEYWORD            DELIMITED BY SIZE
+               'UT-EXPECTED-NUMERIC' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+           STRING 
+               SET-VERB              DELIMITED BY SIZE
+               ' UT-COMPARE-NUMERIC' DELIMITED BY SIZE
+               TO-KEYWORD            DELIMITED BY SIZE
+               TRUE-KEYWORD          DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE 'PERFORM UT-ASSERT-EQUAL'
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           .
+
+       4340-GENERATE-88-COMPARE.
+
+      * EXPECT foo TO BE TRUE
+           STRING
+               MOVE-VERB             DELIMITED BY SIZE
+               'UT-TEST-CASE-COUNT'  DELIMITED BY SPACE
+               TO-KEYWORD            DELIMITED BY SIZE
+               'UT-TEST-CASE-NUMBER' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           STRING 
+               SET-VERB              DELIMITED BY SIZE
+               ' UT-COMPARE-DEFAULT' DELIMITED BY SIZE
+               TO-KEYWORD            DELIMITED BY SIZE
+               TRUE-KEYWORD          DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           IF TOKEN(4) IS EQUAL TO TRUE-KEYWORD
+               MOVE FALSE-KEYWORD TO RAW-VALUE
+           ELSE 
+               MOVE TRUE-KEYWORD TO RAW-VALUE
+           END-IF        
+           PERFORM 7950-ENCLOSE-IN-QUOTES
+           STRING
+               MOVE-VERB            DELIMITED BY SIZE
+               QUOTED-VALUE         DELIMITED BY SPACE
+               TO-KEYWORD           DELIMITED BY SIZE
+               'UT-ACTUAL' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE TOKEN(4) TO RAW-VALUE
+           PERFORM 7950-ENCLOSE-IN-QUOTES
+           STRING 
+               MOVE-VERB             DELIMITED BY SIZE
+               QUOTED-VALUE          DELIMITED BY SPACE
+               TO-KEYWORD            DELIMITED BY SIZE
+               'UT-EXPECTED'         DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           STRING 
+               IF-VERB               DELIMITED BY SIZE
+               TOKEN(2)              DELIMITED BY SPACE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           STRING 
+               STATEMENT-SPACER      DELIMITED BY SIZE
+               PERFORM-VERB          DELIMITED BY SIZE
+               ' UT-DISPLAY-PASSED'  DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE ELSE-KEYWORD
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           SET STATEMENT-IX UP BY 1
+
+           STRING 
+               STATEMENT-SPACER      DELIMITED BY SIZE
+               PERFORM-VERB          DELIMITED BY SIZE
+               ' UT-DISPLAY-FAILED'  DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE ENDIF-KEYWORD
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           SET STATEMENT-IX UP BY 1
+           .
+
+       4350-GENERATE-PIC-X-COMPARE.
+           STRING 
+               MOVE-VERB            DELIMITED BY SIZE
+               TOKEN(2)             DELIMITED BY SPACE
+               TO-KEYWORD           DELIMITED BY SIZE
+               'UT-ACTUAL'          DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+           STRING 
+               MOVE-VERB             DELIMITED BY SIZE
+               TOKEN(4)              DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+           STRING 
+               STATEMENT-SPACER      DELIMITED BY SIZE
+               TO-KEYWORD            DELIMITED BY SIZE
+               'UT-EXPECTED'         DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+           STRING 
+               SET-VERB              DELIMITED BY SIZE
+               ' UT-COMPARE-DEFAULT' DELIMITED BY SIZE
+               TO-KEYWORD            DELIMITED BY SIZE
+               TRUE-KEYWORD          DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE 'PERFORM UT-ASSERT-EQUAL'
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           .       
 
        4400-PROCESS-KEYWORD-TESTCASE.
       *****************************************************************

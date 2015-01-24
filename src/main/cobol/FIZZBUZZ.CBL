@@ -27,6 +27,8 @@
            05  CURRENT-RESULT     PIC X(12).
            05  FIZZ-OUT           PIC X(4) VALUE SPACES.
            05  BUZZ-OUT           PIC X(4) VALUE SPACES.
+           05  FILLER             PIC X VALUE 'N'.
+               88  TEST-88 VALUE 'Y', FALSE 'N'.
 
        01  RETURN-VALUE.
            05  RETURN-LINE OCCURS 1 TO 10000 

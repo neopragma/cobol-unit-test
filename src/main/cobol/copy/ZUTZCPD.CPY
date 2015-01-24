@@ -17,23 +17,9 @@
            MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER
            PERFORM UT-COMPARE
            IF UT-COMPARE-PASSED
-               ADD 1 TO UT-NUMBER-PASSED
-               DISPLAY UT-PASSED 
-                       UT-TEST-CASE-NUMBER '. ' 
-                      UT-TEST-CASE-NAME
+               PERFORM UT-DISPLAY-PASSED
            ELSE 
-               ADD 1 TO UT-NUMBER-FAILED
-               DISPLAY UT-FAILED 
-                       UT-TEST-CASE-NUMBER '. ' 
-                       UT-TEST-CASE-NAME
-               IF UT-COMPARE-NUMERIC
-                   DISPLAY '    EXPECTED ' UT-EXPECTED-NUMERIC
-                           ', WAS ' UT-ACTUAL-NUMERIC
-               ELSE                     
-                   DISPLAY '    EXPECTED <' UT-EXPECTED 
-                           '>, GOT <' UT-ACTUAL '>'
-               END-IF            
-               MOVE 4 TO UT-RETCODE
+               PERFORM UT-DISPLAY-FAILED
            END-IF
            .
 
@@ -49,7 +35,30 @@
                END-IF    
            END-IF        
            .
-           
+
+       UT-DISPLAY-PASSED.
+           ADD 1 TO UT-NUMBER-PASSED
+           DISPLAY UT-PASSED 
+                   UT-TEST-CASE-NUMBER '. ' 
+                   UT-TEST-CASE-NAME
+           .              
+
+       UT-DISPLAY-FAILED.
+           ADD 1 TO UT-NUMBER-FAILED
+           DISPLAY UT-FAILED 
+                   UT-TEST-CASE-NUMBER '. ' 
+                   UT-TEST-CASE-NAME
+           IF UT-COMPARE-NUMERIC
+               DISPLAY '    EXPECTED ' UT-EXPECTED-NUMERIC
+                       ', WAS ' UT-ACTUAL-NUMERIC
+           ELSE                     
+               DISPLAY '    EXPECTED <' UT-EXPECTED 
+                       '>, WAS <' UT-ACTUAL '>'
+           END-IF            
+           MOVE 4 TO UT-RETCODE
+           .
+
+
 
        UT-ASSERT-ACCESSES.
       *****************************************************************
