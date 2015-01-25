@@ -34,7 +34,18 @@
                    SET UT-COMPARE-PASSED TO TRUE
                END-IF    
            END-IF        
+           PERFORM UT-REVERSE-RESULT
            .
+
+       UT-REVERSE-RESULT.
+           IF UT-REVERSE-COMPARE
+               IF UT-COMPARE-PASSED
+                   SET UT-COMPARE-PASSED TO FALSE
+               ELSE
+                   SET UT-COMPARE-PASSED TO TRUE
+               END-IF
+           END-IF
+           .                
 
        UT-DISPLAY-PASSED.
            ADD 1 TO UT-NUMBER-PASSED

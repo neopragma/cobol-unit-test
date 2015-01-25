@@ -145,6 +145,7 @@
            05  MAX-STATUS-MNEMONICS       PIC 9(02) VALUE 4.
            05  PREVIOUS-ENTRY             PIC 9(02) VALUE 0.
            05  TEMP-SUB                   PIC 9(02) VALUE 0.
+           05  TEMP-TOKEN                 PIC X(80).
            05  MOCK-FILE-STATUS-MNEMONICS.
                10  FILLER PIC X(20) VALUE 'OK'.
                10  FILLER PIC X(02) VALUE '00'.
@@ -337,6 +338,10 @@
                                         VALUE '       UT-END.'.
            05  INCR-TESTCASE-COUNT-STMT     PIC X(80) VALUE
                '           ADD 1 TO UT-TEST-CASE-COUNT'.
+           05  SET-REVERSE-TRUE-STMT        PIC X(80) VALUE
+               '           SET UT-REVERSE-COMPARE TO TRUE'.    
+           05  SET-REVERSE-FALSE-STMT        PIC X(80) VALUE
+               '           SET UT-REVERSE-COMPARE TO FALSE'.    
            05  SET-MOCK-STMT                PIC X(80) VALUE
                '           PERFORM UT-SET-MOCK'.    
            05  ENDIF-STMT                   PIC X(18) VALUE
@@ -375,6 +380,8 @@
                88  DATATYPE-X                  VALUE SPACE.
                88  DATATYPE-9                  VALUE '9'.
                88  DATATYPE-88                 VALUE 'B'.
+           05  FILLER                    PIC X VALUE SPACE.
+               88  REVERSE-COMPARE             VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
                88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
@@ -1114,6 +1121,19 @@
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
            INITIALIZE KEYWORD-MATCHED-INDICATOR
+           MOVE 'NOT ' TO KEYWORD-TO-MATCH
+           MOVE 4 TO KEYWORD-MATCH-LENGTH
+           MOVE KEYWORD-OFFSET TO TEMP-SUB
+           PERFORM 7400-MATCH-KEYWORD
+           IF KEYWORD-MATCHED
+               SET REVERSE-COMPARE TO TRUE
+           ELSE    
+               SET REVERSE-COMPARE TO FALSE
+               MOVE TEMP-SUB TO KEYWORD-OFFSET
+               SUBTRACT 6 FROM KEYWORD-OFFSET
+           END-IF
+
+           INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'TO BE ' TO KEYWORD-TO-MATCH
            MOVE 6 TO KEYWORD-MATCH-LENGTH
            PERFORM 7400-MATCH-KEYWORD
@@ -1162,6 +1182,8 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
 
+           PERFORM 4360-GENERATE-SET-REVERSE
+
            EVALUATE TRUE
                WHEN DATATYPE-9
                     PERFORM 4330-GENERATE-NUMERIC-COMPARE
@@ -1176,7 +1198,6 @@
            .
 
        4330-GENERATE-NUMERIC-COMPARE.
-
            STRING
                MOVE-VERB            DELIMITED BY SIZE
                TOKEN(2)             DELIMITED BY SPACE
@@ -1239,6 +1260,7 @@
                MOVE TRUE-KEYWORD TO RAW-VALUE
            END-IF        
            PERFORM 7950-ENCLOSE-IN-QUOTES
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            STRING
                MOVE-VERB            DELIMITED BY SIZE
                QUOTED-VALUE         DELIMITED BY SPACE
@@ -1299,6 +1321,7 @@
            .
 
        4350-GENERATE-PIC-X-COMPARE.
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
            STRING 
                MOVE-VERB            DELIMITED BY SIZE
                TOKEN(2)             DELIMITED BY SPACE
@@ -1337,6 +1360,17 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
            .       
+
+       4360-GENERATE-SET-REVERSE.
+           IF REVERSE-COMPARE
+               MOVE SET-REVERSE-TRUE-STMT
+                    TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           ELSE
+               MOVE SET-REVERSE-FALSE-STMT
+                    TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-IF   
+           SET STATEMENT-IX UP BY 1          
+           .    
 
        4400-PROCESS-KEYWORD-TESTCASE.
       *****************************************************************
@@ -2025,6 +2059,7 @@
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
                          KEYWORD-SEARCH-LIMIT
                       OR KEYWORD-MATCHED  
+
                IF KEYWORD-TO-MATCH IS EQUAL TO
                    LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
                    SET KEYWORD-MATCHED TO TRUE
