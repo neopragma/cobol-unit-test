@@ -272,7 +272,7 @@
            05  KEYWORD-SEARCH-LIMIT   PIC 9(02) VALUE 0.
            05  KEYWORD-END            PIC 9(02) VALUE 72.
            05  KEYWORD-START          PIC 9(02) VALUE 12.
-           05  MAX-KEYWORDS           PIC 9(02) VALUE 7.
+           05  MAX-KEYWORDS           PIC 9(02) VALUE 8.
            05  KEYWORD-VALUES.
                10  FILLER PIC X(20) VALUE 'EXPECT'.
                10  FILLER PIC 9(02) VALUE 6.
@@ -288,8 +288,10 @@
                10  FILLER PIC 9(02) VALUE 4.     
                10  FILLER PIC X(20) VALUE 'VERIFY'.
                10  FILLER PIC 9(02) VALUE 6.     
+               10  FILLER PIC X(20) VALUE 'IGNORE'.
+               10  FILLER PIC 9(02) VALUE 6.
            05  KEYWORDS REDEFINES KEYWORD-VALUES.
-               10  KEYWORD OCCURS 7 INDEXED BY KEYWORD-IX.
+               10  KEYWORD OCCURS 8 INDEXED BY KEYWORD-IX.
                    15  KEYWORD-VALUE      PIC X(20).
                    15  KEYWORD-LENGTH     PIC 9(02).
 
@@ -382,6 +384,10 @@
                88  DATATYPE-88                 VALUE 'B'.
            05  FILLER                    PIC X VALUE SPACE.
                88  REVERSE-COMPARE             VALUE 'Y', FALSE SPACE.
+           05  FILLER                    PIC X VALUE SPACE.
+               88  IGNORE-TESTCASE             VALUE 'Y', FALSE SPACE.  
+           05  FILLER                    PIC X VALUE SPACE.
+               88  FIRST-TESTCASE-AFTER-IGNORE VALUE 'Y', FALSE SPACE.      
            05  FILLER                    PIC X VALUE SPACE.
                88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
            05  FILLER                    PIC X VALUE SPACE.
@@ -1054,7 +1060,7 @@
            PERFORM 9350-READ-TEST-CASES
            IF TEST-CASES-STATUS-OK
                PERFORM 4200-PROCESS-KEYWORDS
-               IF SUPPRESS-COPY-SOURCE
+               IF SUPPRESS-COPY-SOURCE OR IGNORE-TESTCASE
                    CONTINUE
                ELSE    
                    MOVE TEST-CASE-LINE TO TEST-LINE
@@ -1091,11 +1097,33 @@
                    SET TOKEN-IX TO 2
                    EVALUATE TRUE
                        WHEN TOKEN(1) IS EQUAL TO 'EXPECT'
-                            PERFORM 4300-PROCESS-KEYWORD-EXPECT
+                            IF IGNORE-TESTCASE
+                                SET SUPPRESS-COPY-SOURCE TO TRUE
+                            ELSE    
+                                PERFORM 4300-PROCESS-KEYWORD-EXPECT
+                            END-IF
                        WHEN TOKEN(1) IS EQUAL TO 'VERIFY'
-                            PERFORM 5000-PROCESS-KEYWORD-VERIFY     
+                            IF IGNORE-TESTCASE
+                                SET SUPPRESS-COPY-SOURCE TO TRUE
+                            ELSE    
+                                PERFORM 5000-PROCESS-KEYWORD-VERIFY  
+                            END-IF
+                       WHEN TOKEN(1) IS EQUAL TO 'IGNORE'
+                            SET IGNORE-TESTCASE TO TRUE     
+                            SET FIRST-TESTCASE-AFTER-IGNORE TO TRUE 
+                            SET SUPPRESS-COPY-SOURCE TO TRUE 
                        WHEN TOKEN(1) IS EQUAL TO 'TESTCASE'
-                            PERFORM 4400-PROCESS-KEYWORD-TESTCASE  
+                            IF IGNORE-TESTCASE
+                                IF FIRST-TESTCASE-AFTER-IGNORE
+                                    SET FIRST-TESTCASE-AFTER-IGNORE
+                                        TO FALSE
+                                ELSE        
+                                    SET IGNORE-TESTCASE TO FALSE
+                                PERFORM 4400-PROCESS-KEYWORD-TESTCASE
+                                END-IF    
+                            ELSE    
+                                PERFORM 4400-PROCESS-KEYWORD-TESTCASE
+                            END-IF      
                        WHEN TOKEN(1) IS EQUAL TO 'TESTSUITE'
                             PERFORM 4500-PROCESS-KEYWORD-TESTSUITE        
                        WHEN TOKEN(1) IS EQUAL TO 'BEFORE-EACH'
@@ -1103,7 +1131,11 @@
                        WHEN TOKEN(1) IS EQUAL TO 'AFTER-EACH'
                             PERFORM 4700-PROCESS-KEYWORD-AFTER      
                        WHEN TOKEN(1) IS EQUAL TO 'MOCK'
-                            PERFORM 4800-PROCESS-KEYWORD-MOCK      
+                            IF IGNORE-TESTCASE
+                                SET SUPPRESS-COPY-SOURCE TO TRUE
+                            ELSE    
+                                PERFORM 4800-PROCESS-KEYWORD-MOCK      
+                            END-IF
                    END-EVALUATE
                END-IF   
            END-PERFORM
@@ -2347,7 +2379,9 @@
            IF TEST-LINE(8:13) IS EQUAL TO 'PROCEDURE DIV'
                SET BEYOND-PROCEDURE-HEADER TO TRUE
            END-IF    
+
            WRITE TEST-LINE
+
            EVALUATE TRUE
                WHEN TEST-SOURCE-STATUS-OK
                     CONTINUE
