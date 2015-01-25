@@ -85,7 +85,26 @@
               MOVE UT-CONST-ES TO UT-LABEL-EXPECTED-ACCESS-PLURAL
            END-IF      
 
-           IF UT-ACTUAL-ACCESSES IS EQUAL TO UT-EXPECTED-ACCESSES
+           SET UT-VERIFY-PASSED TO FALSE
+           EVALUATE TRUE
+               WHEN UT-VERIFY-AT-LEAST
+                    IF UT-ACTUAL-ACCESSES IS GREATER THAN OR EQUAL TO 
+                            UT-EXPECTED-ACCESSES
+                        SET UT-VERIFY-PASSED TO TRUE
+                    END-IF    
+               WHEN UT-VERIFY-NO-MORE-THAN
+                    IF UT-ACTUAL-ACCESSES IS LESS THAN OR EQUAL TO
+                            UT-EXPECTED-ACCESSES
+                        SET UT-VERIFY-PASSED TO TRUE
+                    END-IF        
+               WHEN OTHER
+                    IF UT-ACTUAL-ACCESSES IS EQUAL TO
+                            UT-EXPECTED-ACCESSES
+                        SET UT-VERIFY-PASSED TO TRUE
+                    END-IF        
+           END-EVALUATE    
+
+           IF UT-VERIFY-PASSED
                ADD 1 TO UT-NUMBER-PASSED
                DISPLAY UT-PASSED 
                        UT-TEST-CASE-NUMBER '. ' 

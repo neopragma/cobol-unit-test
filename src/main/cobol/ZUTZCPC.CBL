@@ -145,6 +145,7 @@
            05  MAX-STATUS-MNEMONICS       PIC 9(02) VALUE 4.
            05  PREVIOUS-ENTRY             PIC 9(02) VALUE 0.
            05  TEMP-SUB                   PIC 9(02) VALUE 0.
+           05  SAVE-OFFSET                PIC 9(02) VALUE 0.
            05  TEMP-TOKEN                 PIC X(80).
            05  MOCK-FILE-STATUS-MNEMONICS.
                10  FILLER PIC X(20) VALUE 'OK'.
@@ -348,6 +349,14 @@
                '           PERFORM UT-SET-MOCK'.    
            05  ENDIF-STMT                   PIC X(18) VALUE
                '           END-IF'.    
+           05  SET-VERIFY-EXACT-STMT        PIC X(80) VALUE
+               '           SET UT-VERIFY-EXACT TO TRUE'.    
+           05  SET-VERIFY-AT-LEAST-STMT     PIC X(80) VALUE
+               '           SET UT-VERIFY-AT-LEAST TO TRUE'.    
+           05  SET-VERIFY-NO-MORE-THAN-STMT PIC X(80) VALUE
+               '           SET UT-VERIFY-NO-MORE-THAN TO TRUE'.     
+           05  SET-FIND-FILE-MOCK-STMT      PIC X(80) VALUE
+               '           SET UT-FIND-FILE-MOCK TO TRUE'.        
 
       *****************************************************************
       * File status codes
@@ -384,6 +393,10 @@
                88  DATATYPE-88                 VALUE 'B'.
            05  FILLER                    PIC X VALUE SPACE.
                88  REVERSE-COMPARE             VALUE 'Y', FALSE SPACE.
+           05  FILLER                    PIC X VALUE '1'.
+               88  VERIFY-EXACT                VALUE '1'.
+               88  VERIFY-AT-LEAST             VALUE '2'.
+               88  VERIFY-NO-MORE-THAN         VALUE '3'.    
            05  FILLER                    PIC X VALUE SPACE.
                88  IGNORE-TESTCASE             VALUE 'Y', FALSE SPACE.  
            05  FILLER                    PIC X VALUE SPACE.
@@ -502,6 +515,14 @@
            05  MSG-VERIFY-SYNTAX-6.
                10  FILLER PIC X(80) VALUE
                '    VERIFY FILE INPUT-FILE OPEN NEVER HAPPENED'.     
+           05  MSG-VERIFY-SYNTAX-7.
+               10  FILLER PIC X(80) VALUE
+               '    VERIFY FILE INPUT-FILE OPEN HAPPENED AT LEAST ONCE'.     
+           05  MSG-VERIFY-SYNTAX-8.
+               10  FILLER PIC X(40) VALUE
+               '    VERIFY FILE INPUT-FILE READ HAPPENED'.
+               10  FILLER PIC X(40) VALUE
+               ' NO MORE THAN 5 TIMES'.     
 
            05  MSG-FILE-MOCK-NOMATCH-1.
                10  FILLER PIC X(06) VALUE '009-W'.
@@ -553,6 +574,18 @@
                10  FILLER                   PIC X(04) VALUE ' ON '.
                10  MSG-TEST-SOURCE-OPERATION PIC X(04).
                10  FILLER                   PIC X(31) VALUE SPACES.
+
+           05  MSG-EXPECT-SYNTAX-1.    
+               10  FILLER PIC X(06) VALUE '016-E '.
+               10  FILLER PIC X(40) VALUE
+               'UNABLE TO PARSE EXPECT STATEMENT (UNIT T'.    
+               10  FILLER PIC X(36) VALUE
+               'EST FILE UTESTS)'.
+           05  MSG-EXPECT-SYNTAX-2.
+               10  FILLER PIC X(80) VALUE 'SYNTAX IS:'.
+           05  MSG-EXPECT-SYNTAX-2.
+               10  FILLER PIC X(80) VALUE 
+               '    EXPECT [actual] TO BE [expected]'.
 
        LINKAGE SECTION.
 
@@ -1172,13 +1205,9 @@
            IF KEYWORD-MATCHED
                PERFORM 4320-EXPECT-EQUALITY
            ELSE
-
-      *----------------------------------------------------------------
-      * TODO This needs to be a standard format message MSG-etc
-      *----------------------------------------------------------------
-
-               DISPLAY 'SYNTAX IS:'
-               DISPLAY '    EXPECT [actual] TO BE [expected]'
+               DISPLAY 'MSG-EXPECT-SYNTAX-1'
+               DISPLAY 'MSG-EXPECT-SYNTAX-2'
+               DISPLAY 'MSG-EXPECT-SYNTAX-3'
            END-IF
            .
 
@@ -1823,12 +1852,42 @@
            PERFORM 6500-LOOK-UP-FILE-MOCK
            PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
 
+      * Expect next tokens to be one of the following sequences:
+      *      NEVER HAPPENED
+      *      HAPPENED ONCE
+      *      HAPPENED n TIME[S]
+      *      HAPPENED AT LEAST ONCE
+      *      HAPPENED AT LEAST n TIME[S]
+      *      HAPPENED NO MORE THAN ONCE
+      *      HAPPENED NO MORE THAN n TIME[S]   
+
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            IF TOKEN(TOKEN-IX) IS EQUAL TO NEVER-KEYWORD
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                MOVE ZERO TO MOCK-TEST-COUNT
            ELSE                   
                IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
+                   SET KEYWORD-MATCHED TO FALSE
+                   MOVE KEYWORD-OFFSET TO SAVE-OFFSET
+                   MOVE 'NO MORE THAN ' TO KEYWORD-TO-MATCH
+                   MOVE 13 TO KEYWORD-MATCH-LENGTH
+                   PERFORM 7400-MATCH-KEYWORD
+                   IF KEYWORD-MATCHED
+                       SET VERIFY-NO-MORE-THAN TO TRUE
+                       ADD 12 TO KEYWORD-OFFSET
+                   ELSE
+                       MOVE SAVE-OFFSET TO KEYWORD-OFFSET
+                       MOVE 'AT LEAST ' TO KEYWORD-TO-MATCH
+                       MOVE 9 TO KEYWORD-MATCH-LENGTH
+                       PERFORM 7400-MATCH-KEYWORD
+                       IF KEYWORD-MATCHED
+                           SET VERIFY-AT-LEAST TO TRUE
+                           ADD 8 TO KEYWORD-OFFSET
+                       ELSE
+                           MOVE SAVE-OFFSET TO KEYWORD-OFFSET
+                           SET VERIFY-EXACT TO TRUE
+                       END-IF    
+                   END-IF
                    PERFORM 7100-NEXT-TOKEN-TEST-CASES
                END-IF
                IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
@@ -1847,59 +1906,101 @@
       * Generate statements in TEST-SOURCE to do the verification
 
            MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
-           SET STATEMENT-IX TO ZERO
-           
-           PERFORM 6100-GEN-LOOKUP-MOCK
+           SET STATEMENT-IX TO 1
+
+           MOVE SET-FIND-FILE-MOCK-STMT
+                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           MOVE MOCK-LOOKUP-FILENAME TO RAW-VALUE
+           PERFORM 7950-ENCLOSE-IN-QUOTES
+           STRING
+               STATEMENT-SPACER        DELIMITED BY SIZE
+               MOVE-VERB               DELIMITED BY SIZE
+               QUOTED-VALUE            DELIMITED BY SPACE
+               TO-KEYWORD              DELIMITED BY SIZE
+               'UT-MOCK-FIND-FILENAME' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           MOVE MOCK-LOOKUP-OPERATION TO RAW-VALUE
+           PERFORM 7950-ENCLOSE-IN-QUOTES
+           STRING
+               STATEMENT-SPACER         DELIMITED BY SIZE
+               MOVE-VERB                DELIMITED BY SIZE
+               QUOTED-VALUE             DELIMITED BY SPACE
+               TO-KEYWORD               DELIMITED BY SIZE
+               'UT-MOCK-FIND-OPERATION' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           PERFORM 6100-GEN-LOOKUP-MOCK
            MOVE TEMP-STATEMENT 
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-
            SET STATEMENT-IX UP BY 1
+
            MOVE '           IF UT-MOCK-FOUND' 
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
 
            PERFORM 6200-GEN-LOOKUP-FILE    
-           SET STATEMENT-IX UP BY 1
            MOVE TEMP-STATEMENT 
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
-
            SET STATEMENT-IX UP BY 1
+
            STRING
                STATEMENT-SPACER                      DELIMITED BY SIZE
                MOVE-VERB                             DELIMITED BY SIZE
                MOCK-TEST-COUNT                       DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-STRING    
-
            SET STATEMENT-IX UP BY 1
+
            STRING
                STATEMENT-SPACER                      DELIMITED BY SIZE
                TO-KEYWORD                            DELIMITED BY SIZE
                'UT-EXPECTED-ACCESSES'                DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-STRING    
-
            SET STATEMENT-IX UP BY 1
+
            STRING
                STATEMENT-SPACER                      DELIMITED BY SIZE
                MOVE-VERB                             DELIMITED BY SIZE
                'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'    DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-STRING    
-
            SET STATEMENT-IX UP BY 1
+
            STRING
                STATEMENT-SPACER                      DELIMITED BY SIZE
                TO-KEYWORD                            DELIMITED BY SIZE
                'UT-ACTUAL-ACCESSES'                  DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-STRING    
-
            SET STATEMENT-IX UP BY 1    
+
            MOVE INCR-TESTCASE-COUNT-STMT
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-
            SET STATEMENT-IX UP BY 1
+
+           EVALUATE TRUE
+               WHEN VERIFY-AT-LEAST
+                    MOVE SET-VERIFY-AT-LEAST-STMT 
+                         TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+               WHEN VERIFY-NO-MORE-THAN
+                    MOVE SET-VERIFY-NO-MORE-THAN-STMT 
+                         TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+               WHEN OTHER
+                    MOVE SET-VERIFY-EXACT-STMT
+                         TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-EVALUATE    
+           SET STATEMENT-IX UP BY 1
+
            STRING
                STATEMENT-SPACER                      DELIMITED BY SIZE
                PERFORM-VERB                          DELIMITED BY SIZE
@@ -1918,12 +2019,13 @@
            DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-4
            DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-5
            DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-6
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-7
+           DISPLAY THIS-PROGRAM MSG-VERIFY-SYNTAX-8
            .
 
        6100-GEN-LOOKUP-MOCK.
       *****************************************************************
       * Generate code for TEST-SOURCE to look up a mock specification
-      * based on its filename.
       * Assumes the filename is currently in TOKEN(TOKEN-IX).
       *****************************************************************
            MOVE SPACES TO TEMP-STATEMENT

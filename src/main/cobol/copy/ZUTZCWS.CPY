@@ -8,6 +8,12 @@
            05  UT-DISPLAY-MESSAGE        PIC X(256) VALUE SPACES.
            05  FILLER                    PIC X(01) VALUE SPACES.
                88  UT-REVERSE-COMPARE    VALUE 'Y', FALSE SPACES.
+           05  FILLER                    PIC X(01) VALUE '1'.
+               88  UT-VERIFY-EXACT                 VALUE '1'.
+               88  UT-VERIFY-AT-LEAST              VALUE '2'.
+               88  UT-VERIFY-NO-MORE-THAN          VALUE '3'.   
+           05  FILLER                    PIC X(01) VALUE SPACES.
+               88  UT-VERIFY-PASSED      VALUE 'Y', FALSE SPACES.     
            05  FILLER                    PIC X(01) VALUE SPACES.
                88  UT-COMPARE-DEFAULT    VALUE SPACE.
                88  UT-COMPARE-NUMERIC    VALUE 'N', FALSE SPACES.
