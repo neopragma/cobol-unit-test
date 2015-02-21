@@ -45,7 +45,7 @@ function run_unit_tests {
 }
 
 function show_help {
-	echo 'Run unit test cases for a batch Cobol program'
+	echo 'Run unit test cases for a Cobol program'
 	echo 'Usage: run ut [options]' 
   echo '           config-file-name' 
   echo '           program-name-without-suffix'
