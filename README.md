@@ -2,7 +2,7 @@
 
 The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. 
 
-Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki) for more information.
+Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/00. Home) for more information.
 
 ## Description
 
@@ -44,7 +44,7 @@ The unit test precompiler copies the program under test and inserts test code in
 
 ### Notes
 
-The precompiler recognizes certain keywords and substitutes test code, so that you need not code a lot of boilerplate code manually. Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki) for syntax details.
+The precompiler recognizes certain keywords and substitutes test code, so that you need not code a lot of boilerplate code manually. Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/00. Home) for syntax details.
 
 TESTSUITE - Provides a description for a series of test cases. The description is echoed in the output from the test run.
 
