@@ -2506,6 +2506,7 @@
            MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-OPERATION
            PERFORM 6500-LOOK-UP-FILE-MOCK
            PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
            PERFORM 5025-PARSE-HAPPENED-SPEC
 
       * Generate statements in TEST-SOURCE to do the verification
@@ -2591,7 +2592,6 @@
                END-IF
            END-PERFORM
 
-
       * This will put a single string containing the command keywords
       * separated by single spaces into MOCK-CICS-LOOKUP-KEY.
 
@@ -2660,16 +2660,17 @@
 
        5025-PARSE-HAPPENED-SPEC.
       *****************************************************************
-      * Expect next tokens to be one of the following sequences:
-      *      NEVER HAPPENED
-      *      HAPPENED ONCE
-      *      HAPPENED n TIME[S]
-      *      HAPPENED AT LEAST ONCE
-      *      HAPPENED AT LEAST n TIME[S]
-      *      HAPPENED NO MORE THAN ONCE
-      *      HAPPENED NO MORE THAN n TIME[S]   
+      * On entry to this paragraph, the current token is HAPPENED or
+      * NEVER. Expect next tokens to be one of the following sequences:
+      *      HAPPENED   (if the spec reads NEVER HAPPENED)
+      *      ONCE
+      *      n TIME[S]
+      *      AT LEAST ONCE
+      *      AT LEAST n TIME[S]
+      *      NO MORE THAN ONCE
+      *      NO MORE THAN n TIME[S]   
       *****************************************************************
-           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
            IF TOKEN(TOKEN-IX) IS EQUAL TO NEVER-KEYWORD
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                MOVE ZERO TO MOCK-TEST-COUNT
@@ -2933,6 +2934,9 @@
                INSPECT MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
                    REPLACING ALL SINGLE-QUOTE BY '"'
 
+      * The following provides the same functionality as these 
+      * statements, and works for older versions of Cobol installed
+      * on some mainframe systems.
       *         INSPECT MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
       *             REPLACING ALL ' (' BY '('
 
@@ -3141,7 +3145,6 @@
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
                          KEYWORD-SEARCH-LIMIT
                       OR KEYWORD-MATCHED  
-
                IF KEYWORD-TO-MATCH IS EQUAL TO
                    LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
                    SET KEYWORD-MATCHED TO TRUE
