@@ -69,8 +69,6 @@
            MOVE 4 TO UT-RETCODE
            .
 
-
-
        UT-ASSERT-ACCESSES.
       *****************************************************************
       * COMPARE THE NUMBER OF ACCESSES TO A MOCK WITH THE EXPECTED
@@ -112,6 +110,7 @@
                       UT-LABEL-EXPECTED-ACCESS
            ELSE 
                ADD 1 TO UT-NUMBER-FAILED
+               MOVE SPACES TO UT-DISPLAY-MESSAGE
                STRING 
                    UT-FAILED                      DELIMITED BY SIZE
                    UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
