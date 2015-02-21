@@ -44,17 +44,17 @@ The unit test precompiler copies the program under test and inserts test code in
 
 ### Notes
 
-The precompiler recognizes certain keywords and substitutes test code, so that you need not code a lot of boilerplate code manually.
+The precompiler recognizes certain keywords and substitutes test code, so that you need not code a lot of boilerplate code manually. Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki) for syntax details.
 
 TESTSUITE - Provides a description for a series of test cases. The description is echoed in the output from the test run.
 
-MOCK - declares a mock. Current version has very basic support for mocking batch file I/O. This feature is currently under active development.
+MOCK - declares a mock. Current version has support for mocking EXEC CICS commands and rudimentary support for mocking batch file I/O. This feature is currently under active development.
 
 BEFORE-EACH, AFTER-EACH - the precompiler copies these statements into paragraphs that are performed at the start and end of each test case.
 
 TESTCASE - identifies a test case. The description is echoed in the output of the test run.
 
-EXPECT - asserts an expected result. Current version only supports an equality check for PIC X items. 
+EXPECT - asserts an expected result. Current version supports PIC X, numeric, and 88-level compares. 
 
 VERIFY - verifies that a mock was accessed the expected number of times.
 
