@@ -167,7 +167,6 @@
       *****************************************************************
        01  FILLER.            
            05  MAX-STATUS-MNEMONICS   PIC 9(02) VALUE 4.
-           05  PREVIOUS-ENTRY         VALUE 0 USAGE INDEX.
            05  TEMP-SUB               VALUE 0 USAGE INDEX.
            05  SAVE-SUB               VALUE 0 USAGE INDEX.
            05  SAVE-OFFSET            PIC 9(02) VALUE 0.
@@ -2389,10 +2388,6 @@
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
            END-IF    
 
-           COMPUTE PREVIOUS-ENTRY = 
-               TOKEN-IX - 1 
-           END-COMPUTE
-
       * Reset the access count for the 'new' mock
 
            SET STATEMENT-IX UP BY 1
@@ -2410,7 +2405,7 @@
       * If the last token was RETURN, then the current token is a
       * record value.
 
-               WHEN TOKEN(PREVIOUS-ENTRY) IS EQUAL TO 'RETURN'
+               WHEN TOKEN(TOKEN-IX - 1) IS EQUAL TO 'RETURN'
                     MOVE TOKEN(TOKEN-IX) 
                       TO MOCK-RECORD(MOCK-IX)
 
@@ -2427,7 +2422,7 @@
       * If the last token was STATUS, then the current token is a
       * FILE STATUS value. 
 
-               WHEN TOKEN(PREVIOUS-ENTRY) IS EQUAL TO 'STATUS'
+               WHEN TOKEN(TOKEN-IX - 1) IS EQUAL TO 'STATUS'
                     PERFORM VARYING MOCK-STATUS-IX FROM 1 BY 1
                             UNTIL MOCK-STATUS-IX IS GREATER THAN
                                   MAX-STATUS-MNEMONICS 
