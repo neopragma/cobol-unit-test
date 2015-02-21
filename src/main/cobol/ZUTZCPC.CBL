@@ -72,6 +72,10 @@
            05  FILLER                    PIC X(249).       
 
        WORKING-STORAGE SECTION.
+
+       01  FILLER PIC X VALUE SPACE.
+           88  SHOW-KEYWORDS VALUE 'Y', FALSE SPACE.
+
       *****************************************************************
       * Saved information about files that are accessed by the program
       * under test. If any MOCKs are declared in the test cases, we
@@ -162,12 +166,12 @@
       * into the test program to perform mock logic.
       *****************************************************************
        01  FILLER.            
-           05  MAX-STATUS-MNEMONICS       PIC 9(02) VALUE 4.
-           05  PREVIOUS-ENTRY             PIC 9(02) VALUE 0.
-           05  TEMP-SUB                   PIC 9(08) VALUE 0.
-           05  SAVE-SUB                   PIC 9(08) VALUE 0.
-           05  SAVE-OFFSET                PIC 9(02) VALUE 0.
-           05  TEMP-TOKEN                 PIC X(80).
+           05  MAX-STATUS-MNEMONICS   PIC 9(02) VALUE 4.
+           05  PREVIOUS-ENTRY         VALUE 0 USAGE INDEX.
+           05  TEMP-SUB               VALUE 0 USAGE INDEX.
+           05  SAVE-SUB               VALUE 0 USAGE INDEX.
+           05  SAVE-OFFSET            PIC 9(02) VALUE 0.
+           05  TEMP-TOKEN             PIC X(80).
            05  MOCK-FILE-STATUS-MNEMONICS.
                10  FILLER PIC X(20) VALUE 'OK'.
                10  FILLER PIC X(02) VALUE '00'.
@@ -792,6 +796,28 @@
                                                   'UNEXPIN',
                                                   'USERIDERR',
                                                   'WRBRK'.
+
+
+      *****************************************************************
+      * Used by 7970-INSPECT-REPLACE.
+      * Workaround for lack of support for INSPECT REPLACING in older
+      * versions of mainframe Cobol.
+      *****************************************************************
+       01  INSPECT-REPLACING-FIELDS.
+           05  FILLER.
+               10  TARGET-STRING          PIC X(80).
+               10  TEMP-STRING            PIC X(80).
+               10  SEARCH-STRING          PIC X(80).
+               10  REPLACE-STRING         PIC X(80).
+           05  FILLER USAGE BINARY.    
+               10  TARGET-STRING-LENGTH   PIC S9(04).
+               10  SEARCH-STRING-LENGTH   PIC S9(04).
+               10  REPLACE-STRING-LENGTH  PIC S9(04).
+               10  INSPECT-MAX            PIC S9(04).
+               10  INSPECT-SUB            PIC S9(04).
+               10  CUT-LENGTH             PIC S9(04).
+               10  CONCAT-OFFSET          PIC S9(04).
+               10  CONCAT-LENGTH          PIC S9(04).
 
       *****************************************************************
       * File status codes
@@ -2906,8 +2932,17 @@
            
                INSPECT MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
                    REPLACING ALL SINGLE-QUOTE BY '"'
-               INSPECT MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
-                   REPLACING ALL ' (' BY '('
+
+      *         INSPECT MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
+      *             REPLACING ALL ' (' BY '('
+
+               MOVE MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX) 
+                   TO TARGET-STRING
+               MOVE 80 TO TARGET-STRING-LENGTH
+               MOVE ' (' TO SEARCH-STRING
+               MOVE 2 TO SEARCH-STRING-LENGTH
+               MOVE '(' TO REPLACE-STRING
+               MOVE 1 TO REPLACE-STRING-LENGTH
 
                MOVE MOCK-CICS-LOOKUP-KEYWORD(MOCK-CICS-LOOKUP-IX)
                    TO RAW-VALUE
@@ -3106,6 +3141,7 @@
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
                          KEYWORD-SEARCH-LIMIT
                       OR KEYWORD-MATCHED  
+
                IF KEYWORD-TO-MATCH IS EQUAL TO
                    LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
                    SET KEYWORD-MATCHED TO TRUE
@@ -3209,6 +3245,57 @@
                       OR RAW-VALUE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
            END-PERFORM           
            .
+
+       7970-INSPECT-REPLACE.
+      *****************************************************************
+      * Workaround for older versions of Cobol in which the 
+      * INSPECT REPLACING verb can't handle strings of different
+      * lengths.
+      *****************************************************************
+           COMPUTE INSPECT-MAX = 
+               TARGET-STRING-LENGTH - SEARCH-STRING-LENGTH
+           END-COMPUTE    
+           PERFORM VARYING INSPECT-SUB FROM 1 BY 1
+                   UNTIL INSPECT-SUB IS GREATER THAN INSPECT-MAX
+
+               IF TARGET-STRING(INSPECT-SUB:SEARCH-STRING-LENGTH)
+                       IS EQUAL TO SEARCH-STRING
+
+                   COMPUTE CONCAT-OFFSET =
+                       INSPECT-SUB + SEARCH-STRING-LENGTH
+                   END-COMPUTE     
+
+                   COMPUTE CONCAT-LENGTH =
+                       TARGET-STRING-LENGTH - CONCAT-OFFSET
+                   END-COMPUTE       
+
+                   COMPUTE CUT-LENGTH =
+                       INSPECT-SUB - 1
+                   END-COMPUTE    
+
+                   MOVE SPACES TO TEMP-STRING
+
+                   STRING
+                       TARGET-STRING(1:CUT-LENGTH) 
+                           DELIMITED BY SIZE
+                       REPLACE-STRING(1:REPLACE-STRING-LENGTH) 
+                           DELIMITED BY SIZE
+                       TARGET-STRING(CONCAT-OFFSET:CONCAT-LENGTH)
+                           DELIMITED BY SIZE
+                       INTO TEMP-STRING    
+                   END-STRING  
+                   MOVE TEMP-STRING TO TARGET-STRING      
+               END-IF        
+           END-PERFORM
+           .
+
+
+
+
+
+
+
+
 
       *****************************************************************
       * 8xxx - Initialization
