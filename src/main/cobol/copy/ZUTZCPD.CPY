@@ -111,21 +111,43 @@
            ELSE 
                ADD 1 TO UT-NUMBER-FAILED
                MOVE SPACES TO UT-DISPLAY-MESSAGE
-               STRING 
-                   UT-FAILED                      DELIMITED BY SIZE
-                   UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
-                   '. VERIFY ACCESSES TO '        DELIMITED BY SIZE
-                   UT-MOCK-OPERATION(UT-MOCK-IX)  DELIMITED BY SPACE
-                   ' ON '                         DELIMITED BY SIZE
-                   UT-MOCK-FILENAME(UT-MOCK-IX)   DELIMITED BY SPACE
-                   ' | EXPECTED '                 DELIMITED BY SIZE
-                   UT-EXPECTED-ACCESSES-FMT       DELIMITED BY SIZE
-                   SPACE                          DELIMITED BY SIZE
-                   UT-LABEL-EXPECTED-ACCESS       DELIMITED BY SPACE
-                   ', WAS '                       DELIMITED BY SIZE
-                   UT-ACTUAL-ACCESSES-FMT         DELIMITED BY SIZE
-                   INTO UT-DISPLAY-MESSAGE
-               END-STRING
+               IF UT-MOCK-FILE(UT-MOCK-IX)
+                   STRING 
+                       UT-FAILED                      DELIMITED BY SIZE
+                       UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
+                       '. VERIFY ACCESSES TO '        DELIMITED BY SIZE
+                       UT-MOCK-OPERATION(UT-MOCK-IX)  DELIMITED BY SPACE
+                       ' ON '                         DELIMITED BY SIZE
+                       UT-MOCK-FILENAME(UT-MOCK-IX)   DELIMITED BY SPACE
+                       ' | EXPECTED '                 DELIMITED BY SIZE
+                       UT-EXPECTED-ACCESSES-FMT       DELIMITED BY SIZE
+                       SPACE                          DELIMITED BY SIZE
+                       UT-LABEL-EXPECTED-ACCESS       DELIMITED BY SPACE
+                       ', WAS '                       DELIMITED BY SIZE
+                       UT-ACTUAL-ACCESSES-FMT         DELIMITED BY SIZE
+                       INTO UT-DISPLAY-MESSAGE
+                   END-STRING
+               ELSE
+                   STRING 
+                       UT-FAILED                      DELIMITED BY SIZE
+                       UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
+                       '. VERIFY ACCESSES TO '        DELIMITED BY SIZE
+                       UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
+                                                      DELIMITED BY SIZE
+                       INTO UT-DISPLAY-MESSAGE
+                   END-STRING     
+                   DISPLAY UT-DISPLAY-MESSAGE
+                   MOVE SPACES TO UT-DISPLAY-MESSAGE
+                   STRING 
+                       '   EXPECTED '                 DELIMITED BY SIZE
+                       UT-EXPECTED-ACCESSES-FMT       DELIMITED BY SIZE
+                       SPACE                          DELIMITED BY SIZE
+                       UT-LABEL-EXPECTED-ACCESS       DELIMITED BY SPACE
+                       ', WAS '                       DELIMITED BY SIZE
+                       UT-ACTUAL-ACCESSES-FMT         DELIMITED BY SIZE
+                       INTO UT-DISPLAY-MESSAGE
+                   END-STRING                                  
+               END-IF    
                DISPLAY UT-DISPLAY-MESSAGE
                MOVE 4 TO UT-RETCODE
            END-IF              
