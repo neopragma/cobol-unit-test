@@ -91,8 +91,9 @@
 
        01  FILLER.
            05  MAX-FILES                     PIC 9(02) VALUE 10.
-       01  FILLER                            PIC X(01) VALUE SPACE.
-           88  FILENAME-MATCHED              VALUE 'Y', FALSE SPACE.
+       01  FILLER                            PIC X(01) VALUE 'N'.
+           88  FILENAME-MATCHED              VALUE 'Y'.
+           88  FILENAME-NOT-MATCHED          VALUE 'N'.
        01  FILE-INFORMATION.
            05  FILE-INF OCCURS 10 INDEXED BY FILE-IX.
                10  INTERNAL-FILENAME         PIC X(31).
@@ -114,9 +115,11 @@
        01  FILLER.
            05  MOCK-FILE-STATUS-WORK      PIC X(02).
            05  FILLER                     PIC X.
-               88  MOCK-SYNTAX-ERROR      VALUE 'Y', FALSE SPACE.
+               88  MOCK-SYNTAX-ERROR      VALUE 'Y'.
+               88  NO-MOCK-SYNTAX-ERROR   VALUE 'N'.
            05  FILLER                     PIC X.
-               88  MOCK-MATCHED           VALUE 'Y', FALSE SPACE.
+               88  MOCK-MATCHED           VALUE 'Y'.
+               88  MOCK-NOT-MATCHED       VALUE 'N'.
            05  MAX-MOCKS                  PIC 9(02) VALUE 10.
            05  MAX-CICS-KEYWORDS          PIC 9(02) VALUE 25.
            05  MAX-MOCK-CICS-STATEMENTS   PIC 9(02) VALUE 25.
@@ -128,9 +131,9 @@
                10  MOCK-LOOKUP-OPERATION  PIC X(20).
            05  MOCK OCCURS 10 INDEXED BY MOCK-IX.
                10  MOCK-TYPE              PIC X(04).
-                   88  MOCK-FILE          VALUE 'FILE', FALSE SPACES.
-                   88  MOCK-CICS          VALUE 'CICS', FALSE SPACES.
-                   88  MOCK-SQL           VALUE 'SQL',  FALSE SPACES.
+                   88  MOCK-FILE          VALUE 'FILE'.
+                   88  MOCK-CICS          VALUE 'CICS'.
+                   88  MOCK-SQL           VALUE 'SQL'.
                10  MOCK-RECORD            PIC X(2048).    
                10  MOCK-DATA              PIC X(3200).
                10  MOCK-FILE-DATA REDEFINES MOCK-DATA.        
@@ -312,8 +315,9 @@
                10  RAW-VALUE-2        PIC X(1976).
            05  QUOTED-VALUE           PIC X(2048).
            05  LINE-TO-PARSE          PIC X(80).
-           05  KEYWORD-MATCHED-INDICATOR PIC X(01) VALUE SPACE.
-               88  KEYWORD-MATCHED              VALUE 'Y', FALSE SPACE.
+           05  KEYWORD-MATCHED-INDICATOR PIC X(01) VALUE 'N'.
+               88  KEYWORD-MATCHED              VALUE 'Y'.
+               88  KEYWORD-NOT-MATCHED          VALUE 'N'.
            05  WS-CHARS               PIC 9(02) VALUE ZERO.  
            05  WS-NEXT                PIC 9(02) VALUE ZERO.
            05  WS-STRING-DELIMITER    PIC X(01) VALUE SPACE.  
@@ -420,8 +424,8 @@
                '           ADD 1 TO UT-TEST-CASE-COUNT'.
            05  SET-REVERSE-TRUE-STMT        PIC X(80) VALUE
                '           SET UT-REVERSE-COMPARE TO TRUE'.    
-           05  SET-REVERSE-FALSE-STMT        PIC X(80) VALUE
-               '           SET UT-REVERSE-COMPARE TO FALSE'.    
+           05  SET-NORMAL-TRUE-STMT        PIC X(80) VALUE
+               '           SET UT-NORMAL-COMPARE TO TRUE'.    
            05  SET-MOCK-STMT                PIC X(80) VALUE
                '           PERFORM UT-SET-MOCK'.    
            05  ENDIF-STMT                   PIC X(18) VALUE
@@ -1400,7 +1404,7 @@
       * Found an I/O statement in ORIGINAL-SOURCE. See if a MOCK was
       * specified for this filename.
       *****************************************************************
-           SET MOCK-MATCHED TO FALSE
+           SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1
                    UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
                       OR MOCK-MATCHED
@@ -1423,7 +1427,7 @@
       * for the real I/O operation.
       * MOCK-IX is already set.
       *****************************************************************
-           SET FILENAME-MATCHED TO FALSE
+           SET FILENAME-NOT-MATCHED TO TRUE
            PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
                PERFORM 2550-GEN-MOCK-STATEMENTS
@@ -1606,7 +1610,7 @@
 
       * See if this set of tokens corresponds to a defined MOCK.
 
-           SET MOCK-MATCHED TO FALSE
+           SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1
                    UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
                       OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
@@ -1918,18 +1922,51 @@
            END-STRING
            SET STATEMENT-IX UP BY 1
 
-           IF TOKEN(4) IS EQUAL TO TRUE-KEYWORD
-               MOVE FALSE-KEYWORD TO RAW-VALUE
-           ELSE 
-               MOVE TRUE-KEYWORD TO RAW-VALUE
-           END-IF        
-           PERFORM 7950-ENCLOSE-IN-QUOTES
+      * TOKEN(2) is the field name
+      * TOKEN(4) is the truth value (TRUE or FALSE)
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               IF-VERB              DELIMITED BY SIZE
+               TOKEN(2)             DELIMITED BY SPACE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            STRING
                MOVE-VERB            DELIMITED BY SIZE
-               QUOTED-VALUE         DELIMITED BY SPACE
+               " 'TRUE' "           DELIMITED BY SIZE
                TO-KEYWORD           DELIMITED BY SIZE
-               'UT-ACTUAL' DELIMITED BY SIZE
+               'UT-ACTUAL'          DELIMITED BY SIZE               
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               ELSE-KEYWORD           DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               MOVE-VERB            DELIMITED BY SIZE
+               " 'FALSE' "           DELIMITED BY SIZE
+               TO-KEYWORD           DELIMITED BY SIZE
+               'UT-ACTUAL'          DELIMITED BY SIZE               
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               ENDIF-KEYWORD           DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                          (STATEMENT-OFFSET:STATEMENT-LENGTH)
            END-STRING
@@ -1948,39 +1985,11 @@
            SET STATEMENT-IX UP BY 1
 
            STRING 
-               IF-VERB               DELIMITED BY SIZE
-               TOKEN(2)              DELIMITED BY SPACE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-
-           STRING 
-               STATEMENT-SPACER      DELIMITED BY SIZE
                PERFORM-VERB          DELIMITED BY SIZE
-               ' UT-DISPLAY-PASSED'  DELIMITED BY SIZE
+               ' UT-ASSERT-EQUAL'    DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                          (STATEMENT-OFFSET:STATEMENT-LENGTH)
            END-STRING
-           SET STATEMENT-IX UP BY 1
-
-           MOVE ELSE-KEYWORD
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           SET STATEMENT-IX UP BY 1
-
-           STRING 
-               STATEMENT-SPACER      DELIMITED BY SIZE
-               PERFORM-VERB          DELIMITED BY SIZE
-               ' UT-DISPLAY-FAILED'  DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-
-           MOVE ENDIF-KEYWORD
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
            SET STATEMENT-IX UP BY 1
            .
 
@@ -2030,7 +2039,7 @@
                MOVE SET-REVERSE-TRUE-STMT
                     TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            ELSE
-               MOVE SET-REVERSE-FALSE-STMT
+               MOVE SET-NORMAL-TRUE-STMT
                     TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-IF   
            SET STATEMENT-IX UP BY 1          
@@ -2220,7 +2229,7 @@
       * when references are encountered in ORIGINAL-SOURCE.
       *****************************************************************
            SET MOCK-IX UP BY 1
-           SET MOCK-SYNTAX-ERROR TO FALSE
+           SET NO-MOCK-SYNTAX-ERROR TO TRUE
 
       * Next token will be the type of mock
 
@@ -2303,7 +2312,7 @@
                    MAX-VALID-FILE-OPERATIONS
                IF TOKEN(TOKEN-IX) IS EQUAL TO
                        VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
-                   SET MOCK-SYNTAX-ERROR TO FALSE
+                   SET NO-MOCK-SYNTAX-ERROR TO TRUE
                    MOVE TOKEN(TOKEN-IX) TO MOCK-OPERATION(MOCK-IX)
 
                    MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
@@ -2562,7 +2571,7 @@
 
            PERFORM 5050-FORMAT-CICS-KEYWORD-STRING
 
-           SET MOCK-MATCHED TO FALSE
+           SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1 
                    UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
                       OR MOCK-MATCHED
@@ -2640,7 +2649,7 @@
                MOVE ZERO TO MOCK-TEST-COUNT
            ELSE                   
                IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
-                   SET KEYWORD-MATCHED TO FALSE
+                   SET KEYWORD-NOT-MATCHED TO TRUE
                    MOVE KEYWORD-OFFSET TO SAVE-OFFSET
                    MOVE 'NO MORE THAN ' TO KEYWORD-TO-MATCH
                    MOVE 13 TO KEYWORD-MATCH-LENGTH
@@ -2975,7 +2984,7 @@
       * MOCK-IX is pointing to a MOCK entry and we need to find the
       * corresponding file information.
       *****************************************************************
-           SET FILENAME-MATCHED TO FALSE
+           SET FILENAME-NOT-MATCHED TO TRUE
            PERFORM VARYING FILE-IX FROM 1 BY 1
                    UNTIL FILE-IX IS GREATER THAN MAX-FILES
                       OR FILENAME-MATCHED
@@ -2994,7 +3003,7 @@
       * Set MOCK-IX to the entry that matches the type (FILE), the
       * filename, and the I/O operation.
       *****************************************************************
-           SET MOCK-MATCHED TO FALSE
+           SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1
                    UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
                       OR MOCK-MATCHED
@@ -3108,7 +3117,7 @@
       *****************************************************************
       * Position pointers for first keyword/token search on a line.
       *****************************************************************
-           SET KEYWORD-MATCHED TO FALSE
+           SET KEYWORD-NOT-MATCHED TO TRUE
            MOVE KEYWORD-START TO KEYWORD-OFFSET
            MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
            .

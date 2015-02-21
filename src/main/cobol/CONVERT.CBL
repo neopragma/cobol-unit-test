@@ -39,7 +39,7 @@
        01  WS-FILE-STATUS.
            05  WS-INPUT-FILE-STATUS  PIC 9(02).
        01  EOF      PIC X VALUE SPACES.
-           88  END-OF-FILE          VALUE "Y".
+           88  END-OF-FILE          VALUE 'N'.
  
        01  INPUT-VALUES.
            05  TEXT-VALUE-1     PIC X(12).

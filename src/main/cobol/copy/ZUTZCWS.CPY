@@ -7,7 +7,8 @@
                                          PIC X(02) VALUE SPACES.
            05  UT-DISPLAY-MESSAGE        PIC X(256) VALUE SPACES.
            05  FILLER                    PIC X(01) VALUE SPACES.
-               88  UT-REVERSE-COMPARE    VALUE 'Y', FALSE SPACES.
+               88  UT-NORMAL-COMPARE     VALUE 'N'.
+               88  UT-REVERSE-COMPARE    VALUE 'Y'.
            05  FILLER                    PIC X(01) VALUE '1'.
                88  UT-VERIFY-EXACT                 VALUE '1'.
                88  UT-VERIFY-AT-LEAST              VALUE '2'.
@@ -52,9 +53,9 @@
            05  UT-MOCK-COUNT             PIC 9(02) VALUE ZERO.
            05  UT-MOCK OCCURS 20 INDEXED BY UT-MOCK-IX.
                10  UT-MOCK-TYPE          PIC X(04).
-                   88  UT-MOCK-FILE          VALUE 'FILE', FALSE SPACES.
-                   88  UT-MOCK-CICS          VALUE 'CICS', FALSE SPACES.
-                   88  UT-MOCK-SQL           VALUE 'SQL',  FALSE SPACES.
+                   88  UT-MOCK-FILE          VALUE 'FILE'.
+                   88  UT-MOCK-CICS          VALUE 'CICS'.
+                   88  UT-MOCK-SQL           VALUE 'SQL'.
                10  UT-MOCK-ACCESS-COUNT    PIC 9(04) VALUE ZERO.
                10  UT-MOCK-RECORD        PIC X(8192).    
                10  UT-MOCK-DATA          PIC X(806).
@@ -74,7 +75,8 @@
            05  UT-FILE-MAX                   PIC 9(02) VALUE 10.
            05  UT-FILE-COUNT                 PIC 9(02) VALUE ZERO.
            05  FILLER                        PIC X(01) VALUE SPACE.
-               88  UT-FILENAME-MATCHED       VALUE 'Y', FALSE SPACE.
+               88  UT-FILENAME-MATCHED       VALUE 'Y'.
+               88  UT-FILENAME-NOT-MATCHED   VALUE 'N'.
            05  UT-FILE-INFORMATION.
                10  FILLER OCCURS 10 INDEXED BY UT-FILE-IX.
                    15  UT-INTERNAL-FILENAME      PIC X(31).
