@@ -2,7 +2,7 @@
 
 The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. 
 
-Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/00.%20Home) for more information.
+Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/) for more information.
 
 ## Description
 
@@ -60,35 +60,6 @@ VERIFY - verifies that a mock was accessed the expected number of times.
 
 The precompiler ignores Cobol-style comment lines.
 
-
-### Directory structure
-
-```
-README.md                     This file.
-envvars                       Environment variable settings. Sourced by bash scripts.
-compile                       Bash script to compile a program.
-run-ut                        Run the unit tests for a program.
-run-examples                  Run all the unit test examples provided with the project.
-target/                       Destination directory for compiled programs (.so and executable).
-src/
-  |
-  +-- main/
-  |     |
-  |     +-- cobol/            "Production" source code.
-  |     |     |
-  |     |     +-- copy/       "Production" copy library.
-  |     |
-  |     +-- resources/        "Production" resource files.
-  |
-  +-- test/  
-        |
-        +-- cobol/            Test source code.
-        |     |
-        |     +-- unit-tests/ Unit test copy files.
-        |
-        +-- resources/        Test resource files, including unit test configuraiton files.
-  
-```
 
 ### Examples
 
