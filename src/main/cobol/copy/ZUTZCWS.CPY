@@ -44,29 +44,27 @@
                88  UT-FIND-SQL-MOCK      VALUE 'SQL'.
            05  UT-MOCK-FIND-FILENAME     PIC X(31).
            05  UT-MOCK-FIND-OPERATION    PIC X(04).
+           05  UT-MOCK-FIND-CICS-KEYWORDS.
+               10  UT-MOCK-FIND-CICS-KEYWORD OCCURS 25 PIC X(31).
            05  UT-MOCK-SET-RECORD        PIC X(2048).
            05  UT-MOCK-SET-FILE-STATUS   PIC X(02).
            05  UT-MOCK-MAX               PIC 9(02) VALUE 10.
            05  UT-MOCK-COUNT             PIC 9(02) VALUE ZERO.
-           05  UT-MOCK OCCURS 10 INDEXED BY UT-MOCK-IX.
+           05  UT-MOCK OCCURS 20 INDEXED BY UT-MOCK-IX.
                10  UT-MOCK-TYPE          PIC X(04).
                    88  UT-MOCK-FILE          VALUE 'FILE', FALSE SPACES.
                    88  UT-MOCK-CICS          VALUE 'CICS', FALSE SPACES.
                    88  UT-MOCK-SQL           VALUE 'SQL',  FALSE SPACES.
                10  UT-MOCK-ACCESS-COUNT    PIC 9(04) VALUE ZERO.
-               10  UT-MOCK-RECORD        PIC X(2048).    
-               10  UT-MOCK-DATA          PIC X(2048).
+               10  UT-MOCK-RECORD        PIC X(8192).    
+               10  UT-MOCK-DATA          PIC X(806).
                10  UT-MOCK-FILE-DATA REDEFINES UT-MOCK-DATA.        
-                   15  UT-MOCK-FILENAME      PIC X(31).    
-                   15  UT-MOCK-OPERATION     PIC X(20).  
-                   15  UT-MOCK-FILE-STATUS   PIC X(02).
-                   15  FILLER             PIC X(104).
+                   15  UT-MOCK-FILENAME       PIC X(31).    
+                   15  UT-MOCK-OPERATION      PIC X(20).  
+                   15  UT-MOCK-FILE-STATUS    PIC X(02).
+                   15  FILLER                 PIC X(104).
                10  UT-MOCK-CICS-DATA REDEFINES UT-MOCK-DATA.
-                   15  UT-MOCK-CICS-RESOURCE PIC X(08).
-                   15  UT-MOCK-CICS-COMMAND  PIC X(30).
-                   15  UT-MOCK-CICS-RIDFLD   PIC X(100).    
-                   15  UT-MOCK-EIBRESP       PIC S9(08) COMP.
-                   15  UT-MOCK-EIBRESP2      PIC S9(08) COMP.
+                   15  UT-MOCK-CICS-KEYWORDS-KEY PIC X(806).
                10  UT-MOCK-SQL-DATA REDEFINES UT-MOCK-DATA.
                    15  UT-MOCK-SQL-COMMAND   PIC X(20).
                    15  UT-MOCK-SQL-CODE      PIC S9(08) COMP.

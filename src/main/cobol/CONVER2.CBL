@@ -1,12 +1,13 @@
       **********************************************************************
       * AUTHOR:    DAVE NICOLETTE
-      * DATE:      18 JUL 2014
+      * DATE:      23 JAN 2015
       * PURPOSE:   CONVERT A COMMA DELIMITED FILE INTO A FIXED FORMAT FILE.
+      *            "CLASSIC" COBOL VERSION (PERIOD AT END OF EACH SENTENCE).
       *
       * USAGE:     CONVERT INPUT-FILENAME OUTPUT-FILENAME
       **********************************************************************
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. CONVERT.
+       PROGRAM-ID. CONVER2.
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
        FILE-CONTROL.
@@ -66,57 +67,48 @@
 
        0000-MAIN.
 
-           PERFORM 0500-INITIALIZE
-           PERFORM 1000-PROCESS-INPUT UNTIL END-OF-FILE
-           GOBACK
-           .
+           PERFORM 0500-INITIALIZE.
+           PERFORM 1000-PROCESS-INPUT UNTIL END-OF-FILE.
+           GOBACK.
 
        0500-INITIALIZE.
 
-           ACCEPT ARGS FROM COMMAND-LINE END-ACCEPT
+           ACCEPT ARGS FROM COMMAND-LINE.
            UNSTRING ARGS DELIMITED BY SPACE
-               INTO INPUT-FILENAME OUTPUT-FILENAME
-           END-UNSTRING
+               INTO INPUT-FILENAME OUTPUT-FILENAME.
 
            IF  INPUT-FILENAME = SPACES OR OUTPUT-FILENAME = SPACES
                DISPLAY 'USAGE: CONVERT INPUT-FILENAME OUTPUT-FILENAME'
-               GOBACK
-           END-IF
-           .
+               GOBACK.
 
        1000-PROCESS-INPUT.
-           OPEN OUTPUT OUTPUT-FILE
-           OPEN INPUT INPUT-FILE
+           OPEN OUTPUT OUTPUT-FILE.
+           OPEN INPUT INPUT-FILE.
            PERFORM UNTIL END-OF-FILE
-               READ INPUT-FILE 
+               READ INPUT-FILE
                    AT END
                        SET END-OF-FILE TO TRUE
                    NOT AT END
                        PERFORM 2000-CONVERT-RECORD
                        PERFORM 3000-WRITE-OUTPUT
-               END-READ
-           END-PERFORM
-           CLOSE OUTPUT-FILE
-           CLOSE INPUT-FILE
-           .
+           END-PERFORM.            
+           CLOSE OUTPUT-FILE.
+           CLOSE INPUT-FILE.
 
        2000-CONVERT-RECORD.
-           MOVE SPACES TO OUTPUT-RECORD
-           PERFORM 2050-BREAK-OUT-DELIMITED-VALUES
-           PERFORM 2100-CONVERT-TEXT-FIELD-1
-           PERFORM 2200-LOOKUP-STATE-NAME
-           PERFORM 2300-CONVERT-TEXT-FIELD-2
-           MOVE DECIMAL-VALUE-1 TO DECIMAL-OUT-1
-           .
+           MOVE SPACES TO OUTPUT-RECORD.
+           PERFORM 2050-BREAK-OUT-DELIMITED-VALUES.
+           PERFORM 2100-CONVERT-TEXT-FIELD-1.
+           PERFORM 2200-LOOKUP-STATE-NAME.
+           PERFORM 2300-CONVERT-TEXT-FIELD-2.
+           MOVE DECIMAL-VALUE-1 TO DECIMAL-OUT-1.
 
        2050-BREAK-OUT-DELIMITED-VALUES.
            UNSTRING INPUT-RECORD DELIMITED BY ','
                INTO TEXT-VALUE-1
                    STATE-CODE-IN
                    TEXT-VALUE-2
-                   DECIMAL-VALUE-1
-           END-UNSTRING
-           . 
+                   DECIMAL-VALUE-1.
 
        2100-CONVERT-TEXT-FIELD-1.
            IF  TEXT-VALUE-1 = LOW-VALUES
@@ -124,22 +116,18 @@
            ELSE
                MOVE TEXT-VALUE-1 TO TO-UPPER-CASE
                PERFORM 9000-TO-UPPER-CASE
-               MOVE TO-UPPER-CASE TO TEXT-OUT-1
-           END-IF    
-           . 
+               MOVE TO-UPPER-CASE TO TEXT-OUT-1.
 
        2200-LOOKUP-STATE-NAME.
-           MOVE STATE-CODE-IN TO TO-UPPER-CASE
-           PERFORM 9000-TO-UPPER-CASE
-           MOVE TO-UPPER-CASE TO STATE-CODE-IN
+           MOVE STATE-CODE-IN TO TO-UPPER-CASE.
+           PERFORM 9000-TO-UPPER-CASE.
+           MOVE TO-UPPER-CASE TO STATE-CODE-IN.
 
            SEARCH ALL STATE-TABLE-DATA
                AT END
                    MOVE SPACES TO STATE-NAME-OUT
                WHEN STATE-TABLE-CODE (STATE-INDEX) = STATE-CODE-IN
-                   MOVE STATE-TABLE-NAME (STATE-INDEX) TO STATE-NAME-OUT
-           END-SEARCH
-           .
+                   MOVE STATE-TABLE-NAME (STATE-INDEX) TO STATE-NAME-OUT.
 
        2300-CONVERT-TEXT-FIELD-2.
            IF  TEXT-VALUE-2 = LOW-VALUES
@@ -149,27 +137,19 @@
                    USING TEXT-VALUE-2
                    BY VALUE 
                    LENGTH 1
-               END-CALL
 
                CALL "C$JUSTIFY" 
                    USING TEXT-VALUE-2
-                   "C"
-               END-CALL
-           END-IF    
+                   "C".
 
-           MOVE TEXT-VALUE-2 TO TEXT-OUT-2
-           . 
+           MOVE TEXT-VALUE-2 TO TEXT-OUT-2.
 
        3000-WRITE-OUTPUT.
            WRITE 
-               OUTPUT-RECORD FROM OUTPUT-RECORD
-           END-WRITE
-           .
+               OUTPUT-RECORD.
 
        9000-TO-UPPER-CASE.
            CALL "C$TOUPPER" 
                USING TO-UPPER-CASE
                BY VALUE 
-               LENGTH TO-UPPER-CASE
-           END-CALL
-           .     
+               LENGTH TO-UPPER-CASE.

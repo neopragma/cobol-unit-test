@@ -29,6 +29,8 @@ function run_unit_tests {
     echo "COB_LIBRARY_PATH=$COB_LIBRARY_PATH"
   fi
 
+  rm "$TARGET/TESTPRG" 2> /dev/null
+
   "$TARGET/ZUTZCPC"
   if [ $? -eq 0 ]; then
     if [ $SUBPROGRAM == true ]; then
@@ -92,5 +94,8 @@ PROGRAM="$2"
 UNITTESTS="$3"
 DRIVER="$4"
 
+
+echo '=================================================='
+echo "Running: $0 $@"
 run_unit_tests
 exit 0

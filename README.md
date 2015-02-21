@@ -117,6 +117,8 @@ The sample programs are:
 * FIZZBUZZ - the classic FizzBuzz exercise.
 * INVDATE - calculate the date of the last day of the month.
 * MOCKDEMO - demonstration of mocking batch file access.
+* SUBPROG - demonstration of testing a called subprogram.
+* CICSDEMO - demonstration of testing a CICS program.
 
 The unit test framework comprises:
 

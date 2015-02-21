@@ -1,0 +1,31 @@
+           TESTSUITE 'DEMONSTRATE CICS COMMAND MOCKS' 
+
+      *****************************************************************
+      * DEMONSTRATE MOCKING EXEC CICS COMMANDS WITH ZUTZCPC.
+      *****************************************************************  
+
+           TESTCASE 'Mock behavior of EXEC CICS READ DATASET' 
+           MOCK
+               CICS READ DATASET('MYFILE') 
+                    RIDFLD('AAAAA')
+                    INTO(WS-RECORD)
+               MOVE 'AAAAABBBBBCCCCCDDDDDEEEEE' TO WS-RECORD 
+           END-MOCK    
+           PERFORM 0100-READ-DATASET
+           EXPECT WS-FIELD-3 TO BE 'CCCCC'
+           EXPECT EIBRESP TO BE NUMERIC ZERO
+           VERIFY 
+               CICS READ DATASET('MYFILE') 
+                    RIDFLD('AAAAA') 
+                    INTO(WS-RECORD) 
+               HAPPENED ONCE
+
+
+           TESTCASE 'Mock behavior of EXEC CICS WRITE DATASET'
+           MOCK
+               CICS WRITE DATASET('YOURFILE') 
+                    RIDFLD('AAAAA')
+                    FROM(WS-RECORD)
+           END-MOCK    
+           PERFORM 0200-WRITE-DATASET
+           EXPECT EIBRESP TO BE NUMERIC ZERO

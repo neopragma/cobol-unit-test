@@ -138,6 +138,8 @@
       *****************************************************************
            IF UT-FIND-FILE-MOCK
                PERFORM UT-SET-FILE-MOCK
+           ELSE
+               PERFORM UT-SET-CICS-MOCK    
            END-IF    
            .
 
@@ -160,6 +162,18 @@
                 TO UT-MOCK-FILE-STATUS(UT-MOCK-IX)
            .    
 
+       UT-SET-CICS-MOCK.
+           PERFORM UT-LOOKUP-MOCK
+           IF UT-MOCK-FOUND
+               CONTINUE
+           ELSE    
+               ADD 1 TO UT-MOCK-COUNT
+               SET UT-MOCK-IX TO UT-MOCK-COUNT
+               MOVE UT-MOCK-FIND-CICS-KEYWORDS
+                   TO UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
+           END-IF
+           .    
+
        UT-LOOKUP-MOCK.
       *****************************************************************
       * LOOK UP A MOCK SPECIFICATION.
@@ -168,13 +182,22 @@
            PERFORM VARYING UT-MOCK-IX FROM 1 BY 1
                UNTIL UT-MOCK-IX IS GREATER THAN UT-MOCK-MAX
                   OR UT-MOCK-FOUND
-               IF UT-MOCK-FIND-FILENAME IS EQUAL TO
-                          UT-MOCK-FILENAME(UT-MOCK-IX)
-               AND UT-MOCK-FIND-OPERATION IS EQUAL TO
-                          UT-MOCK-OPERATION(UT-MOCK-IX)
-                   SET UT-MOCK-FOUND TO TRUE
-                   CONTINUE
-               END-IF               
+               EVALUATE TRUE
+                   WHEN UT-FIND-FILE-MOCK   
+                       IF UT-MOCK-FIND-FILENAME IS EQUAL TO
+                              UT-MOCK-FILENAME(UT-MOCK-IX)
+                       AND UT-MOCK-FIND-OPERATION IS EQUAL TO
+                              UT-MOCK-OPERATION(UT-MOCK-IX)
+                           SET UT-MOCK-FOUND TO TRUE
+                           CONTINUE
+                       END-IF
+                   WHEN UT-FIND-CICS-MOCK
+                       IF UT-MOCK-FIND-CICS-KEYWORDS IS EQUAL TO
+                              UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
+                           SET UT-MOCK-FOUND TO TRUE
+                           CONTINUE
+                       END-IF            
+               END-EVALUATE
            END-PERFORM    
            SET UT-MOCK-IX DOWN BY 1
            .    

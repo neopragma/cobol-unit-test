@@ -3,27 +3,60 @@
 # Run all the examples
 #
 #================================================================================
-
-echo 'SAMPLE tests...'
+clear
+echo 'SAMPLE'
+echo 'This example demonstrates a minimal unit test setup'
+echo
 ./run-ut SAMPLEC SAMPLE SAMPLET
 
-echo 'FIZZBUZZ tests...'
+echo 'FIZZBUZZ'
+echo 'This example demonstrates a unit test suite for'
+echo 'an implementation of FizzBuzz'
+echo
 ./run-ut FIZZBUZC FIZZBUZZ FIZZBUZT
 
-echo 'VIZZBUZZ (classic) tests...'
+echo 'VIZZBUZZ'
+echo 'This example is the same as the FIZZBUZZ example,'
+echo 'but the program under test is written with the'
+echo '"classic" Cobol style (period after every statement)'
+echo
 ./run-ut FIZZBUZC VIZZBUZZ FIZZBUZT
 
-echo 'CONVERT tests...'
+echo 'CONVERT'
+echo 'This example demonstrates unit tests for a batch program'
+echo 'that processes files. It shows how to organize the code'
+echo 'so that file access is not necessary to support the'
+echo 'automated unit tests'
+echo
 ./run-ut CONVERTC CONVERT CONVERTT
 
-echo 'CONVER2 (classic) tests...'
+echo 'CONVER2'
+echo 'Same as CONVERT, but the program under test is written in'
+echo '"classic" Cobol style (period after every statement)'
+echo
 ./run-ut CONVERTC CONVER2 CONVERTT
 
-echo 'INVDATE tests...'
+echo 'INVDATE'
+echo 'This example demonstrates unit test cases that have a'
+echo 'dependency on the system clock'
+echo
 ./run-ut INVDATEC INVDATE INVDATET
 
-echo 'MOCKDEMO tests...'
+echo 'MOCKDEMO'
+echo 'This example demonstrates mocking batch file accesses'
+echo
 ./run-ut MOCKDEMC MOCKDEMO MOCKDEMT
 
-echo 'SUBPROG tests...'
+echo 'SUBPROG'
+echo 'This example demonstrates how to set up unit tests for'
+echo 'a called subprogram'
+echo
 ./run-ut -s SUBPROGC SUBPROG SUBPROGT SUBPROGD
+
+echo 'CICSDEMO'
+echo 'This example demonstrates isolated unit tests for a'
+echo 'CICS application program. It does not require a CICS'
+echo 'environment to run.'
+echo
+./run-ut -s CICSDEMC CICSDEMO CICSDEMT CICSDRIV
+
