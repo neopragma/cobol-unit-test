@@ -362,7 +362,18 @@
                                                 'MOCK',
                                                 'VERIFY',
                                                 'IGNORE'.
-                   
+
+       01  FILLER.
+           05  IGNORE-MAX PIC S9(02) VALUE 2.
+           05  KEYWORDS-TO-IGNORE-VALUES.
+               10  FILLER PIC X(80) VALUE ' TESTSUITE '.
+               10  FILLER PIC S9(02) VALUE 11.
+               10  FILLER PIC X(80) VALUE ' TESTCASE '.
+               10  FILLER PIC S9(02) VALUE 10.
+           05  KEYWORDS-TO-IGNORE REDEFINES KEYWORDS-TO-IGNORE-VALUES.
+               10  FILLER OCCURS 2 INDEXED BY IGNORE-IX.
+                   15  KEYWORD-TO-IGNORE PIC X(80).
+                   15  KEYWORD-TO-IGNORE-LENGTH PIC S9(02).    
 
       *****************************************************************
       * Constants
@@ -892,6 +903,9 @@
                88  SAVE-ORIGINAL-LINES         VALUE 'Y', FALSE SPACE.    
            05  FILLER                    PIC X VALUE SPACE.
                88  SUPPRESS-TEST-CASE-READ     VALUE 'Y', FALSE SPACE.    
+           05  FILLER                    PIC X(01) VALUE 'N'.
+               88  STRING-FOUND                VALUE 'Y'.
+               88  STRING-NOT-FOUND            VALUE 'N'.
 
       *****************************************************************
       * Areas to build COPY statements to insert in the test program.
@@ -1069,7 +1083,7 @@
                'EST FILE UTESTS)'.
            05  MSG-EXPECT-SYNTAX-2.
                10  FILLER PIC X(80) VALUE 'SYNTAX IS:'.
-           05  MSG-EXPECT-SYNTAX-2.
+           05  MSG-EXPECT-SYNTAX-3.
                10  FILLER PIC X(80) VALUE 
                '    EXPECT [actual] TO BE [expected]'.
 
@@ -1815,6 +1829,16 @@
       *
       * EXPECT [actual-value] TO BE [expected-value]
       *****************************************************************
+
+           MOVE TEST-CASE-LINE TO TARGET-STRING
+           MOVE 80 TO TARGET-STRING-LENGTH
+           PERFORM 7980-CHECK-FOR-IGNORE
+           IF STRING-NOT-FOUND
+               PERFORM 4310-PROCESS-KEYWORD-EXPECT
+           END-IF    
+           .
+
+       4310-PROCESS-KEYWORD-EXPECT.    
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
@@ -1838,9 +1862,9 @@
            IF KEYWORD-MATCHED
                PERFORM 4320-EXPECT-EQUALITY
            ELSE
-               DISPLAY 'MSG-EXPECT-SYNTAX-1'
-               DISPLAY 'MSG-EXPECT-SYNTAX-2'
-               DISPLAY 'MSG-EXPECT-SYNTAX-3'
+               DISPLAY MSG-EXPECT-SYNTAX-1
+               DISPLAY MSG-EXPECT-SYNTAX-2
+               DISPLAY MSG-EXPECT-SYNTAX-3
            END-IF
            .
 
@@ -2466,6 +2490,16 @@
       * VERIFY FILE filename WRITE NEVER HAPPENED
       * VERIFY CICS [keywords] HAPPENED ONCE
       *****************************************************************
+
+           MOVE TEST-CASE-LINE TO TARGET-STRING
+           MOVE 80 TO TARGET-STRING-LENGTH
+           PERFORM 7980-CHECK-FOR-IGNORE
+           IF STRING-NOT-FOUND
+               PERFORM 5005-PROCESS-KEYWORD-VERIFY
+           END-IF    
+           .
+
+       5005-PROCESS-KEYWORD-VERIFY.           
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
@@ -3290,6 +3324,56 @@
                    MOVE TEMP-STRING TO TARGET-STRING      
                END-IF        
            END-PERFORM
+           .
+
+       7980-CHECK-FOR-IGNORE.
+      *****************************************************************
+      * Check for keywords to be ignored in the current context.
+      * For example: Ignore EXPECT keyword when processing a
+      * TESTSUITE specification.
+      *****************************************************************
+           SET STRING-NOT-FOUND TO TRUE
+           PERFORM VARYING IGNORE-IX FROM 1 BY 1
+                   UNTIL IGNORE-IX IS GREATER THAN IGNORE-MAX
+                      OR STRING-FOUND
+               MOVE KEYWORD-TO-IGNORE(IGNORE-IX) 
+                   TO SEARCH-STRING
+               MOVE KEYWORD-TO-IGNORE-LENGTH(IGNORE-IX)
+                   TO SEARCH-STRING-LENGTH
+               PERFORM 7990-FIND-STRING    
+           END-PERFORM           
+           . 
+
+       7990-FIND-STRING.
+      *****************************************************************
+      * If SEARCH-STRING exists anywhere in TARGET-STRING, set
+      * STRING-FOUND to TRUE.
+      *****************************************************************
+           SET STRING-NOT-FOUND TO TRUE
+           COMPUTE INSPECT-MAX = 
+               TARGET-STRING-LENGTH - SEARCH-STRING-LENGTH
+           END-COMPUTE
+           IF SEARCH-STRING-LENGTH IS GREATER THAN ZERO
+           AND TARGET-STRING-LENGTH IS GREATER THAN ZERO
+             IF TARGET-STRING-LENGTH 
+                   IS LESS THAN OR EQUAL TO SEARCH-STRING-LENGTH
+               IF TARGET-STRING(1:TARGET-STRING-LENGTH) IS EQUAL TO 
+                  SEARCH-STRING(1:TARGET-STRING-LENGTH)
+                   SET STRING-FOUND TO TRUE
+               END-IF
+             ELSE            
+               IF INSPECT-MAX IS GREATER THAN ZERO
+                 PERFORM VARYING INSPECT-SUB FROM 1 BY 1
+                       UNTIL INSPECT-SUB IS GREATER THAN INSPECT-MAX
+                       OR STRING-FOUND
+                   IF TARGET-STRING(INSPECT-SUB:SEARCH-STRING-LENGTH)
+                       IS EQUAL TO SEARCH-STRING(1:SEARCH-STRING-LENGTH)
+                       SET STRING-FOUND TO TRUE
+                   END-IF
+                 END-PERFORM
+               END-IF
+             END-IF  
+           END-IF      
            .
 
 
