@@ -1212,53 +1212,55 @@
                IF END-OF-STATEMENT
                    CONTINUE
                ELSE
-               PERFORM 7500-INIT-KEYWORD-SEARCH
-               MOVE 'FILE STATUS' TO KEYWORD-TO-MATCH
-               MOVE 11 TO KEYWORD-MATCH-LENGTH   
-               PERFORM 7400-MATCH-KEYWORD
-               END-IF
-               IF KEYWORD-MATCHED
-                   COMPUTE KEYWORD-OFFSET =
-                       KEYWORD-OFFSET + 11
-                   END-COMPUTE   
-                   COMPUTE KEYWORD-SEARCH-LIMIT =
-                       KEYWORD-END - KEYWORD-OFFSET
-                   END-COMPUTE     
-                   PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
-                   IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
+                   PERFORM 7500-INIT-KEYWORD-SEARCH
+                   MOVE 'FILE STATUS' TO KEYWORD-TO-MATCH
+                   MOVE 11 TO KEYWORD-MATCH-LENGTH   
+                   PERFORM 7400-MATCH-KEYWORD
+                   IF KEYWORD-MATCHED
+                       COMPUTE KEYWORD-OFFSET =
+                           KEYWORD-OFFSET + 11
+                       END-COMPUTE   
+                       COMPUTE KEYWORD-SEARCH-LIMIT =
+                           KEYWORD-END - KEYWORD-OFFSET
+                       END-COMPUTE     
                        PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
-                   END-IF
-                   PERFORM 7800-STRIP-PERIOD   
-                   MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
-                   PERFORM 7950-ENCLOSE-IN-QUOTES
+                       IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
+                           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
+                       END-IF
+                       PERFORM 7800-STRIP-PERIOD   
+                       MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
+                       PERFORM 7950-ENCLOSE-IN-QUOTES
 
       * Save FILE STATUS field name for future reference during parsing
 
-                   MOVE TOKEN(TOKEN-IX) 
-                        TO FILE-STATUS-FIELD-NAME(FILE-IX)
+                       MOVE TOKEN(TOKEN-IX) 
+                            TO FILE-STATUS-FIELD-NAME(FILE-IX)
 
       * Gen code in TEST-SOURCE to use the field name at runtime
 
-                   SET INITIALIZATION-IX UP BY 1
-                   STRING
-                       STATEMENT-SPACER     DELIMITED BY SIZE
-                       MOVE-VERB            DELIMITED BY SIZE
-                       QUOTED-VALUE         DELIMITED BY SPACE
-                       TO-KEYWORD           DELIMITED BY SIZE
-                      INTO INITIALIZATION-STATEMENT(INITIALIZATION-IX)
-                   END-STRING                         
-                   SET INITIALIZATION-IX UP BY 1
-                   STRING
-                       STATEMENT-SPACER     DELIMITED BY SIZE
-                       STATEMENT-SPACER     DELIMITED BY SIZE
-                       'UT-FILE-STATUS-FIELD-NAME(UT-FILE-IX)'
-                                            DELIMITED BY SIZE
-                       INTO INITIALIZATION-STATEMENT(INITIALIZATION-IX)
-                   END-STRING                         
-               ELSE
-                   PERFORM 9240-READ-AND-COPY-ORIG-SOURCE
-                   MOVE ORIGINAL-LINE TO LINE-TO-PARSE
-               END-IF                           
+                       SET INITIALIZATION-IX UP BY 1
+                       STRING
+                           STATEMENT-SPACER     DELIMITED BY SIZE
+                           MOVE-VERB            DELIMITED BY SIZE
+                           QUOTED-VALUE         DELIMITED BY SPACE
+                           TO-KEYWORD           DELIMITED BY SIZE
+                          INTO INITIALIZATION-STATEMENT
+                               (INITIALIZATION-IX)
+                       END-STRING                         
+                       SET INITIALIZATION-IX UP BY 1
+                       STRING
+                           STATEMENT-SPACER     DELIMITED BY SIZE
+                           STATEMENT-SPACER     DELIMITED BY SIZE
+                           'UT-FILE-STATUS-FIELD-NAME(UT-FILE-IX)'
+                                                DELIMITED BY SIZE
+                           INTO INITIALIZATION-STATEMENT
+                                (INITIALIZATION-IX)
+                       END-STRING                         
+                   ELSE
+                       PERFORM 9240-READ-AND-COPY-ORIG-SOURCE
+                       MOVE ORIGINAL-LINE TO LINE-TO-PARSE
+                   END-IF
+               END-IF                               
            END-PERFORM
            SET FILE-IX UP BY 1      
            .
@@ -1499,7 +1501,7 @@
       * the real I/O functionality.
       *****************************************************************
            MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
-           SET STATEMENT-IX TO ZERO
+           SET STATEMENT-IX TO 1
 
            PERFORM 6300-GEN-SET-FILENAME-TO-FIND
            SET STATEMENT-IX UP BY 1
@@ -1630,7 +1632,7 @@
 
       * Collect tokens until we encounter END-EXEC or END-EXECUTE
 
-           SET MOCK-CICS-LOOKUP-IX TO ZERO
+           SET MOCK-CICS-LOOKUP-IX TO 1
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEY
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEYWORDS
            PERFORM VARYING KEYWORD-OFFSET 
