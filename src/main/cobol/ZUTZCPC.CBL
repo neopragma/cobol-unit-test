@@ -164,8 +164,8 @@
       *****************************************************************
        01  FILLER.            
            05  MAX-STATUS-MNEMONICS   PIC 9(02) VALUE 4.
-           05  TEMP-SUB               VALUE 0 USAGE INDEX.
-           05  SAVE-SUB               VALUE 0 USAGE INDEX.
+           05  TEMP-SUB               USAGE INDEX.
+           05  SAVE-SUB               USAGE INDEX.
            05  SAVE-OFFSET            PIC 9(02) VALUE 0.
            05  TEMP-TOKEN             PIC X(80).
            05  MOCK-FILE-STATUS-MNEMONICS.
