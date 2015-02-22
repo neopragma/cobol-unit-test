@@ -1652,9 +1652,9 @@
                        INTO CANDIDATE-CICS-RESERVED-WORD
                    END-STRING
 
-                   SET MOCK-CICS-LOOKUP-IX UP BY 1
                    MOVE TOKEN(TOKEN-IX) TO MOCK-CICS-LOOKUP-KEYWORD
                            (MOCK-CICS-LOOKUP-IX)
+                   SET MOCK-CICS-LOOKUP-IX UP BY 1
                END-IF
            END-PERFORM
 
