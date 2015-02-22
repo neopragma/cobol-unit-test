@@ -828,7 +828,7 @@
       * File status codes
       *****************************************************************
        01  FILLER.
-           05  UNIT-TEST-CONFIG-STATUS       PIC X(02) VALUE ZERO.
+           05  UNIT-TEST-CONFIG-STATUS       PIC 9(02) VALUE ZERO.
                88  UNIT-TEST-CONFIG-STATUS-OK         VALUE ZERO.
                88  UNIT-TEST-CONFIG-END-OF-FILE       VALUE 10.
                88  UNIT-TEST-CONFIG-NOT-FOUND         VALUE 35.
