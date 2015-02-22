@@ -1501,10 +1501,9 @@
       * the real I/O functionality.
       *****************************************************************
            MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
-           SET STATEMENT-IX TO 1
 
            PERFORM 6300-GEN-SET-FILENAME-TO-FIND
-           SET STATEMENT-IX UP BY 1
+           SET STATEMENT-IX TO 1
            MOVE TEMP-STATEMENT 
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            
