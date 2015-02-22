@@ -1216,6 +1216,7 @@
                MOVE 'FILE STATUS' TO KEYWORD-TO-MATCH
                MOVE 11 TO KEYWORD-MATCH-LENGTH   
                PERFORM 7400-MATCH-KEYWORD
+               END-IF
                IF KEYWORD-MATCHED
                    COMPUTE KEYWORD-OFFSET =
                        KEYWORD-OFFSET + 11
