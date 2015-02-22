@@ -1,0 +1,35 @@
+#!/bin/bash
+#======================================================================================
+# Prepare source files for upload to a zOS system.
+# Copy source files and pad each line to a fixed length of 80 bytes.
+#
+# Arguments:
+# (None)		
+#
+# Version: 1.0.0
+# Date: 06 Mar 2015
+# Author: Dave Nicolette
+#======================================================================================
+
+BASE_DIR="$HOME/projects/cics-unit-test/"
+BASE_DIR=""
+export UPLOAD_DIR="${BASE_DIR}upload/"
+export SRC_MAIN="${BASE_DIR}src/main/cobol/"
+export SRC_COPY="${SRC_MAIN}copy/"
+
+declare -a file
+file[${#file[@]}]="${SRC_MAIN}ZUTZCPC.CBL"
+file[${#file[@]}]="${SRC_COPY}ZUTZCWS.CPY"
+file[${#file[@]}]="${SRC_COPY}ZUTZCPD.CPY"
+
+mkdir -p "${UPLOAD_DIR}"
+
+for name in "${file[@]}"
+do
+    BASE_NAME=$(basename "${name}")
+    FILE_NAME=${BASE_NAME%.*} 
+    echo "Preparing ${name} as ${UPLOAD_DIR}${FILE_NAME}"
+    python padder.py -i "${name}" -o "${UPLOAD_DIR}${FILE_NAME}"
+done
+
+sed -i 's/LINE SEQUENTIAL/SEQUENTIAL/g' ${UPLOAD_DIR}*
