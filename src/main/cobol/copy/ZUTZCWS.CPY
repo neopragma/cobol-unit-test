@@ -63,14 +63,11 @@
                    15  UT-MOCK-FILENAME       PIC X(31).    
                    15  UT-MOCK-OPERATION      PIC X(20).  
                    15  UT-MOCK-FILE-STATUS    PIC X(02).
-                   15  FILLER                 PIC X(104).
+                   15  FILLER                 PIC X(753).
                10  UT-MOCK-CICS-DATA REDEFINES UT-MOCK-DATA.
                    15  UT-MOCK-CICS-KEYWORDS-KEY PIC X(806).
                10  UT-MOCK-SQL-DATA REDEFINES UT-MOCK-DATA.
-                   15  UT-MOCK-SQL-COMMAND   PIC X(20).
-                   15  UT-MOCK-SQL-CODE      PIC S9(08) COMP.
-                   15  UT-MOCK-SQL-STATE     PIC S9(08) COMP.
-                   15  FILLER             PIC X(118).
+                   15  FILLER             PIC X(806).
        01  UT-FILES.
            05  UT-FILE-MAX                   PIC 9(02) VALUE 10.
            05  UT-FILE-COUNT                 PIC 9(02) VALUE ZERO.

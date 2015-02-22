@@ -141,7 +141,7 @@
                    15  MOCK-FILENAME      PIC X(31).    
                    15  MOCK-OPERATION     PIC X(20).  
                    15  MOCK-FILE-STATUS   PIC X(02).
-                   15  FILLER             PIC X(93).
+                   15  FILLER             PIC X(3147).
                10  MOCK-CICS-DATA REDEFINES MOCK-DATA.
                    15  MOCK-CICS-KEYWORDS-KEY PIC X(320).
                    15  MOCK-CICS-KEYWORDS.
@@ -151,12 +151,10 @@
                    15  MOCK-CICS-STATEMENTS.
                        20  MOCK-CICS-STATEMENT
                            OCCURS 25 TIMES
-                           INDEXED BY MOCK-CICS-STATEMENTS-IX PIC X(80).        
+                           INDEXED BY MOCK-CICS-STATEMENTS-IX PIC X(80).  
+                   15  FILLER             PIC X(105).              
                10  MOCK-SQL-DATA REDEFINES MOCK-DATA.
-                   15  MOCK-SQL-COMMAND   PIC X(20).
-                   15  MOCK-SQL-CODE      PIC S9(08) COMP.
-                   15  MOCK-SQL-STATE     PIC S9(08) COMP.
-                   15  FILLER             PIC X(118).
+                   15  FILLER             PIC X(3200).
 
       *****************************************************************
       * This area is used to generate paragraph names to be inserted
