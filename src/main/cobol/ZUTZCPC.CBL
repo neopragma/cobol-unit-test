@@ -1654,7 +1654,7 @@
 
                    MOVE TOKEN(TOKEN-IX) TO MOCK-CICS-LOOKUP-KEYWORD
                            (MOCK-CICS-LOOKUP-IX)
-                   SET MOCK-CICS-LOOKUP-IX UP BY 1
+                   SET MOCK-CICS-LOOKUP-IX UP BY 1 
                END-IF
            END-PERFORM
 
@@ -1857,13 +1857,13 @@
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'NOT ' TO KEYWORD-TO-MATCH
            MOVE 4 TO KEYWORD-MATCH-LENGTH
-           MOVE KEYWORD-OFFSET TO TEMP-SUB
+           SET TEMP-SUB TO KEYWORD-OFFSET
            PERFORM 7400-MATCH-KEYWORD
            IF KEYWORD-MATCHED
                SET REVERSE-COMPARE TO TRUE
            ELSE    
                SET NORMAL-COMPARE TO TRUE
-               MOVE TEMP-SUB TO KEYWORD-OFFSET
+               SET KEYWORD-OFFSET TO TEMP-SUB
                SUBTRACT 6 FROM KEYWORD-OFFSET
            END-IF
 
@@ -3613,7 +3613,7 @@
                ELSE    
       * Not a paragraph header         
                    IF TEST-LINE(8:4) IS EQUAL TO SPACES 
-                       INSPECT TEST-LINE REPLACING ALL '. ' BY ' '
+                       INSPECT TEST-LINE REPLACING ALL '. ' BY '  '
                    ELSE
       * A paragraph header             
                       MOVE TEST-LINE TO TEMP-STATEMENT
