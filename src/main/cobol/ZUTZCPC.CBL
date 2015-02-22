@@ -59,7 +59,7 @@
                10  FILLER                PIC X(03).
                    88  FD-STATEMENT          VALUE 'FD '.
                10  FILLER                PIC X(07).           
-           05  FILLER                    PIC X(40).
+           05  FILLER                    PIC X(63).
 
        FD  TEST-SOURCE
            DATA RECORD IS TEST-LINE.
@@ -3496,6 +3496,9 @@
 
        9250-READ-ORIGINAL-SOURCE.
            READ ORIGINAL-SOURCE
+           IF ORIGINAL-LINE IS EQUAL TO LOW-VALUES
+               MOVE SPACES TO ORIGINAL-LINE
+           END-IF    
            EVALUATE TRUE
                WHEN ORIGINAL-SOURCE-STATUS-OK
                     IF SAVE-ORIGINAL-LINES
@@ -3608,6 +3611,10 @@
            .
 
        9425-WRITE-TEST-LINE.    
+           IF TEST-LINE IS EQUAL TO LOW-VALUES
+               MOVE SPACES TO TEST-LINE
+           END-IF    
+
            IF BEYOND-PROCEDURE-HEADER
                PERFORM 9430-CHECK-FOR-COPY-STMT
                IF IS-FIRST-TOKEN
