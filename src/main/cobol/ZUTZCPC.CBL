@@ -40,6 +40,7 @@
            DATA RECORD IS UNIT-TEST-CONFIG-REC.
        01  UNIT-TEST-CONFIG-REC.
            05  COPYBOOK-NAME   PIC X(12).
+           05  FILLER          PIC X(68).
        FD  ORIGINAL-SOURCE
            DATA RECORD IS ORIGINAL-LINE.
        01  ORIGINAL-LINE.
@@ -58,7 +59,7 @@
                10  FILLER                PIC X(03).
                    88  FD-STATEMENT          VALUE 'FD '.
                10  FILLER                PIC X(07).           
-           05  FILLER                    PIC X(63).
+           05  FILLER                    PIC X(40).
 
        FD  TEST-SOURCE
            DATA RECORD IS TEST-LINE.
@@ -72,10 +73,6 @@
            05  FILLER                    PIC X(249).       
 
        WORKING-STORAGE SECTION.
-
-       01  FILLER PIC X VALUE SPACE.
-           88  SHOW-KEYWORDS VALUE 'Y', FALSE SPACE.
-
       *****************************************************************
       * Saved information about files that are accessed by the program
       * under test. If any MOCKs are declared in the test cases, we
@@ -863,45 +860,60 @@
                88  DATATYPE-9                  VALUE '9'.
                88  DATATYPE-88                 VALUE 'B'.
            05  FILLER                    PIC X VALUE SPACE.
-               88  REVERSE-COMPARE             VALUE 'Y', FALSE SPACE.
+               88  NORMAL-COMPARE              VALUE 'N'.
+               88  REVERSE-COMPARE             VALUE 'Y'.
            05  FILLER                    PIC X VALUE '1'.
                88  VERIFY-EXACT                VALUE '1'.
                88  VERIFY-AT-LEAST             VALUE '2'.
                88  VERIFY-NO-MORE-THAN         VALUE '3'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  IGNORE-TESTCASE             VALUE 'Y', FALSE SPACE.  
+               88  NOT-IGNORE-TESTCASE         VALUE 'N'.
+               88  IGNORE-TESTCASE             VALUE 'Y'.  
            05  FILLER                    PIC X VALUE SPACE.
-               88  FIRST-TESTCASE-AFTER-IGNORE VALUE 'Y', FALSE SPACE.      
+               88  NOT-1ST-TEST-AFTER-IGNORE VALUE 'N'.
+               88  1ST-TEST-AFTER-IGNORE VALUE 'Y'.      
            05  FILLER                    PIC X VALUE SPACE.
-               88  BEYOND-PROCEDURE-HEADER     VALUE 'Y', FALSE SPACE.
+               88  NOT-BEYOND-PROCEDURE-HEADER VALUE 'N'.
+               88  BEYOND-PROCEDURE-HEADER     VALUE 'Y'.
            05  FILLER                    PIC X VALUE SPACE.
-               88  IS-FIRST-TOKEN              VALUE 'Y', FALSE SPACE.
+               88  NOT-FIRST-TOKEN             VALUE 'N'.
+               88  IS-FIRST-TOKEN              VALUE 'Y'.
            05  FILLER                    PIC X VALUE SPACE.
-               88  NO-MORE-TOKENS              VALUE 'Y', FALSE SPACE.    
+               88  MORE-TOKENS                 VALUE 'N'.
+               88  NO-MORE-TOKENS              VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
                88  END-OF-FILE                 VALUE 'Y'.   
            05  FILLER                    PIC X VALUE SPACE.
-               88  NON-SPACE-FOUND             VALUE 'Y', FALSE SPACE.
+               88  SPACE-FOUND                 VALUE 'N'.
+               88  NON-SPACE-FOUND             VALUE 'Y'.
            05  FILLER                    PIC X VALUE SPACE.
-               88  END-OF-STATEMENT            VALUE 'Y', FALSE SPACE.  
+               88  NOT-END-OF-STATEMENT        VALUE 'N'.
+               88  END-OF-STATEMENT            VALUE 'Y'.  
            05  FILLER                    PIC X VALUE SPACE.
-               88  END-OF-TEST-CASES           VALUE 'Y', FALSE SPACE.  
+               88  END-OF-TEST-CASES           VALUE 'Y'.  
            05  COPY-SOURCE-INDICATOR     PIC X VALUE SPACE.
-               88  SUPPRESS-COPY-SOURCE        VALUE 'Y', FALSE SPACE.   
+               88  COPY-SOURCE                 VALUE 'N'.
+               88  SUPPRESS-COPY-SOURCE        VALUE 'Y'.   
            05  FILLER                    PIC X VALUE SPACE.
                88  GENERATE-PERFORM-AFTER      VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  SCANNING-TEST-CASES         VALUE 'Y', FALSE SPACE.    
+               88  NOT-SCANNING-TEST-CASES     VALUE 'N'.
+               88  SCANNING-TEST-CASES         VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  SCANNING-ORIGINAL-SOURCE    VALUE 'Y', FALSE SPACE.    
+               88  NOT-SCANNING-ORIGINAL-SOURCE VALUE 'N'.
+               88  SCANNING-ORIGINAL-SOURCE    VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  CHECK-FOR-MOCKABLES     VALUE 'Y', FALSE SPACE.    
+               88  NO-CHECK-FOR-MOCKABLES      VALUE 'N'.
+               88  CHECK-FOR-MOCKABLES         VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  NO-MORE-RESERVED-WORDS      VALUE 'Y', FALSE SPACE.    
+               88  MORE-RESERVED-WORDS         VALUE 'N'.
+               88  NO-MORE-RESERVED-WORDS      VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  SAVE-ORIGINAL-LINES         VALUE 'Y', FALSE SPACE.    
+               88  NO-SAVE-ORIGINAL-LINES      VALUE 'N'.
+               88  SAVE-ORIGINAL-LINES         VALUE 'Y'.    
            05  FILLER                    PIC X VALUE SPACE.
-               88  SUPPRESS-TEST-CASE-READ     VALUE 'Y', FALSE SPACE.    
+               88  NO-SUPPRESS-TEST-CASE-READ  VALUE 'N'.
+               88  SUPPRESS-TEST-CASE-READ     VALUE 'Y'.    
            05  FILLER                    PIC X(01) VALUE 'N'.
                88  STRING-FOUND                VALUE 'Y'.
                88  STRING-NOT-FOUND            VALUE 'N'.
@@ -1382,7 +1394,7 @@
       * - It doesn't handle READ INTO.
       * - It doesn't handle WRITE FROM. 
       *****************************************************************
-           SET SUPPRESS-COPY-SOURCE TO FALSE
+           SET COPY-SOURCE TO TRUE
            SET TOKEN-IX TO 1
            PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
            PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
@@ -1406,11 +1418,11 @@
       * See if it is a mocked EXEC command.
 
                PERFORM 2600-CHECK-FOR-EXEC-COMMAND
-               SET SUPPRESS-COPY-SOURCE TO FALSE   
+               SET COPY-SOURCE TO TRUE   
            END-IF
 
            IF SUPPRESS-COPY-SOURCE
-               SET SUPPRESS-COPY-SOURCE TO FALSE
+               SET COPY-SOURCE TO TRUE
            ELSE
                PERFORM 9460-COPY-ORIGINAL-LINE
            END-IF        
@@ -1434,7 +1446,7 @@
            IF MOCK-MATCHED
                PERFORM 2540-FIND-CORR-FILE-INFO
            ELSE
-               SET SUPPRESS-COPY-SOURCE TO FALSE    
+               SET COPY-SOURCE TO TRUE    
            END-IF        
            .
 
@@ -1453,7 +1465,7 @@
                AND MOCK-FILENAME(MOCK-IX) EQUAL TOKEN(2)
                    SET MOCK-MATCHED TO TRUE
                ELSE
-                   SET SUPPRESS-COPY-SOURCE TO FALSE
+                   SET COPY-SOURCE TO TRUE
                END-IF               
            END-PERFORM            
            SET MOCK-IX DOWN BY 1
@@ -1471,7 +1483,7 @@
            IF FILENAME-MATCHED
                PERFORM 2550-GEN-MOCK-STATEMENTS
            ELSE
-               SET SUPPRESS-COPY-SOURCE TO FALSE
+               SET COPY-SOURCE TO TRUE
                MOVE MOCK-FILENAME(MOCK-IX) 
                     TO MSG-FILE-MOCK-MOMATCH-FILENAME
                MOVE MOCK-OPERATION(MOCK-IX)
@@ -1576,7 +1588,7 @@
       * Match on either EXEC or EXECUTE.
       *****************************************************************
 
-      *     SET SUPPRESS-COPY-SOURCE TO FALSE
+      *     SET COPY-SOURCE TO TRUE
 
            SET TOKEN-IX TO 1
            PERFORM VARYING EXEC-KEYWORD-IX FROM 1 BY 1
@@ -1609,7 +1621,7 @@
                         CONTINUE
                END-EVALUATE
            END-IF              
-           SET SAVE-ORIGINAL-LINES TO FALSE         
+           SET NO-SAVE-ORIGINAL-LINES TO TRUE       
            .
 
        2610-PROCESS-CICS-COMMAND.    
@@ -1668,7 +1680,7 @@
       * lines in the program under test. Otherwise, copy the original
       * lines unchanged.
 
-           SET SAVE-ORIGINAL-LINES TO FALSE
+           SET NO-SAVE-ORIGINAL-LINES TO TRUE
            PERFORM VARYING SAVED-LINE-IX FROM 1 BY 1
                    UNTIL SAVED-LINE-IX 
                          IS GREATER THAN MAX-SAVED-LINES
@@ -1768,7 +1780,7 @@
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
-               SET SCANNING-ORIGINAL-SOURCE TO FALSE
+               SET NOT-SCANNING-ORIGINAL-SOURCE TO TRUE
                PERFORM 7400-MATCH-KEYWORD
 
                IF KEYWORD-MATCHED
@@ -1789,15 +1801,15 @@
                             END-IF
                        WHEN TOKEN(1) IS EQUAL TO 'IGNORE'
                             SET IGNORE-TESTCASE TO TRUE     
-                            SET FIRST-TESTCASE-AFTER-IGNORE TO TRUE 
+                            SET 1ST-TEST-AFTER-IGNORE TO TRUE 
                             SET SUPPRESS-COPY-SOURCE TO TRUE 
                        WHEN TOKEN(1) IS EQUAL TO 'TESTCASE'
                             IF IGNORE-TESTCASE
-                                IF FIRST-TESTCASE-AFTER-IGNORE
-                                    SET FIRST-TESTCASE-AFTER-IGNORE
-                                        TO FALSE
+                                IF 1ST-TEST-AFTER-IGNORE
+                                    SET NOT-1ST-TEST-AFTER-IGNORE
+                                        TO TRUE
                                 ELSE        
-                                    SET IGNORE-TESTCASE TO FALSE
+                                    SET NOT-IGNORE-TESTCASE TO TRUE
                                 PERFORM 4400-PROCESS-KEYWORD-TESTCASE
                                 END-IF    
                             ELSE    
@@ -1849,7 +1861,7 @@
            IF KEYWORD-MATCHED
                SET REVERSE-COMPARE TO TRUE
            ELSE    
-               SET REVERSE-COMPARE TO FALSE
+               SET NORMAL-COMPARE TO TRUE
                MOVE TEMP-SUB TO KEYWORD-OFFSET
                SUBTRACT 6 FROM KEYWORD-OFFSET
            END-IF
@@ -2197,7 +2209,7 @@
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
-               SET SCANNING-ORIGINAL-SOURCE TO FALSE
+               SET NOT-SCANNING-ORIGINAL-SOURCE TO TRUE
                PERFORM 7400-MATCH-KEYWORD
 
                IF KEYWORD-MATCHED
@@ -2234,7 +2246,7 @@
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
-               SET SCANNING-ORIGINAL-SOURCE TO FALSE
+               SET NOT-SCANNING-ORIGINAL-SOURCE TO TRUE
                PERFORM 7400-MATCH-KEYWORD
 
                IF KEYWORD-MATCHED
@@ -2253,7 +2265,7 @@
       * is in the middle of a description (e.g. TESTCASE, TESTSUITE).
       * In that case, ignore it.
       *****************************************************************
-           SET IS-FIRST-TOKEN TO FALSE
+           SET NOT-FIRST-TOKEN TO TRUE
            PERFORM VARYING TEMP-SUB FROM 1 BY 1
                    UNTIL TEMP-SUB IS GREATER THAN KEYWORD-END
                IF TEST-CASE-LINE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
@@ -2607,7 +2619,7 @@
            SET MOCK-CICS-LOOKUP-IX TO ZERO
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEY
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEYWORDS
-           SET NO-MORE-TOKENS TO FALSE
+           SET MORE-TOKENS TO TRUE
            PERFORM UNTIL NO-MORE-TOKENS
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                IF TOKEN(TOKEN-IX) IS EQUAL TO 
@@ -2836,7 +2848,7 @@
       * reached the first Cobol statement to be executed to mock the
       * command's behavior at run time.
 
-           SET NO-MORE-RESERVED-WORDS TO FALSE
+           SET MORE-RESERVED-WORDS TO TRUE
            PERFORM VARYING KEYWORD-OFFSET 
                    FROM KEYWORD-OFFSET BY 1
                    UNTIL TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
@@ -3095,7 +3107,7 @@
       *****************************************************************
            MOVE TEST-CASE-LINE TO LINE-TO-PARSE
            SET SCANNING-TEST-CASES TO TRUE
-           SET SCANNING-ORIGINAL-SOURCE TO FALSE
+           SET NOT-SCANNING-ORIGINAL-SOURCE TO TRUE
            PERFORM 7300-EXTRACT-NEXT-TOKEN
            .
 
@@ -3105,7 +3117,7 @@
       *****************************************************************
            MOVE ORIGINAL-LINE TO LINE-TO-PARSE
            SET SCANNING-ORIGINAL-SOURCE TO TRUE
-           SET SCANNING-TEST-CASES TO FALSE
+           SET NOT-SCANNING-TEST-CASES TO TRUE
            PERFORM 7300-EXTRACT-NEXT-TOKEN
            .
 
@@ -3143,7 +3155,7 @@
            .
 
        7310-FIND-NEXT-NON-SPACE.
-           SET NON-SPACE-FOUND TO FALSE
+           SET SPACE-FOUND TO TRUE
            PERFORM UNTIL NON-SPACE-FOUND
                PERFORM VARYING KEYWORD-OFFSET FROM KEYWORD-OFFSET BY 1
                    UNTIL KEYWORD-OFFSET IS GREATER THAN KEYWORD-END
@@ -3231,7 +3243,7 @@
            IF KEYWORD-MATCHED
                SET END-OF-STATEMENT TO TRUE
            ELSE
-               SET END-OF-STATEMENT TO FALSE
+               SET NOT-END-OF-STATEMENT TO TRUE
            END-IF
            .            
 
@@ -3388,8 +3400,8 @@
        8000-INITIALIZE.
            PERFORM 8100-LOAD-CONFIG-SETTINGS
            PERFORM 8200-INITIALIZE-MOCK-HANDLING
-           SET BEYOND-PROCEDURE-HEADER TO FALSE
-           SET SAVE-ORIGINAL-LINES TO FALSE
+           SET NOT-BEYOND-PROCEDURE-HEADER TO TRUE
+           SET NO-SAVE-ORIGINAL-LINES TO TRUE
            .
 
        8100-LOAD-CONFIG-SETTINGS.
@@ -3403,7 +3415,7 @@
            
        8200-INITIALIZE-MOCK-HANDLING.        
            INITIALIZE MOCKS
-           SET CHECK-FOR-MOCKABLES TO FALSE
+           SET NO-CHECK-FOR-MOCKABLES TO TRUE
            SET MOCK-IX TO 0
            SET FILE-IX TO 1
            MOVE SPACES TO INITIALIZATION-STATEMENTS
@@ -3490,14 +3502,14 @@
                         PERFORM 7650-SAVE-ORIGINAL-LINE
                     END-IF     
                WHEN ORIGINAL-SOURCE-END-OF-FILE
-                    SET IS-FIRST-TOKEN TO FALSE
+                    SET NOT-FIRST-TOKEN TO TRUE
                     PERFORM VARYING TEMP-SUB FROM 12 BY 1
                             UNTIL TEMP-SUB GREATER THAN KEYWORD-END
                         IF TEST-LINE(TEMP-SUB:1) EQUAL '.'
                             SET IS-FIRST-TOKEN TO TRUE
                         END-IF
                     END-PERFORM
-                    IF NOT IS-FIRST-TOKEN
+                    IF NOT-FIRST-TOKEN
                         WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
                     END-IF            
                WHEN OTHER
@@ -3536,10 +3548,10 @@
 
        9350-READ-TEST-CASES.
            IF NOT END-OF-TEST-CASES
-               IF NOT SUPPRESS-TEST-CASE-READ
+               IF NO-SUPPRESS-TEST-CASE-READ
                    PERFORM 9360-NEXT-TEST-CASE-RECORD
                ELSE
-                   SET SUPPRESS-TEST-CASE-READ TO FALSE
+                   SET NO-SUPPRESS-TEST-CASE-READ TO TRUE
                END-IF    
            END-IF
            .
@@ -3629,7 +3641,7 @@
            .    
 
        9430-CHECK-FOR-COPY-STMT.
-           SET IS-FIRST-TOKEN TO FALSE
+           SET NOT-FIRST-TOKEN TO TRUE
            PERFORM VARYING TEMP-SUB FROM 12 BY 1
                    UNTIL TEMP-SUB IS GREATER THAN KEYWORD-END
                IF TEST-LINE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
