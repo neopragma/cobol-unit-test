@@ -937,23 +937,23 @@
  
            05  ERROR-MESSAGE-LINE              PIC X(80) VALUE SPACES.
 
-           05  MSG-ORIGINAL-SOURCE-NOT-FOUND.
+           05  MSG-ORIG-SOURCE-NOT-FOUND.
                10  FILLER PIC X(06) VALUE '001-E '.  
                10  FILLER PIC X(74) VALUE
                    'ORIGINAL SOURCE FILE SRCPRG NOT FOUND'.
 
-           05  MSG-ORIGINAL-SOURCE-UNREADABLE.
+           05  MSG-ORIG-SOURCE-UNREADABLE.
                10  FILLER PIC X(06) VALUE '002-E '.
                10  FILLER PIC X(76) VALUE
                'ORIGINAL SOURCE FILE SRCPRG CAN''T BE OPENED FOR INPUT'.
 
-           05  MSG-ORIGINAL-SOURCE-ERROR.
+           05  MSG-ORIG-SOURCE-ERROR.
                10  FILLER PIC X(06) VALUE '003-E '.
                10  FILLER PIC X(36) VALUE
                    'ORIGINAL SOURCE FILE SRCPRG STATUS '.
-               10  MSG-ORIGINAL-SOURCE-STATUS    PIC 9(02).
+               10  MSG-ORIG-SOURCE-STATUS    PIC 9(02).
                10  FILLER                   PIC X(04) VALUE ' ON '.
-               10  MSG-ORIGINAL-SOURCE-OPERATION PIC X(04).
+               10  MSG-ORIG-SOURCE-OPERATION PIC X(04).
                10  FILLER                   PIC X(28) VALUE SPACES.
 
            05  MSG-TEST-CASES-NOT-FOUND.
@@ -1043,10 +1043,10 @@
                    'ATCH ANY SELECT STATEMENT'.
            05  MSG-FILE-MOCK-NOMATCH-2.
                10  FILLER PIC X(15) VALUE '    FILENAME: '.
-               10  MSG-FILE-MOCK-MOMATCH-FILENAME PIC X(65).             
+               10  MSG-MOCK-NOMATCH-FILENAME PIC X(65).             
            05  MSG-FILE-MOCK-NOMATCH-3.
                10  FILLER PIC X(15) VALUE '    OPERATION: '.
-               10  MSG-FILE-MOCK-MOMATCH-OPERATION PIC X(64).     
+               10  MSG-MOCK-MOMATCH-OPERATION PIC X(64).     
 
            05  MSG-CONFIG-FILE-NOT-FOUND.
                10  FILLER PIC X(06) VALUE '010-E '.
@@ -1141,7 +1141,7 @@
                WHEN WORKING-STORAGE-HEADER
                     PERFORM 2100-INSERT-WORKING-STG-CODE
                WHEN PROCEDURE-DIVISION-HEADER
-                    PERFORM 2400-INSERT-PROCEDURE-DIV-CODE
+                    PERFORM 2400-INSERT-PROC-DIV-CODE
                WHEN SELECT-STATEMENT
                     PERFORM 2200-PROCESS-SELECT
                WHEN FD-STATEMENT
@@ -1176,7 +1176,7 @@
 
       *    Next token is the internal filename in a SELECT statement    
 
-           PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
 
       *    Save the filename for future reference during parsing
 
@@ -1214,7 +1214,7 @@
                IF END-OF-STATEMENT
                    CONTINUE
                ELSE
-               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
+               PERFORM 7500-INIT-KEYWORD-SEARCH
                MOVE 'FILE STATUS' TO KEYWORD-TO-MATCH
                MOVE 11 TO KEYWORD-MATCH-LENGTH   
                PERFORM 7400-MATCH-KEYWORD
@@ -1225,9 +1225,9 @@
                    COMPUTE KEYWORD-SEARCH-LIMIT =
                        KEYWORD-END - KEYWORD-OFFSET
                    END-COMPUTE     
-                   PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+                   PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
-                       PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+                       PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
                    END-IF
                    PERFORM 7800-STRIP-PERIOD   
                    MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
@@ -1277,7 +1277,7 @@
 
       * Look for file name to match with the SELECT file name     
 
-           PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
            PERFORM 7800-STRIP-PERIOD
 
       * Find the entry in the file information table for this file
@@ -1315,7 +1315,7 @@
            MOVE ORIGINAL-LINE TO LINE-TO-PARSE
            MOVE 11 TO KEYWORD-OFFSET
            MOVE KEYWORD-END TO KEYWORD-SEARCH-LIMIT
-           PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
            PERFORM 7800-STRIP-PERIOD
 
       * Save the field name for future reference during parsing
@@ -1338,7 +1338,7 @@
            END-STRING               
            .
 
-       2400-INSERT-PROCEDURE-DIV-CODE.
+       2400-INSERT-PROC-DIV-CODE.
       *****************************************************************
       * Insert the unit test cases and standard unit test code at the
       * top of the PROCEDURE DIVISION.
@@ -1354,7 +1354,7 @@
            MOVE 'PERFORM UT-AFTER' TO        
                GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
                    
       * Insert a COPY for boilerplate unit test code and write
       * generated paragraphs just after it.
@@ -1396,8 +1396,8 @@
       *****************************************************************
            SET COPY-SOURCE TO TRUE
            SET TOKEN-IX TO 1
-           PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
-           PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+           PERFORM 7500-INIT-KEYWORD-SEARCH
+           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
            PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
                    UNTIL VALID-FILE-OPERATION-IX IS GREATER THAN
                          MAX-VALID-FILE-OPERATIONS
@@ -1439,7 +1439,7 @@
 
            PERFORM 
                NEXT-TOKEN-TO-GET(VALID-FILE-OPERATION-IX) TIMES
-               PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+               PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
            END-PERFORM
 
            PERFORM 2520-FIND-CORR-FILE-MOCK
@@ -1479,15 +1479,15 @@
       * MOCK-IX is already set.
       *****************************************************************
            SET FILENAME-NOT-MATCHED TO TRUE
-           PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
+           PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
                PERFORM 2550-GEN-MOCK-STATEMENTS
            ELSE
                SET COPY-SOURCE TO TRUE
                MOVE MOCK-FILENAME(MOCK-IX) 
-                    TO MSG-FILE-MOCK-MOMATCH-FILENAME
+                    TO MSG-MOCK-NOMATCH-FILENAME
                MOVE MOCK-OPERATION(MOCK-IX)
-                    TO MSG-FILE-MOCK-MOMATCH-OPERATION
+                    TO MSG-MOCK-MOMATCH-OPERATION
                DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-1
                DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-2
                DISPLAY THIS-PROGRAM MSG-FILE-MOCK-NOMATCH-3
@@ -1577,7 +1577,7 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
 
            PERFORM 9465-COMMENT-ORIGINAL-LINE
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            .
 
        2600-CHECK-FOR-EXEC-COMMAND.
@@ -1595,7 +1595,7 @@
                UNTIL EXEC-KEYWORD-IX IS GREATER THAN 2
                   OR KEYWORD-MATCHED
 
-               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
+               PERFORM 7500-INIT-KEYWORD-SEARCH
                MOVE EXEC-KEYWORD(EXEC-KEYWORD-IX) TO KEYWORD-TO-MATCH
                MOVE EXEC-KEYWORD-LENGTH(EXEC-KEYWORD-IX) 
                     TO KEYWORD-MATCH-LENGTH
@@ -1608,10 +1608,10 @@
            ADD EXEC-KEYWORD-ADJUST(EXEC-KEYWORD-IX) TO KEYWORD-OFFSET
 
            IF KEYWORD-MATCHED
-               PERFORM 7640-SET-SAVE-ORIGINAL-LINES
-               PERFORM 7650-SAVE-ORIGINAL-LINE
+               PERFORM 7640-SET-SAVE-ORIG-LINES
+               PERFORM 7650-SAVE-ORIG-LINE
 
-               PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+               PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
                EVALUATE TRUE
                    WHEN TOKEN(TOKEN-IX) IS EQUAL TO CICS-KEYWORD
                         PERFORM 2610-PROCESS-CICS-COMMAND
@@ -1638,7 +1638,7 @@
                    FROM KEYWORD-OFFSET BY 1
                    UNTIL TOKEN(TOKEN-IX) IS EQUAL TO END-EXEC-KEYWORD
 
-               PERFORM 7200-NEXT-TOKEN-ORIGINAL-SOURCE
+               PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
 
                IF TOKEN(TOKEN-IX) IS EQUAL TO END-EXEC-KEYWORD
                    CONTINUE
@@ -1657,7 +1657,7 @@
                END-IF
            END-PERFORM
 
-           PERFORM 5050-FORMAT-CICS-KEYWORD-STRING
+           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
 
       * See if this set of tokens corresponds to a defined MOCK.
 
@@ -1708,7 +1708,7 @@
                    TO GENERATED-SOURCE-STATEMENT
                          (MOCK-CICS-STATEMENTS-IX)          
            END-PERFORM                 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS    
+           PERFORM 9440-WRITE-GENERATED-STMTS    
            .
 
        2700-PROCESS-SQL-COMMAND.    
@@ -1791,13 +1791,13 @@
                             IF IGNORE-TESTCASE
                                 SET SUPPRESS-COPY-SOURCE TO TRUE
                             ELSE    
-                                PERFORM 4300-PROCESS-KEYWORD-EXPECT
+                                PERFORM 4300-KEYWORD-EXPECT
                             END-IF
                        WHEN TOKEN(1) IS EQUAL TO 'VERIFY'
                             IF IGNORE-TESTCASE
                                 SET SUPPRESS-COPY-SOURCE TO TRUE
                             ELSE    
-                                PERFORM 5000-PROCESS-KEYWORD-VERIFY  
+                                PERFORM 5000-KEYWORD-VERIFY  
                             END-IF
                        WHEN TOKEN(1) IS EQUAL TO 'IGNORE'
                             SET IGNORE-TESTCASE TO TRUE     
@@ -1810,29 +1810,29 @@
                                         TO TRUE
                                 ELSE        
                                     SET NOT-IGNORE-TESTCASE TO TRUE
-                                PERFORM 4400-PROCESS-KEYWORD-TESTCASE
+                                PERFORM 4400-KEYWORD-TESTCASE
                                 END-IF    
                             ELSE    
-                                PERFORM 4400-PROCESS-KEYWORD-TESTCASE
+                                PERFORM 4400-KEYWORD-TESTCASE
                             END-IF      
                        WHEN TOKEN(1) IS EQUAL TO 'TESTSUITE'
-                            PERFORM 4500-PROCESS-KEYWORD-TESTSUITE        
+                            PERFORM 4500-KEYWORD-TESTSUITE        
                        WHEN TOKEN(1) IS EQUAL TO 'BEFORE-EACH'
-                            PERFORM 4600-PROCESS-KEYWORD-BEFORE       
+                            PERFORM 4600-KEYWORD-BEFORE       
                        WHEN TOKEN(1) IS EQUAL TO 'AFTER-EACH'
-                            PERFORM 4700-PROCESS-KEYWORD-AFTER      
+                            PERFORM 4700-KEYWORD-AFTER      
                        WHEN TOKEN(1) IS EQUAL TO 'MOCK'
                             IF IGNORE-TESTCASE
                                 SET SUPPRESS-COPY-SOURCE TO TRUE
                             ELSE    
-                                PERFORM 4800-PROCESS-KEYWORD-MOCK      
+                                PERFORM 4800-KEYWORD-MOCK      
                             END-IF
                    END-EVALUATE
                END-IF   
            END-PERFORM
            .    
 
-       4300-PROCESS-KEYWORD-EXPECT.
+       4300-KEYWORD-EXPECT.
       *****************************************************************
       * EXPECT keyword was found. 
       *
@@ -1845,11 +1845,11 @@
            MOVE 80 TO TARGET-STRING-LENGTH
            PERFORM 7980-CHECK-FOR-IGNORE
            IF STRING-NOT-FOUND
-               PERFORM 4310-PROCESS-KEYWORD-EXPECT
+               PERFORM 4310-KEYWORD-EXPECT
            END-IF    
            .
 
-       4310-PROCESS-KEYWORD-EXPECT.    
+       4310-KEYWORD-EXPECT.    
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
@@ -1922,7 +1922,7 @@
                     PERFORM 4350-GENERATE-PIC-X-COMPARE
            END-EVALUATE              
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE
            .
 
@@ -1961,7 +1961,6 @@
            .
 
        4340-GENERATE-88-COMPARE.
-
       * EXPECT foo TO BE TRUE
            STRING
                MOVE-VERB             DELIMITED BY SIZE
@@ -2106,7 +2105,7 @@
            SET STATEMENT-IX UP BY 1          
            .    
 
-       4400-PROCESS-KEYWORD-TESTCASE.
+       4400-KEYWORD-TESTCASE.
       *****************************************************************
       * TESTCASE keyword was found. 
       *
@@ -2150,11 +2149,11 @@
                GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE
            .
 
-       4500-PROCESS-KEYWORD-TESTSUITE.
+       4500-KEYWORD-TESTSUITE.
       *****************************************************************
       * TESTSUITE keyword was found. 
       *
@@ -2181,11 +2180,11 @@
                    (STATEMENT-OFFSET:STATEMENT-LENGTH) 
            MOVE 'DISPLAY SPACE' TO GENERATED-SOURCE-STATEMENT(5)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
-       4600-PROCESS-KEYWORD-BEFORE.
+       4600-KEYWORD-BEFORE.
       *****************************************************************
       * BEFORE-EACH keyword was found. 
       * 
@@ -2205,7 +2204,7 @@
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-BEFORE' TO KEYWORD-TO-MATCH
                MOVE 10 TO KEYWORD-MATCH-LENGTH
-               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
+               PERFORM 7500-INIT-KEYWORD-SEARCH
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
@@ -2222,7 +2221,7 @@
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
-       4700-PROCESS-KEYWORD-AFTER.
+       4700-KEYWORD-AFTER.
       *****************************************************************
       * AFTER-EACH keyword was found. 
       * 
@@ -2242,7 +2241,7 @@
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-AFTER' TO KEYWORD-TO-MATCH
                MOVE 9 TO KEYWORD-MATCH-LENGTH
-               PERFORM 7500-INITIALIZE-KEYWORD-SEARCH
+               PERFORM 7500-INIT-KEYWORD-SEARCH
 
                MOVE TEST-CASE-LINE TO LINE-TO-PARSE
                SET SCANNING-TEST-CASES TO TRUE
@@ -2259,7 +2258,7 @@
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
-       4800-PROCESS-KEYWORD-MOCK.
+       4800-KEYWORD-MOCK.
       *****************************************************************
       * If the word 'MOCK' is not the first token on the line, then it
       * is in the middle of a description (e.g. TESTCASE, TESTSUITE).
@@ -2484,10 +2483,10 @@
            MOVE SET-MOCK-STMT
                 TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            .    
 
-       5000-PROCESS-KEYWORD-VERIFY.
+       5000-KEYWORD-VERIFY.
       *****************************************************************
       * VERIFY keyword was found. 
       *
@@ -2502,11 +2501,11 @@
            MOVE 80 TO TARGET-STRING-LENGTH
            PERFORM 7980-CHECK-FOR-IGNORE
            IF STRING-NOT-FOUND
-               PERFORM 5005-PROCESS-KEYWORD-VERIFY
+               PERFORM 5005-KEYWORD-VERIFY
            END-IF    
            .
 
-       5005-PROCESS-KEYWORD-VERIFY.           
+       5005-KEYWORD-VERIFY.           
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
@@ -2526,7 +2525,7 @@
                IF KEYWORD-MATCHED
                    PERFORM 5020-VERIFY-CICS-MOCK
                ELSE     
-                   PERFORM 5035-DISPLAY-VERIFY-SYNTAX-ERR
+                   PERFORM 5035-DISPLAY-VERIFY-ERROR
                END-IF    
            END-IF
            .
@@ -2546,7 +2545,7 @@
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-OPERATION
            PERFORM 6500-LOOK-UP-FILE-MOCK
-           PERFORM 6400-LOOK-UP-FILE-INFO-FOR-MOCK
+           PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            PERFORM 5025-PARSE-HAPPENED-SPEC
 
@@ -2600,7 +2599,7 @@
 
            PERFORM 5030-GEN-VERIFY-CODE
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
@@ -2636,7 +2635,7 @@
       * This will put a single string containing the command keywords
       * separated by single spaces into MOCK-CICS-LOOKUP-KEY.
 
-           PERFORM 5050-FORMAT-CICS-KEYWORD-STRING
+           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
 
            SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1 
@@ -2695,7 +2694,7 @@
 
            PERFORM 5030-GEN-VERIFY-CODE
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .  
 
@@ -2748,7 +2747,7 @@
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
                        CONTINUE
                    ELSE
-                       PERFORM 5035-DISPLAY-VERIFY-SYNTAX-ERR
+                       PERFORM 5035-DISPLAY-VERIFY-ERROR
                    END-IF
                END-IF
            END-IF        
@@ -2815,7 +2814,7 @@
            END-STRING    
            .
 
-       5035-DISPLAY-VERIFY-SYNTAX-ERR.    
+       5035-DISPLAY-VERIFY-ERROR.    
       *****************************************************************
       * Display an informative error message when the program cannot
       * understand a VERIFY specification.
@@ -2875,7 +2874,7 @@
 
            END-PERFORM
 
-           PERFORM 5050-FORMAT-CICS-KEYWORD-STRING
+           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
 
       * Save the list of CICS keywords for this mock in this program
       * and generate code to save them in the test program.
@@ -2956,10 +2955,10 @@
            MOVE SET-MOCK-STMT
                 TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
 
-           PERFORM 9440-WRITE-GENERATED-STATEMENTS
+           PERFORM 9440-WRITE-GENERATED-STMTS
            .
 
-       5050-FORMAT-CICS-KEYWORD-STRING.
+       5050-STRINGIFY-CICS-KEYWORDS.
       *****************************************************************
       * Format the list of CICS keywords as a single string with the 
       * keywords separated by spaces. This will be the key for looking
@@ -3059,7 +3058,7 @@
            END-STRING               
            .
 
-       6400-LOOK-UP-FILE-INFO-FOR-MOCK.     
+       6400-GET-FILE-INFO-FOR-MOCK.     
       *****************************************************************
       * MOCK-IX is pointing to a MOCK entry and we need to find the
       * corresponding file information.
@@ -3111,7 +3110,7 @@
            PERFORM 7300-EXTRACT-NEXT-TOKEN
            .
 
-       7200-NEXT-TOKEN-ORIGINAL-SOURCE.
+       7200-NEXT-TOKEN-ORIG-SOURCE.
       *****************************************************************
       * Extract the next token from ORIGINAL-SOURCE.
       *****************************************************************
@@ -3193,7 +3192,7 @@
            END-PERFORM    
            .    
 
-       7500-INITIALIZE-KEYWORD-SEARCH.
+       7500-INIT-KEYWORD-SEARCH.
       *****************************************************************
       * Position pointers for first keyword/token search on a line.
       *****************************************************************
@@ -3215,7 +3214,7 @@
            END-COMPUTE    
            .
 
-       7640-SET-SAVE-ORIGINAL-LINES.
+       7640-SET-SAVE-ORIG-LINES.
       *****************************************************************
       * Initialize WORKING-STORAGE to start saving lines from the
       * ORIGINAL-SOURCE file.
@@ -3225,7 +3224,7 @@
            SET SAVED-LINE-IX TO ZERO
            .
 
-       7650-SAVE-ORIGINAL-LINE.
+       7650-SAVE-ORIG-LINE.
       *****************************************************************
       * Save the current line from ORIGINAL-SOURCE because we don't
       * know what to do with it yet.
@@ -3383,14 +3382,6 @@
            END-IF      
            .
 
-
-
-
-
-
-
-
-
       *****************************************************************
       * 8xxx - Initialization
       * 8100 - Load configuration settings
@@ -3478,14 +3469,14 @@
                WHEN ORIGINAL-SOURCE-STATUS-OK
                     CONTINUE
                WHEN ORIGINAL-SOURCE-NOT-FOUND
-                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-NOT-FOUND
+                    DISPLAY THIS-PROGRAM MSG-ORIG-SOURCE-NOT-FOUND
                WHEN ORIGINAL-SOURCE-NOT-READABLE
-                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-UNREADABLE
+                    DISPLAY THIS-PROGRAM MSG-ORIG-SOURCE-UNREADABLE
                WHEN OTHER
                     MOVE ORIGINAL-SOURCE-STATUS 
-                         TO MSG-ORIGINAL-SOURCE-STATUS
-                    MOVE OPEN-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
-                    DISPLAY THIS-PROGRAM MSG-ORIGINAL-SOURCE-ERROR   
+                         TO MSG-ORIG-SOURCE-STATUS
+                    MOVE OPEN-VERB TO MSG-ORIG-SOURCE-OPERATION
+                    DISPLAY THIS-PROGRAM MSG-ORIG-SOURCE-ERROR   
            END-EVALUATE
            .
 
@@ -3502,7 +3493,7 @@
            EVALUATE TRUE
                WHEN ORIGINAL-SOURCE-STATUS-OK
                     IF SAVE-ORIGINAL-LINES
-                        PERFORM 7650-SAVE-ORIGINAL-LINE
+                        PERFORM 7650-SAVE-ORIG-LINE
                     END-IF     
                WHEN ORIGINAL-SOURCE-END-OF-FILE
                     SET NOT-FIRST-TOKEN TO TRUE
@@ -3517,9 +3508,9 @@
                     END-IF            
                WHEN OTHER
                     MOVE ORIGINAL-SOURCE-STATUS 
-                         TO MSG-ORIGINAL-SOURCE-STATUS
-                    MOVE READ-VERB TO MSG-ORIGINAL-SOURCE-OPERATION
-                    DISPLAY MSG-ORIGINAL-SOURCE-ERROR  
+                         TO MSG-ORIG-SOURCE-STATUS
+                    MOVE READ-VERB TO MSG-ORIG-SOURCE-OPERATION
+                    DISPLAY MSG-ORIG-SOURCE-ERROR  
                     PERFORM 9290-CLOSE-ORIGINAL-SOURCE
                     PERFORM 9490-CLOSE-TEST-SOURCE
                     GOBACK    
@@ -3580,7 +3571,6 @@
        9390-CLOSE-TEST-CASES.
            CLOSE TEST-CASES.
            .
-
 
       *****************************************************************
       * 94xx - TEST-SOURCE file I/O routines.
@@ -3661,7 +3651,7 @@
            END-PERFORM
            .           
 
-       9440-WRITE-GENERATED-STATEMENTS.    
+       9440-WRITE-GENERATED-STMTS.    
       *****************************************************************
       * Insert test code resulting from parsing unit test keywords.
       *****************************************************************
@@ -3692,10 +3682,6 @@
                        PERFORM 9420-WRITE-TEST-LINE
                    END-IF
       *         END-PERFORM                      
-
-
-
-
            END-PERFORM        
            .
 
