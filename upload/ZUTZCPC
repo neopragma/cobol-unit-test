@@ -73,6 +73,9 @@
            05  FILLER                    PIC X(249).                            
                                                                                 
        WORKING-STORAGE SECTION.                                                 
+                                                                                
+       01  FILLER PIC X(16) VALUE '******* ZUTZCPC'.                            
+       01  FILLER PIC X(16) VALUE '******* 0.1.0'.                              
       *****************************************************************         
       * Saved information about files that are accessed by the program          
       * under test. If any MOCKs are declared in the test cases, we             

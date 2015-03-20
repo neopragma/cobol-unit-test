@@ -1,4 +1,6 @@
       * TEST CODE INSERTED BY ZUTZCPC                                           
+       01  FILLER PIC X(16) VALUE '******* ZUTZCPC'.                            
+       01  FILLER PIC X(16) VALUE '******* 0.1.0'.                              
        01  UT-FIELDS.                                                           
            05  UT-CONST-ES               PIC X(02) VALUE 'ES'.                  
            05  UT-LABEL-EXPECTED-ACCESS.                                        
