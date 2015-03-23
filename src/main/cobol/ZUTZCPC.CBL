@@ -39,8 +39,7 @@
        FD  UNIT-TEST-CONFIG
            DATA RECORD IS UNIT-TEST-CONFIG-REC.
        01  UNIT-TEST-CONFIG-REC.
-           05  COPYBOOK-NAME   PIC X(12).
-           05  FILLER          PIC X(68).
+           05  COPYBOOK-NAME   PIC X(80).
        FD  ORIGINAL-SOURCE
            DATA RECORD IS ORIGINAL-LINE.
        01  ORIGINAL-LINE.
@@ -147,10 +146,6 @@
                    15  FILLER             PIC X(3147).
                10  MOCK-CICS-DATA REDEFINES MOCK-DATA.
                    15  MOCK-CICS-KEYWORDS-KEY PIC X(320).
-                   15  MOCK-CICS-KEYWORDS.
-                       20  MOCK-CICS-KEYWORD 
-                           OCCURS 25 TIMES
-                           INDEXED BY MOCK-CICS-KEYWORDS-IX PIC X(31).
                    15  MOCK-CICS-STATEMENTS.
                        20  MOCK-CICS-STATEMENT
                            OCCURS 25 TIMES
@@ -165,8 +160,8 @@
       *****************************************************************
        01  FILLER.            
            05  MAX-STATUS-MNEMONICS   PIC 9(02) VALUE 4.
-           05  TEMP-SUB               USAGE INDEX.
-           05  SAVE-SUB               USAGE INDEX.
+           05  TEMP-SUB               PIC S9(08) COMP.
+           05  SAVE-SUB               PIC S9(08) COMP.
            05  SAVE-OFFSET            PIC 9(02) VALUE 0.
            05  TEMP-TOKEN             PIC X(80).
            05  MOCK-FILE-STATUS-MNEMONICS.
@@ -1603,6 +1598,7 @@
                MOVE EXEC-KEYWORD-LENGTH(EXEC-KEYWORD-IX) 
                     TO KEYWORD-MATCH-LENGTH
                PERFORM 7400-MATCH-KEYWORD
+
            END-PERFORM
 
       * If EXEC or EXECUTE was found, next token will be CICS or SQL
@@ -1615,6 +1611,7 @@
                PERFORM 7650-SAVE-ORIG-LINE
 
                PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
+
                EVALUATE TRUE
                    WHEN TOKEN(TOKEN-IX) IS EQUAL TO CICS-KEYWORD
                         PERFORM 2610-PROCESS-CICS-COMMAND
@@ -1626,7 +1623,7 @@
            END-IF              
            SET NO-SAVE-ORIGINAL-LINES TO TRUE       
            .
-
+        
        2610-PROCESS-CICS-COMMAND.    
       *****************************************************************
       * EXEC CICS was found. See if it corresponds with a MOCK.
@@ -1859,13 +1856,13 @@
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'NOT ' TO KEYWORD-TO-MATCH
            MOVE 4 TO KEYWORD-MATCH-LENGTH
-           SET TEMP-SUB TO KEYWORD-OFFSET
+           MOVE KEYWORD-OFFSET TO TEMP-SUB
            PERFORM 7400-MATCH-KEYWORD
            IF KEYWORD-MATCHED
                SET REVERSE-COMPARE TO TRUE
            ELSE    
                SET NORMAL-COMPARE TO TRUE
-               SET KEYWORD-OFFSET TO TEMP-SUB
+               MOVE TEMP-SUB TO KEYWORD-OFFSET
                SUBTRACT 6 FROM KEYWORD-OFFSET
            END-IF
 
@@ -2291,13 +2288,13 @@
       * substituted to simulate interaction with the mocked item
       * when references are encountered in ORIGINAL-SOURCE.
       *****************************************************************
-           SET MOCK-IX UP BY 1
            SET NO-MOCK-SYNTAX-ERROR TO TRUE
 
       * Next token will be the type of mock
 
            ADD 4 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
            EVALUATE TRUE
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO FILE-KEYWORD
                     PERFORM 4900-PROCESS-MOCK-FILE-SPEC
@@ -2312,6 +2309,8 @@
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-2   
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-3
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-4
+           ELSE    
+               SET MOCK-IX UP BY 1
            END-IF
            .
 
@@ -2618,7 +2617,7 @@
       * When we encounter HAPPENED or NEVER it's the end of the tokens.
 
            ADD 3 TO KEYWORD-OFFSET
-           SET MOCK-CICS-LOOKUP-IX TO ZERO
+           SET MOCK-CICS-LOOKUP-IX TO 1
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEY
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEYWORDS
            SET MORE-TOKENS TO TRUE
@@ -2628,10 +2627,10 @@
                   HAPPENED-KEYWORD OR NEVER-KEYWORD
                   SET NO-MORE-TOKENS TO TRUE
                ELSE
-                  SET MOCK-CICS-LOOKUP-IX UP BY 1
                   MOVE TOKEN(TOKEN-IX)
                       TO MOCK-CICS-LOOKUP-KEYWORD
                           (MOCK-CICS-LOOKUP-IX)
+                  SET MOCK-CICS-LOOKUP-IX UP BY 1
                END-IF
            END-PERFORM
 
@@ -2648,11 +2647,8 @@
                AND MOCK-CICS-LOOKUP-KEY IS EQUAL TO
                        MOCK-CICS-KEYWORDS-KEY(MOCK-IX)
                    SET MOCK-MATCHED TO TRUE
+               END-IF    
            END-PERFORM
-
-           IF MOCK-MATCHED
-               SET MOCK-IX DOWN BY 1
-           END-IF
 
            PERFORM 5025-PARSE-HAPPENED-SPEC
 
@@ -2666,6 +2662,7 @@
 
            MOVE MOCK-CICS-LOOKUP-KEY TO RAW-VALUE
            PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
+
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            STRING
                STATEMENT-SPACER             DELIMITED BY SIZE
@@ -2839,9 +2836,8 @@
       * By the time this routine is performed, the keywords MOCK and
       * CICS have already been processed. 
       *****************************************************************
-           SET MOCK-CICS(MOCK-IX) TO TRUE
-           SET MOCK-CICS-KEYWORDS-IX TO ZERO
-           SET MOCK-CICS-LOOKUP-IX TO ZERO
+           SET MOCK-CICS(MOCK-IX) TO TRUE     
+           SET MOCK-CICS-LOOKUP-IX TO 1
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEY
            MOVE SPACES TO MOCK-CICS-LOOKUP-KEYWORDS
 
@@ -2867,10 +2863,10 @@
                END-STRING
 
                IF TOKEN-IS-CICS-RESERVED-WORD
-                   SET MOCK-CICS-LOOKUP-IX UP BY 1
                    MOVE TOKEN(TOKEN-IX)
                        TO MOCK-CICS-LOOKUP-KEYWORD
                            (MOCK-CICS-LOOKUP-IX)
+                   SET MOCK-CICS-LOOKUP-IX UP BY 1
                ELSE
                    SET NO-MORE-RESERVED-WORDS TO TRUE
                END-IF            
@@ -3004,15 +3000,16 @@
                ELSE                      
                    MOVE RAW-VALUE TO SAVE-VALUE
                    MOVE TEMP-SUB TO SAVE-SUB
-
                    MOVE TEMP-VALUE TO RAW-VALUE
                    PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
+
                    STRING
                        TEMP-VALUE(1:TEMP-SUB) DELIMITED BY SIZE
                        SPACE                  DELIMITED BY SIZE
                        SAVE-VALUE(1:SAVE-SUB) DELIMITED BY SIZE
-                       INTO TEMP-VALUE
+                       INTO RAW-VALUE
                    END-STRING
+                   MOVE RAW-VALUE TO TEMP-VALUE
                END-IF
 
            END-PERFORM        
@@ -3224,7 +3221,7 @@
       *****************************************************************
            SET SAVE-ORIGINAL-LINES TO TRUE
            MOVE SPACES TO SAVED-LINES
-           SET SAVED-LINE-IX TO ZERO
+           SET SAVED-LINE-IX TO 1
            .
 
        7650-SAVE-ORIG-LINE.
@@ -3232,8 +3229,8 @@
       * Save the current line from ORIGINAL-SOURCE because we don't
       * know what to do with it yet.
       *****************************************************************
-           SET SAVED-LINE-IX UP BY 1
            MOVE ORIGINAL-LINE TO SAVED-LINE(SAVED-LINE-IX)
+           SET SAVED-LINE-IX UP BY 1
            .    
 
        7700-PERIOD-ON-THIS-LINE.
@@ -3410,10 +3407,10 @@
        8200-INITIALIZE-MOCK-HANDLING.        
            INITIALIZE MOCKS
            SET NO-CHECK-FOR-MOCKABLES TO TRUE
-           SET MOCK-IX TO 0
+           SET MOCK-IX TO 1
            SET FILE-IX TO 1
            MOVE SPACES TO INITIALIZATION-STATEMENTS
-           SET INITIALIZATION-IX TO 0
+           SET INITIALIZATION-IX TO 1
            .    
 
       *****************************************************************
