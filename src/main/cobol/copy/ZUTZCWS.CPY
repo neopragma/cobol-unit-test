@@ -16,12 +16,14 @@
                88  UT-VERIFY-AT-LEAST              VALUE '2'.
                88  UT-VERIFY-NO-MORE-THAN          VALUE '3'.   
            05  FILLER                    PIC X(01) VALUE SPACES.
-               88  UT-VERIFY-PASSED      VALUE 'Y', FALSE SPACES.     
+               88  UT-VERIFY-PASSED      VALUE 'Y'.
+               88  UT-VERIFY-FAILED      VALUE SPACES.    
            05  FILLER                    PIC X(01) VALUE SPACES.
                88  UT-COMPARE-DEFAULT    VALUE SPACE.
-               88  UT-COMPARE-NUMERIC    VALUE 'N', FALSE SPACES.
+               88  UT-COMPARE-NUMERIC    VALUE 'N'.
            05  FILLER                    PIC X(01) VALUE SPACES.
-               88  UT-COMPARE-PASSED     VALUE 'Y', FALSE SPACES.    
+               88  UT-COMPARE-PASSED     VALUE 'Y'.
+               88  UT-COMPARE-FAILED     VALUE SPACES.
            05  UT-EXPECTED               PIC X(60) VALUE SPACES.
            05  UT-ACTUAL                 PIC X(60) VALUE SPACES.
            05  UT-EXPECTED-NUMERIC       PIC S9(08) VALUE ZERO.
@@ -39,8 +41,9 @@
            05  UT-NUMBER-PASSED          PIC 9(4)   VALUE ZERO.
            05  UT-NUMBER-FAILED          PIC 9(4)   VALUE ZERO.
        01  UT-MOCKS.
-           05  FILLER                   PIC X(01) VALUE SPACES.
-               88  UT-MOCK-FOUND        VALUE 'Y', FALSE SPACES.
+           05  FILLER                    PIC X(01) VALUE SPACES.
+               88  UT-MOCK-FOUND                   VALUE 'Y'.
+               88  UT-MOCK-NOT-FOUND               VALUE SPACES.
            05  UT-MOCK-FIND-TYPE         PIC X(04).
                88  UT-FIND-FILE-MOCK     VALUE 'FILE'.
                88  UT-FIND-CICS-MOCK     VALUE 'CICS'.

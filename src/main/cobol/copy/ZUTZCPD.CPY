@@ -24,7 +24,7 @@
            .
 
        UT-COMPARE.
-           SET UT-COMPARE-PASSED TO FALSE
+           SET UT-COMPARE-FAILED TO TRUE
            IF UT-COMPARE-NUMERIC
                IF UT-ACTUAL-NUMERIC IS EQUAL TO UT-EXPECTED-NUMERIC
                    SET UT-COMPARE-PASSED TO TRUE
@@ -40,7 +40,7 @@
        UT-REVERSE-RESULT.
            IF UT-REVERSE-COMPARE
                IF UT-COMPARE-PASSED
-                   SET UT-COMPARE-PASSED TO FALSE
+                   SET UT-COMPARE-FAILED TO TRUE
                ELSE
                    SET UT-COMPARE-PASSED TO TRUE
                END-IF
@@ -83,7 +83,7 @@
               MOVE UT-CONST-ES TO UT-LABEL-EXPECTED-ACCESS-PLURAL
            END-IF      
 
-           SET UT-VERIFY-PASSED TO FALSE
+           SET UT-VERIFY-FAILED TO TRUE
            EVALUATE TRUE
                WHEN UT-VERIFY-AT-LEAST
                     IF UT-ACTUAL-ACCESSES IS GREATER THAN OR EQUAL TO 
@@ -214,7 +214,7 @@
       *****************************************************************
       * LOOK UP A MOCK SPECIFICATION.
       *****************************************************************
-           SET UT-MOCK-FOUND TO FALSE
+           SET UT-MOCK-NOT-FOUND TO TRUE
            PERFORM VARYING UT-MOCK-IX FROM 1 BY 1
                UNTIL UT-MOCK-IX IS GREATER THAN UT-MOCK-MAX
                   OR UT-MOCK-FOUND
