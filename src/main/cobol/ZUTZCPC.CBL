@@ -141,6 +141,7 @@
            05  MAX-MOCK-STATEMENTS   PIC 9(02) VALUE 25.
        01  MOCKS.
            05  MOCK-TEST-COUNT            PIC 9(04).
+           05  MOCK-COUNT                 PIC S9(08) COMP.
            05  MOCK-LOOKUP.
                10  MOCK-LOOKUP-TYPE       PIC X(04).
                10  MOCK-LOOKUP-FILENAME   PIC X(31).
@@ -173,8 +174,7 @@
                    15  FILLER             PIC X(3200).
 
       *****************************************************************
-      * This area is used to generate paragraph names to be inserted
-      * into the test program to perform mock logic.
+      * This area is used to handle file status values for file mocks.
       *****************************************************************
        01  FILLER.            
            05  MAX-STATUS-MNEMONICS   PIC 9(02) VALUE 4.
@@ -318,7 +318,7 @@
       * the ORIGINAL-SOURCE file.
       *****************************************************************
        01  TOKENS.
-           05  TOKEN OCCURS 20 TIMES INDEXED BY TOKEN-IX PIC X(80).
+           05  TOKEN OCCURS 100 TIMES INDEXED BY TOKEN-IX PIC X(80).
 
       *****************************************************************
       * This area is used for parsing keywords out of input records.
@@ -2416,7 +2416,8 @@
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-3
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-4
            ELSE    
-               SET MOCK-IX UP BY 1
+               ADD 1 TO MOCK-COUNT
+               SET MOCK-IX TO MOCK-COUNT
            END-IF
            .
 
@@ -2486,6 +2487,8 @@
                    MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
                    PERFORM 7950-ENCLOSE-IN-QUOTES
                    SET STATEMENT-IX UP BY 1    
+                   MOVE SPACES TO GENERATED-SOURCE-STATEMENT
+                                             (STATEMENT-IX)
                    STRING 
                        STATEMENT-SPACER         DELIMITED BY SIZE
                        MOVE-VERB                DELIMITED BY SIZE
@@ -2497,10 +2500,13 @@
                END-IF            
            END-PERFORM       
 
-      * Optional syntactic sugar 'IS' may or may not be next.
+      * Keyword 'STATUS' is next.
 
            SET TOKEN-IX UP BY 1
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+      * Optional syntactic sugar 'IS' may or may not be next.
+
            SET TOKEN-IX UP BY 1           
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
            IF TOKEN(TOKEN-IX) IS EQUAL TO 'IS'
@@ -2509,7 +2515,6 @@
 
            SET STATEMENT-IX UP BY 1
            PERFORM 6010-GEN-INIT-ACCESS-COUNT
-
            EVALUATE TRUE
 
       * If the last token was RETURN, then the current token is a
@@ -2543,10 +2548,8 @@
                     IF MOCK-STATUS-IX IS GREATER THAN 
                             MAX-STATUS-MNEMONICS
                         PERFORM 7900-STRIP-QUOTES
-                        STRING 
-                            TOKEN(TOKEN-IX) DELIMITED BY SPACE
-                            INTO MOCK-FILE-STATUS(MOCK-IX)
-                        END-STRING
+                        MOVE TOKEN(TOKEN-IX)(1:2) TO
+                            MOCK-FILE-STATUS(MOCK-IX)
                     ELSE
                         MOVE MOCK-FILE-STATUS-VALUE(MOCK-STATUS-IX)
                             TO MOCK-FILE-STATUS(MOCK-IX)
@@ -2612,47 +2615,61 @@
 
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE KEYWORD-OFFSET TO TEMP-SUB
-      *----------------------------------------------------------------
-           MOVE 'FILE ' TO KEYWORD-TO-MATCH
-           MOVE 5 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
+           PERFORM 5002-CHECK-VERIFY-FILE
            IF KEYWORD-MATCHED
                PERFORM 5010-VERIFY-FILE-MOCK
            ELSE
                MOVE TEMP-SUB TO KEYWORD-OFFSET
                SUBTRACT 5 FROM KEYWORD-OFFSET
-      *----------------------------------------------------------------
-               MOVE 'CICS ' TO KEYWORD-TO-MATCH
-               MOVE 5 TO KEYWORD-MATCH-LENGTH
-               PERFORM 7400-MATCH-KEYWORD
+               PERFORM 5003-CHECK-VERIFY-CICS
                IF KEYWORD-MATCHED
                    PERFORM 5020-VERIFY-CICS-MOCK
                ELSE
                    MOVE TEMP-SUB TO KEYWORD-OFFSET
                    SUBTRACT 5 FROM KEYWORD-OFFSET
-      *----------------------------------------------------------------
-                   MOVE 'PARA ' TO KEYWORD-TO-MATCH
-                   MOVE 5 TO KEYWORD-MATCH-LENGTH
-                   PERFORM 7400-MATCH-KEYWORD
+                   PERFORM 5004-CHECK-VERIFY-PARA
                    IF KEYWORD-MATCHED
                        PERFORM 5030-VERIFY-PARA-MOCK
-                   ELSE
-                       MOVE TEMP-SUB TO KEYWORD-OFFSET
-                       SUBTRACT 9 FROM KEYWORD-OFFSET
-      *----------------------------------------------------------------
-                       MOVE 'PARAGRAPH ' TO KEYWORD-TO-MATCH
-                       MOVE 10 TO KEYWORD-MATCH-LENGTH
-                       PERFORM 7400-MATCH-KEYWORD
-                       IF KEYWORD-MATCHED
-                           PERFORM 5030-VERIFY-PARA-MOCK
-                       ELSE    
-      *----------------------------------------------------------------
-                           PERFORM 5070-DISPLAY-VERIFY-ERROR
-                       END-IF    
-                   END-IF
+                   ELSE    
+                       PERFORM 5070-DISPLAY-VERIFY-ERROR
+                   END-IF    
                END-IF
            END-IF                
            .
+
+       5002-CHECK-VERIFY-FILE.
+      *****************************************************************
+      * Are we verifying a mocked batch file access?
+      *****************************************************************
+           MOVE 'FILE ' TO KEYWORD-TO-MATCH
+           MOVE 5 TO KEYWORD-MATCH-LENGTH
+           PERFORM 7400-MATCH-KEYWORD
+           .
+
+       5003-CHECK-VERIFY-CICS.
+      *****************************************************************
+      * Are we verifying a mocked EXEC CICS command?
+      *****************************************************************
+           MOVE 'CICS ' TO KEYWORD-TO-MATCH
+           MOVE 5 TO KEYWORD-MATCH-LENGTH
+           PERFORM 7400-MATCH-KEYWORD
+           .
+
+       5004-CHECK-VERIFY-PARA.
+      *****************************************************************
+      * Are we verifying a mocked paragraph?
+      *****************************************************************
+           MOVE 'PARA ' TO KEYWORD-TO-MATCH
+           MOVE 5 TO KEYWORD-MATCH-LENGTH
+           PERFORM 7400-MATCH-KEYWORD
+           IF NOT KEYWORD-MATCHED
+               MOVE TEMP-SUB TO KEYWORD-OFFSET
+               SUBTRACT 9 FROM KEYWORD-OFFSET
+               MOVE 'PARAGRAPH ' TO KEYWORD-TO-MATCH
+               MOVE 10 TO KEYWORD-MATCH-LENGTH
+               PERFORM 7400-MATCH-KEYWORD
+           END-IF
+           .    
 
        5010-VERIFY-FILE-MOCK.
       *****************************************************************
@@ -3756,6 +3773,7 @@
        8200-INITIALIZE-MOCK-HANDLING.        
            INITIALIZE MOCKS
            SET NO-CHECK-FOR-MOCKABLES TO TRUE
+           MOVE ZERO TO MOCK-COUNT
            SET MOCK-IX TO 1
            SET FILE-IX TO 1
            MOVE SPACES TO INITIALIZATION-STATEMENTS
