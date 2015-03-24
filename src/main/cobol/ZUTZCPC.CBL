@@ -421,9 +421,11 @@
            05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
            05  PARA-KEYWORD                 PIC X(04) VALUE 'PARA'.
            05  PARAGRAPH-KEYWORD            PIC X(09) VALUE 'PARAGRAPH'.
+           05  PERFORMED-KEYWORD            PIC X(09) VALUE 'PERFORMED'.
            05  SQL-KEYWORD                  PIC X(03) VALUE 'SQL'.
            05  TO-KEYWORD                   PIC X(04) VALUE ' TO '.
            05  TRUE-KEYWORD                 PIC X(04) VALUE 'TRUE'.
+           05  WAS-KEYWORD                  PIC X(03) VALUE 'WAS'.
            05  ZERO-KEYWORD                 PIC X(06) VALUE ' ZERO '.
 
            05  IF-VERB                      PIC X(03) VALUE 'IF '.
@@ -2397,7 +2399,8 @@
 
            ADD 4 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
+           ADD 1 TO MOCK-COUNT
+           SET MOCK-IX TO MOCK-COUNT
            EVALUATE TRUE
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO FILE-KEYWORD
                     PERFORM 4900-PROCESS-MOCK-FILE-SPEC
@@ -2415,9 +2418,6 @@
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-2   
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-3
                DISPLAY THIS-PROGRAM MSG-MOCK-SYNTAX-4
-           ELSE    
-               ADD 1 TO MOCK-COUNT
-               SET MOCK-IX TO MOCK-COUNT
            END-IF
            .
 
@@ -2445,7 +2445,6 @@
 
            ADD 1 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
            MOVE TOKEN(TOKEN-IX) TO MOCK-FILENAME(MOCK-IX)
 
            MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
@@ -2863,12 +2862,19 @@
                END-IF
            END-PERFORM
            
-      * Expect next token to be HAPPENED or NEVER
+      * Expect next token to be WAS, PERFORMED, HAPPENED, or NEVER
       * Need to skip past variable-length paragraph name
 
            ADD 1 TO KEYWORD-OFFSET
            PERFORM 7320-FIND-NEXT-SPACE
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+      * If token is syntactic sugar 'WAS', skip to the next token.
+      
+           IF TOKEN(TOKEN-IX) IS EQUAL TO WAS-KEYWORD
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           END-IF         
+
            PERFORM 5060-PARSE-HAPPENED-SPEC
 
       * Generate statements in TEST-SOURCE to do the verification
@@ -2938,7 +2944,8 @@
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                MOVE ZERO TO MOCK-TEST-COUNT
            ELSE                   
-               IF TOKEN(TOKEN-IX) IS EQUAL TO HAPPENED-KEYWORD
+               IF TOKEN(TOKEN-IX) 
+                   IS EQUAL TO HAPPENED-KEYWORD OR PERFORMED-KEYWORD
                    SET KEYWORD-NOT-MATCHED TO TRUE
                    MOVE KEYWORD-OFFSET TO SAVE-OFFSET
                    MOVE 'NO MORE THAN ' TO KEYWORD-TO-MATCH
@@ -3234,7 +3241,6 @@
 
            ADD 1 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
            STRING 
                TOKEN(TOKEN-IX)          DELIMITED BY SPACE
                PERIOD                   DELIMITED BY SIZE
@@ -3549,8 +3555,10 @@
       *****************************************************************
            PERFORM VARYING KEYWORD-OFFSET FROM KEYWORD-OFFSET BY 1
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
-                         KEYWORD-SEARCH-LIMIT
+      *---                   KEYWORD-SEARCH-LIMIT
+                         KEYWORD-END
                       OR KEYWORD-MATCHED  
+
                IF KEYWORD-TO-MATCH IS EQUAL TO
                    LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
                    SET KEYWORD-MATCHED TO TRUE
