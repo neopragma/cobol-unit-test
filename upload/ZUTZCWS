@@ -5,7 +5,7 @@
            05  UT-CONST-ES               PIC X(02) VALUE 'ES'.                  
            05  UT-LABEL-EXPECTED-ACCESS.                                        
                10  FILLER                PIC X(06) VALUE 'ACCESS'.              
-               10  UT-LABEL-EXPECTED-ACCESS-PLURAL                              
+               10  UT-LABEL-EXPECTED-ACCESS-PL                                  
                                          PIC X(02) VALUE SPACES.                
            05  UT-DISPLAY-MESSAGE        PIC X(256) VALUE SPACES.               
            05  FILLER                    PIC X(01) VALUE SPACES.                
