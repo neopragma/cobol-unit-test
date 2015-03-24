@@ -47,8 +47,7 @@
                88  UT-FIND-SQL-MOCK      VALUE 'SQL'.
                88  UT-FIND-PARA-MOCK     VALUE 'PARA'.
            05  UT-MOCK-FIND-FILENAME     PIC X(31).
-           05  UT-MOCK-FIND-PARA-NAME REDEFINES UT-MOCK-FIND-FILENAME
-                                         PIC X(31).
+           05  UT-MOCK-FIND-PARA-NAME    PIC X(31).
            05  UT-MOCK-FIND-OPERATION    PIC X(04).
            05  UT-MOCK-FIND-CICS-KEYWORDS.
                10  UT-MOCK-FIND-CICS-KEYWORD OCCURS 25 PIC X(31).

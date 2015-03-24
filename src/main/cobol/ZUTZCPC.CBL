@@ -145,6 +145,7 @@
                10  MOCK-LOOKUP-TYPE       PIC X(04).
                10  MOCK-LOOKUP-FILENAME   PIC X(31).
                10  MOCK-LOOKUP-OPERATION  PIC X(20).
+               10  MOCK-LOOKUP-PARA-NAME  PIC X(31).
            05  MOCK OCCURS 10 INDEXED BY MOCK-IX.
                10  MOCK-TYPE              PIC X(04).
                    88  MOCK-FILE          VALUE 'FILE'.
@@ -1397,43 +1398,10 @@
 
        2500-CHECK-FOR-MOCKABLES.
       *****************************************************************
-      * First check to see if the current source line is potentially a
-      * mocked file I/O statement. If not then see if it is potentially
-      * a mocked EXEC command. If not then see if it is potentially a
-      * mocked paragraph header.
-      *
-      * Replace any mocked statements with the COBOL source statements
-      * defined in the MOCK specification.
-      *
-      * File definition information has already been parsed from the
-      * ORIGINAL-SOURCE file, and MOCK specifications have been
-      * collected from the TEST-CASES file, before this paragraph is
-      * performed.
-      *
-      * Limitations of the current implementation: 
-      * - It will identify an I/O statement only if the I/O verb is the 
-      *   first token on the line.
-      * - It doesn't handle I/O statements that span more than one
-      *   line in the source file.
-      * - It doesn't handle READ INTO.
-      * - It doesn't handle WRITE FROM. 
+      * See if the current original source statement looks like
+      * something that can be mocked, and handle it accordingly.
       *****************************************************************
-           SET COPY-SOURCE TO TRUE
-           SET TOKEN-IX TO 1
-           PERFORM 7500-INIT-KEYWORD-SEARCH
-           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
-           PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
-                   UNTIL VALID-FILE-OPERATION-IX IS GREATER THAN
-                         MAX-VALID-FILE-OPERATIONS
-                      OR KEYWORD-MATCHED   
-               IF TOKEN(TOKEN-IX) IS EQUAL TO
-                       VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
-                   SET KEYWORD-MATCHED TO TRUE   
-      * Keep index set to this entry for subsequent processing
-                   SET VALID-FILE-OPERATION-IX DOWN BY 1 
-               END-IF                    
-           END-PERFORM
-
+           PERFORM 2505-CHECK-FOR-IO-STATEMENT
            IF KEYWORD-MATCHED
                PERFORM 2510-IO-KEYWORD-MATCHED
            ELSE
@@ -1451,6 +1419,30 @@
            ELSE
                PERFORM 9460-COPY-ORIGINAL-LINE
            END-IF        
+           .
+
+       2505-CHECK-FOR-IO-STATEMENT.
+      *****************************************************************
+      * First check to see if the current source line is potentially a
+      * mocked file I/O statement. If not then see if it is potentially
+      * a mocked EXEC command. If not then see if it is potentially a
+      * mocked paragraph header.
+      *****************************************************************
+           SET COPY-SOURCE TO TRUE
+           SET TOKEN-IX TO 1
+           PERFORM 7500-INIT-KEYWORD-SEARCH
+           PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
+           PERFORM VARYING VALID-FILE-OPERATION-IX FROM 1 BY 1
+                   UNTIL VALID-FILE-OPERATION-IX IS GREATER THAN
+                         MAX-VALID-FILE-OPERATIONS
+                      OR KEYWORD-MATCHED   
+               IF TOKEN(TOKEN-IX) IS EQUAL TO
+                       VALID-FILE-OPERATION(VALID-FILE-OPERATION-IX)
+                   SET KEYWORD-MATCHED TO TRUE   
+      * Keep index set to this entry for subsequent processing
+                   SET VALID-FILE-OPERATION-IX DOWN BY 1 
+               END-IF                    
+           END-PERFORM
            .
 
        2510-IO-KEYWORD-MATCHED.
@@ -1606,10 +1598,8 @@
 
        2600-CHECK-FOR-EXEC-COMMAND.
       *****************************************************************
-      * Replace an EXEC command with the code corresponding to the 
-      * MOCK specification. If the command is not mocked, copy it 
-      * as-is.
-      * Match on either EXEC or EXECUTE.
+      * See if the current original source line contains an EXEC
+      * command.
       *****************************************************************
            SET TOKEN-IX TO 1
            PERFORM VARYING EXEC-KEYWORD-IX FROM 1 BY 1
@@ -1682,7 +1672,7 @@
                END-IF
            END-PERFORM
 
-           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
+           PERFORM 5080-STRINGIFY-CICS-KEYWORDS
 
       * See if this set of tokens corresponds to a defined MOCK.
 
@@ -1787,13 +1777,17 @@
                PERFORM 9250-READ-ORIGINAL-SOURCE
            END-PERFORM           
 
+      * Comment out the original behavior of the mocked paragraph.     
+
            SET COMMENT-THE-LINES TO TRUE
            PERFORM 2900-COPY-OR-COMMENT-LINES
+
+      * Replace the original behavior with the mocked behavior.
+
+           MOVE '           ADD 1 TO UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'
+               TO TEST-LINE
+           WRITE TEST-LINE
            PERFORM 6030-WRITE-GENERATED-STMTS
-
-
-      *---- resume here
-
 
            IF PARA-MATCHED
                SET MOCKABLE-FOUND TO TRUE
@@ -2408,10 +2402,10 @@
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO FILE-KEYWORD
                     PERFORM 4900-PROCESS-MOCK-FILE-SPEC
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO CICS-KEYWORD
-                    PERFORM 5040-PROCESS-MOCK-CICS-SPEC
+                    PERFORM 5075-PROCESS-MOCK-CICS-SPEC
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO PARA-KEYWORD
                                              OR PARAGRAPH-KEYWORD
-                    PERFORM 5060-PROCESS-MOCK-PARA-SPEC                              
+                    PERFORM 5085-PROCESS-MOCK-PARA-SPEC                              
                WHEN OTHER
                     SET MOCK-SYNTAX-ERROR TO TRUE     
            END-EVALUATE
@@ -2601,21 +2595,24 @@
       * VERIFY FILE filename WRITE NEVER HAPPENED
       * VERIFY CICS [keywords] HAPPENED ONCE
       *****************************************************************
-
            MOVE TEST-CASE-LINE TO TARGET-STRING
            MOVE 80 TO TARGET-STRING-LENGTH
            PERFORM 7980-CHECK-FOR-IGNORE
            IF STRING-NOT-FOUND
-               PERFORM 5005-KEYWORD-VERIFY
+               PERFORM 5001-IDENT-MOCK-TO-VERIFY
            END-IF    
            .
 
-       5005-KEYWORD-VERIFY.           
+       5001-IDENT-MOCK-TO-VERIFY.           
+      *****************************************************************
+      * Identify the type of mock for the VERIFY.
+      *****************************************************************
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE KEYWORD-OFFSET TO TEMP-SUB
+      *----------------------------------------------------------------
            MOVE 'FILE ' TO KEYWORD-TO-MATCH
            MOVE 5 TO KEYWORD-MATCH-LENGTH
            PERFORM 7400-MATCH-KEYWORD
@@ -2623,16 +2620,38 @@
                PERFORM 5010-VERIFY-FILE-MOCK
            ELSE
                MOVE TEMP-SUB TO KEYWORD-OFFSET
-               SUBTRACT 5 FROM KEYWORD-OFFSET              
+               SUBTRACT 5 FROM KEYWORD-OFFSET
+      *----------------------------------------------------------------
                MOVE 'CICS ' TO KEYWORD-TO-MATCH
                MOVE 5 TO KEYWORD-MATCH-LENGTH
                PERFORM 7400-MATCH-KEYWORD
                IF KEYWORD-MATCHED
                    PERFORM 5020-VERIFY-CICS-MOCK
-               ELSE     
-                   PERFORM 5035-DISPLAY-VERIFY-ERROR
-               END-IF    
-           END-IF
+               ELSE
+                   MOVE TEMP-SUB TO KEYWORD-OFFSET
+                   SUBTRACT 5 FROM KEYWORD-OFFSET
+      *----------------------------------------------------------------
+                   MOVE 'PARA ' TO KEYWORD-TO-MATCH
+                   MOVE 5 TO KEYWORD-MATCH-LENGTH
+                   PERFORM 7400-MATCH-KEYWORD
+                   IF KEYWORD-MATCHED
+                       PERFORM 5030-VERIFY-PARA-MOCK
+                   ELSE
+                       MOVE TEMP-SUB TO KEYWORD-OFFSET
+                       SUBTRACT 9 FROM KEYWORD-OFFSET
+      *----------------------------------------------------------------
+                       MOVE 'PARAGRAPH ' TO KEYWORD-TO-MATCH
+                       MOVE 10 TO KEYWORD-MATCH-LENGTH
+                       PERFORM 7400-MATCH-KEYWORD
+                       IF KEYWORD-MATCHED
+                           PERFORM 5030-VERIFY-PARA-MOCK
+                       ELSE    
+      *----------------------------------------------------------------
+                           PERFORM 5070-DISPLAY-VERIFY-ERROR
+                       END-IF    
+                   END-IF
+               END-IF
+           END-IF                
            .
 
        5010-VERIFY-FILE-MOCK.
@@ -2652,7 +2671,7 @@
            PERFORM 6500-LOOK-UP-FILE-MOCK
            PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-           PERFORM 5025-PARSE-HAPPENED-SPEC
+           PERFORM 5060-PARSE-HAPPENED-SPEC
 
       * Generate statements in TEST-SOURCE to do the verification
 
@@ -2702,7 +2721,7 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
            SET STATEMENT-IX UP BY 1
 
-           PERFORM 5030-GEN-VERIFY-CODE
+           PERFORM 5065-GEN-VERIFY-CODE
 
            PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
@@ -2740,7 +2759,7 @@
       * This will put a single string containing the command keywords
       * separated by single spaces into MOCK-CICS-LOOKUP-KEY.
 
-           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
+           PERFORM 5080-STRINGIFY-CICS-KEYWORDS
 
            SET MOCK-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1 
@@ -2753,7 +2772,7 @@
                END-IF    
            END-PERFORM
 
-           PERFORM 5025-PARSE-HAPPENED-SPEC
+           PERFORM 5060-PARSE-HAPPENED-SPEC
 
       * Generate statements in TEST-SOURCE to do the verification
 
@@ -2795,25 +2814,109 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
 
-           PERFORM 5030-GEN-VERIFY-CODE
+           PERFORM 5065-GEN-VERIFY-CODE
 
            PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .  
 
-       5025-PARSE-HAPPENED-SPEC.
+       5030-VERIFY-PARA-MOCK.
+      *****************************************************************
+      * Generate code for TEST-SOURCE to verify that a given paragraph
+      * mock was accessed the expected number of times.
+      *****************************************************************
+           MOVE PARA-KEYWORD TO MOCK-LOOKUP-TYPE
+
+      * Expect next token to be the mock paragraph name
+
+           PERFORM 7320-FIND-NEXT-SPACE
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-PARA-NAME
+
+      * Find this mock in the local table
+
+           SET MOCK-NOT-MATCHED TO TRUE
+           PERFORM VARYING MOCK-IX FROM 1 BY 1
+                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
+                      OR MOCK-MATCHED
+               IF MOCK-PARAGRAPH(MOCK-IX)
+               AND MOCK-LOOKUP-PARA-NAME IS EQUAL TO
+                       MOCK-PARA-NAME(MOCK-IX)
+                   SET MOCK-MATCHED TO TRUE    
+               END-IF
+           END-PERFORM
+           
+      * Expect next token to be HAPPENED or NEVER
+      * Need to skip past variable-length paragraph name
+
+           ADD 1 TO KEYWORD-OFFSET
+           PERFORM 7320-FIND-NEXT-SPACE
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           PERFORM 5060-PARSE-HAPPENED-SPEC
+
+      * Generate statements in TEST-SOURCE to do the verification
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
+           SET STATEMENT-IX TO 1
+
+           MOVE SET-FIND-PARA-MOCK-STMT
+                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           MOVE MOCK-LOOKUP-PARA-NAME TO RAW-VALUE
+           PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               STATEMENT-SPACER             DELIMITED BY SIZE
+               MOVE-VERB                    DELIMITED BY SIZE
+               SINGLE-QUOTE                 DELIMITED BY SIZE
+               RAW-VALUE(1:TEMP-SUB)        DELIMITED BY SIZE
+               SINGLE-QUOTE                 DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               STATEMENT-SPACER             DELIMITED BY SIZE
+               TO-KEYWORD                   DELIMITED BY SIZE
+               'UT-MOCK-FIND-PARA-NAME'     DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           PERFORM 6100-GEN-LOOKUP-MOCK
+           MOVE TEMP-STATEMENT 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           MOVE '           IF UT-MOCK-FOUND' 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           PERFORM 5065-GEN-VERIFY-CODE
+           SET STATEMENT-IX UP BY 1
+
+           MOVE ENDIF-STMT TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           PERFORM 9440-WRITE-GENERATED-STMTS
+           SET SUPPRESS-COPY-SOURCE TO TRUE
+           .
+
+       5060-PARSE-HAPPENED-SPEC.
       *****************************************************************
       * On entry to this paragraph, the current token is HAPPENED or
       * NEVER. Expect next tokens to be one of the following sequences:
-      *      HAPPENED   (if the spec reads NEVER HAPPENED)
-      *      ONCE
-      *      n TIME[S]
+      *      HAPPENED              (if the spec reads NEVER HAPPENED)
+      *      ONCE                  (if the spec reads HAPPENED ONCE)
+      *      n TIME[S]             (if the spec reads HAPPENED n TIMES)
       *      AT LEAST ONCE
       *      AT LEAST n TIME[S]
       *      NO MORE THAN ONCE
       *      NO MORE THAN n TIME[S]   
       *****************************************************************
-
            IF TOKEN(TOKEN-IX) IS EQUAL TO NEVER-KEYWORD
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                MOVE ZERO TO MOCK-TEST-COUNT
@@ -2850,13 +2953,13 @@
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
                        CONTINUE
                    ELSE
-                       PERFORM 5035-DISPLAY-VERIFY-ERROR
+                       PERFORM 5070-DISPLAY-VERIFY-ERROR
                    END-IF
                END-IF
            END-IF        
            .
 
-       5030-GEN-VERIFY-CODE.    
+       5065-GEN-VERIFY-CODE.    
       *****************************************************************
       * Generate VERIFY code common to all types of mocks.
       *****************************************************************
@@ -2917,7 +3020,7 @@
            END-STRING    
            .
 
-       5035-DISPLAY-VERIFY-ERROR.    
+       5070-DISPLAY-VERIFY-ERROR.    
       *****************************************************************
       * Display an informative error message when the program cannot
       * understand a VERIFY specification.
@@ -2928,7 +3031,7 @@
            END-PERFORM
            .
        
-       5040-PROCESS-MOCK-CICS-SPEC.
+       5075-PROCESS-MOCK-CICS-SPEC.
       *****************************************************************
       * Process a specification to mock an EXEC CICS command. 
       * 
@@ -2976,7 +3079,7 @@
 
            END-PERFORM
 
-           PERFORM 5050-STRINGIFY-CICS-KEYWORDS
+           PERFORM 5080-STRINGIFY-CICS-KEYWORDS
 
       * Save the list of CICS keywords for this mock in this program
       * and generate code to save them in the test program.
@@ -3036,7 +3139,7 @@
            PERFORM 9440-WRITE-GENERATED-STMTS
            .
 
-       5050-STRINGIFY-CICS-KEYWORDS.
+       5080-STRINGIFY-CICS-KEYWORDS.
       *****************************************************************
       * Format the list of CICS keywords as a single string with the 
       * keywords separated by spaces. This will be the key for looking
@@ -3095,7 +3198,7 @@
            MOVE TEMP-VALUE TO MOCK-CICS-LOOKUP-KEY          
            .           
 
-       5060-PROCESS-MOCK-PARA-SPEC.
+       5085-PROCESS-MOCK-PARA-SPEC.
       *****************************************************************
       * Process a specification to mock a paragraph. 
       * 
@@ -3104,11 +3207,13 @@
       *     END-MOCK
       *
       * By the time this routine is performed, the keywords MOCK and
-      * CICS have already been processed. 
-      * 
+      * PARA or PARAGRAPH have already been processed. 
       *****************************************************************
            SET MOCK-PARAGRAPH(MOCK-IX) TO TRUE
            MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
+           SET STATEMENT-IX TO 1
+
+      * Next token is the paragraph name     
 
            ADD 1 TO KEYWORD-OFFSET
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
@@ -3121,7 +3226,6 @@
 
            MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
            PERFORM 7950-ENCLOSE-IN-QUOTES
-           SET STATEMENT-IX UP BY 1    
            STRING 
                STATEMENT-SPACER         DELIMITED BY SIZE
                MOVE-VERB                DELIMITED BY SIZE
@@ -3130,22 +3234,22 @@
                'UT-MOCK-FIND-PARA-NAME' DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            END-STRING    
+           SET STATEMENT-IX UP BY 1    
 
+           MOVE SET-FIND-PARA-MOCK-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            SET STATEMENT-IX UP BY 1
+
+           MOVE SET-MOCK-STMT
+                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
            PERFORM 6010-GEN-INIT-ACCESS-COUNT
 
            SET TOKEN-IX UP BY 1
            SET MOCK-STATEMENTS-IX TO 1
            MOVE SPACES TO MOCK-STATEMENTS(MOCK-IX)
            PERFORM 6020-SAVE-REPL-STMTS-FOR-MOCK
-
-           SET STATEMENT-IX TO 1
-           MOVE SET-FIND-PARA-MOCK-STMT
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-
-           SET STATEMENT-IX UP BY 1
-           MOVE SET-MOCK-STMT
-                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
 
            PERFORM 9440-WRITE-GENERATED-STMTS
            . 
@@ -3400,6 +3504,24 @@
                        MOVE ORIGINAL-LINE TO LINE-TO-PARSE
                    END-IF    
                    MOVE KEYWORD-START TO KEYWORD-OFFSET
+               END-IF            
+           END-PERFORM
+           .
+
+       7320-FIND-NEXT-SPACE.
+           IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE
+               SET SPACE-FOUND TO TRUE
+           ELSE    
+               SET NON-SPACE-FOUND TO TRUE
+           END-IF    
+           PERFORM UNTIL SPACE-FOUND
+               PERFORM VARYING KEYWORD-OFFSET FROM KEYWORD-OFFSET BY 1
+                   UNTIL KEYWORD-OFFSET IS GREATER THAN KEYWORD-END
+                      OR LINE-TO-PARSE(KEYWORD-OFFSET:1) 
+                         IS EQUAL TO SPACE
+               END-PERFORM  
+               IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE
+                   SET SPACE-FOUND TO TRUE
                END-IF            
            END-PERFORM
            .
