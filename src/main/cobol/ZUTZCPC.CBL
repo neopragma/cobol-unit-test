@@ -1438,45 +1438,13 @@
                PERFORM 2510-IO-KEYWORD-MATCHED
            ELSE
                PERFORM 2600-CHECK-FOR-EXEC-COMMAND
-      *         SET COPY-SOURCE TO TRUE
-    
-      *--- new code
                IF MOCKABLE-FOUND
                    SET COPY-SOURCE TO TRUE
                ELSE
                    PERFORM 2650-CHECK-FOR-PARA-HEADER
                    SET COPY-SOURCE TO TRUE
                END-IF            
-      *---- end of new code                 
-
            END-IF        
-
-
-      *--- fubar!!!      
-      * Is it an I/O verb?
-      *    IF KEYWORD-MATCHED 
-      *         PERFORM 2510-IO-KEYWORD-MATCHED
-      *         PERFORM 9460-COPY-ORIGINAL-LINE       
-      *         SET SUPPRESS-COPY-SOURCE TO TRUE
-      *     ELSE
-      * Is it a CICS command?     
-      *        PERFORM 2600-CHECK-FOR-EXEC-COMMAND 
-
-      *        IF MOCKABLE-FOUND         
-      *             SET SUPPRESS-COPY-SOURCE TO TRUE  
-      *         ELSE
-
-      *            SET COPY-SOURCE TO TRUE
-      * Is it a paragraph header?   
-      
-      *            PERFORM 2650-CHECK-FOR-PARA-HEADER
-      *             IF MOCKABLE-FOUND         
-      *                 SET SUPPRESS-COPY-SOURCE TO TRUE  
-      *             ELSE         
-      *                 SET COPY-SOURCE TO TRUE
-      *             END-IF          
-      *        END-IF    
-      *    END-IF
 
            IF SUPPRESS-COPY-SOURCE
                SET COPY-SOURCE TO TRUE
