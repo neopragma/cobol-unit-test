@@ -24,7 +24,7 @@
            .                                                                    
                                                                                 
        UT-COMPARE.                                                              
-           SET UT-COMPARE-PASSED TO FALSE                                       
+           SET UT-COMPARE-FAILED TO TRUE                                        
            IF UT-COMPARE-NUMERIC                                                
                IF UT-ACTUAL-NUMERIC IS EQUAL TO UT-EXPECTED-NUMERIC             
                    SET UT-COMPARE-PASSED TO TRUE                                
@@ -40,7 +40,7 @@
        UT-REVERSE-RESULT.                                                       
            IF UT-REVERSE-COMPARE                                                
                IF UT-COMPARE-PASSED                                             
-                   SET UT-COMPARE-PASSED TO FALSE                               
+                   SET UT-COMPARE-FAILED TO TRUE                                
                ELSE                                                             
                    SET UT-COMPARE-PASSED TO TRUE                                
                END-IF                                                           
@@ -83,7 +83,7 @@
               MOVE UT-CONST-ES TO UT-LABEL-EXPECTED-ACCESS-PLURAL               
            END-IF                                                               
                                                                                 
-           SET UT-VERIFY-PASSED TO FALSE                                        
+           SET UT-VERIFY-FAILED TO TRUE                                         
            EVALUATE TRUE                                                        
                WHEN UT-VERIFY-AT-LEAST                                          
                     IF UT-ACTUAL-ACCESSES IS GREATER THAN OR EQUAL TO           
@@ -157,11 +157,14 @@
       *****************************************************************         
       * CREATE OR UPDATE A MOCK SPECIFICATION.                                  
       *****************************************************************         
-           IF UT-FIND-FILE-MOCK                                                 
-               PERFORM UT-SET-FILE-MOCK                                         
-           ELSE                                                                 
-               PERFORM UT-SET-CICS-MOCK                                         
-           END-IF                                                               
+           EVALUATE TRUE                                                        
+               WHEN UT-FIND-FILE-MOCK                                           
+                    PERFORM UT-SET-FILE-MOCK                                    
+               WHEN UT-FIND-CICS-MOCK                                           
+                    PERFORM UT-SET-CICS-MOCK                                    
+               WHEN UT-FIND-PARA-MOCK                                           
+                    PERFORM UT-SET-PARA-MOCK                                    
+           END-EVALUATE                                                         
            .                                                                    
                                                                                 
        UT-SET-FILE-MOCK.                                                        
@@ -195,11 +198,23 @@
            END-IF                                                               
            .                                                                    
                                                                                 
+       UT-SET-PARA-MOCK.                                                        
+           PERFORM UT-LOOKUP-MOCK                                               
+           IF UT-MOCK-FOUND                                                     
+               CONTINUE                                                         
+           ELSE                                                                 
+               ADD 1 TO UT-MOCK-COUNT                                           
+               SET UT-MOCK-IX TO UT-MOCK-COUNT                                  
+               MOVE UT-MOCK-FIND-PARA-NAME                                      
+                   TO UT-MOCK-PARA-NAME(UT-MOCK-IX)                             
+           END-IF                                                               
+           .                                                                    
+                                                                                
        UT-LOOKUP-MOCK.                                                          
       *****************************************************************         
       * LOOK UP A MOCK SPECIFICATION.                                           
       *****************************************************************         
-           SET UT-MOCK-FOUND TO FALSE                                           
+           SET UT-MOCK-NOT-FOUND TO TRUE                                        
            PERFORM VARYING UT-MOCK-IX FROM 1 BY 1                               
                UNTIL UT-MOCK-IX IS GREATER THAN UT-MOCK-MAX                     
                   OR UT-MOCK-FOUND                                              
@@ -215,6 +230,12 @@
                    WHEN UT-FIND-CICS-MOCK                                       
                        IF UT-MOCK-FIND-CICS-KEYWORDS IS EQUAL TO                
                               UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)             
+                           SET UT-MOCK-FOUND TO TRUE                            
+                           CONTINUE                                             
+                       END-IF                                                   
+                   WHEN UT-FIND-PARA-MOCK                                       
+                       IF UT-MOCK-FIND-PARA-NAME IS EQUAL TO                    
+                              UT-MOCK-PARA-NAME(UT-MOCK-IX)                     
                            SET UT-MOCK-FOUND TO TRUE                            
                            CONTINUE                                             
                        END-IF                                                   
