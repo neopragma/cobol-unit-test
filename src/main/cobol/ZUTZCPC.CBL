@@ -58,7 +58,14 @@
                10  FILLER                PIC X(03).
                    88  FD-STATEMENT          VALUE 'FD '.
                10  FILLER                PIC X(07).           
+           05  FILLER REDEFINES SECTION-HEADER.
+               10  PARA-HEADER-AREA      PIC X(04).
+               10  FILLER                PIC X(06).    
            05  FILLER                    PIC X(63).
+       01  FILLER REDEFINES ORIGINAL-LINE.
+           05  FILLER                    PIC X(07).
+           05  PARAGRAPH-NAME            PIC X(31).
+           05  FILLER                    PIC X(42).    
 
        FD  TEST-SOURCE
            DATA RECORD IS TEST-LINE.
@@ -123,9 +130,15 @@
            05  FILLER                     PIC X.
                88  MOCK-MATCHED           VALUE 'Y'.
                88  MOCK-NOT-MATCHED       VALUE 'N'.
+           05  FILLER                     PIC X.
+               88  PARA-MATCHED           VALUE 'Y'.
+               88  PARA-NOT-MATCHED       VALUE 'N'.
+           05  FILLER                     PIC X.
+               88  COMMENT-THE-LINES      VALUE 'Y'.
+               88  COPY-THE-LINES         VALUE 'N'.
            05  MAX-MOCKS                  PIC 9(02) VALUE 10.
            05  MAX-CICS-KEYWORDS          PIC 9(02) VALUE 25.
-           05  MAX-MOCK-CICS-STATEMENTS   PIC 9(02) VALUE 25.
+           05  MAX-MOCK-STATEMENTS   PIC 9(02) VALUE 25.
        01  MOCKS.
            05  MOCK-TEST-COUNT            PIC 9(04).
            05  MOCK-LOOKUP.
@@ -137,6 +150,7 @@
                    88  MOCK-FILE          VALUE 'FILE'.
                    88  MOCK-CICS          VALUE 'CICS'.
                    88  MOCK-SQL           VALUE 'SQL'.
+                   88  MOCK-PARAGRAPH     VALUE 'PARA'.
                10  MOCK-RECORD            PIC X(2048).    
                10  MOCK-DATA              PIC X(3200).
                10  MOCK-FILE-DATA REDEFINES MOCK-DATA.        
@@ -146,11 +160,14 @@
                    15  FILLER             PIC X(3147).
                10  MOCK-CICS-DATA REDEFINES MOCK-DATA.
                    15  MOCK-CICS-KEYWORDS-KEY PIC X(320).
-                   15  MOCK-CICS-STATEMENTS.
-                       20  MOCK-CICS-STATEMENT
+                   15  MOCK-STATEMENTS.
+                       20  MOCK-STATEMENT
                            OCCURS 25 TIMES
-                           INDEXED BY MOCK-CICS-STATEMENTS-IX PIC X(80).  
-                   15  FILLER             PIC X(105).              
+                           INDEXED BY MOCK-STATEMENTS-IX PIC X(80).  
+                   15  FILLER             PIC X(105).          
+               10  MOCK-PARA-DATA REDEFINES MOCK-DATA.
+                   15  MOCK-PARA-NAME     PIC X(31).
+                   15  FILLER             PIC X(3169).      
                10  MOCK-SQL-DATA REDEFINES MOCK-DATA.
                    15  FILLER             PIC X(3200).
 
@@ -399,8 +416,10 @@
            05  IS-KEYWORD                   PIC X(04) VALUE ' IS '.
            05  MOCK-KEYWORD                 PIC X(04) VALUE 'MOCK'.
            05  NEVER-KEYWORD                PIC X(05) VALUE 'NEVER'.
-           05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
            05  NUMERIC-KEYWORD              PIC X(07) VALUE 'NUMERIC'.
+           05  ONCE-KEYWORD                 PIC X(04) VALUE 'ONCE'.
+           05  PARA-KEYWORD                 PIC X(04) VALUE 'PARA'.
+           05  PARAGRAPH-KEYWORD            PIC X(09) VALUE 'PARAGRAPH'.
            05  SQL-KEYWORD                  PIC X(03) VALUE 'SQL'.
            05  TO-KEYWORD                   PIC X(04) VALUE ' TO '.
            05  TRUE-KEYWORD                 PIC X(04) VALUE 'TRUE'.
@@ -416,6 +435,7 @@
 
            05  SINGLE-QUOTE                 PIC X(01) VALUE "'".
            05  COMMENT-MARKER               PIC X(01) VALUE '*'.
+           05  PERIOD                       PIC X(01) VALUE '.'.
            05  STATEMENT-SPACER             PIC X(11) VALUE SPACES.
            05  PARAGRAPH-END-MARKER         PIC X(12) 
                                             VALUE '           .'.
@@ -447,6 +467,8 @@
                '           SET UT-FIND-FILE-MOCK TO TRUE'.        
            05  SET-FIND-CICS-MOCK-STMT      PIC X(80) VALUE
                '           SET UT-FIND-CICS-MOCK TO TRUE'.        
+           05  SET-FIND-PARA-MOCK-STMT      PIC X(80) VALUE
+               '           SET UT-FIND-PARA-MOCK TO TRUE'.        
 
       *****************************************************************
       * These definitions are used to identify CICS reserved words when
@@ -913,6 +935,9 @@
            05  FILLER                    PIC X(01) VALUE 'N'.
                88  STRING-FOUND                VALUE 'Y'.
                88  STRING-NOT-FOUND            VALUE 'N'.
+           05  FILLER                    PIC X(01) VALUE 'N'.
+               88  MOCKABLE-FOUND              VALUE 'Y'.
+               88  MOCKABLE-NOT-FOUND          VALUE 'N'.
 
       *****************************************************************
       * Areas to build COPY statements to insert in the test program.
@@ -1374,11 +1399,11 @@
       *****************************************************************
       * First check to see if the current source line is potentially a
       * mocked file I/O statement. If not then see if it is potentially
-      * a mocked EXEC command.
+      * a mocked EXEC command. If not then see if it is potentially a
+      * mocked paragraph header.
       *
-      * Replace an IO statement for a mocked file with the code
-      * corresponding to the MOCK specification.
-      * If the file is not mocked, copy the IO statement as-is.
+      * Replace any mocked statements with the COBOL source statements
+      * defined in the MOCK specification.
       *
       * File definition information has already been parsed from the
       * ORIGINAL-SOURCE file, and MOCK specifications have been
@@ -1409,16 +1434,39 @@
                END-IF                    
            END-PERFORM
 
-           IF KEYWORD-MATCHED 
+           IF KEYWORD-MATCHED
                PERFORM 2510-IO-KEYWORD-MATCHED
            ELSE
-
-      * Current source line is not a mocked I/O statement.
-      * See if it is a mocked EXEC command.
-
                PERFORM 2600-CHECK-FOR-EXEC-COMMAND
-               SET COPY-SOURCE TO TRUE   
-           END-IF
+               SET COPY-SOURCE TO TRUE
+           END-IF        
+
+
+      *--- fubar!!!      
+      * Is it an I/O verb?
+      *    IF KEYWORD-MATCHED 
+      *         PERFORM 2510-IO-KEYWORD-MATCHED
+      *         PERFORM 9460-COPY-ORIGINAL-LINE       
+      *         SET SUPPRESS-COPY-SOURCE TO TRUE
+      *     ELSE
+      * Is it a CICS command?     
+      *        PERFORM 2600-CHECK-FOR-EXEC-COMMAND 
+
+      *        IF MOCKABLE-FOUND         
+      *             SET SUPPRESS-COPY-SOURCE TO TRUE  
+      *         ELSE
+
+      *            SET COPY-SOURCE TO TRUE
+      * Is it a paragraph header?   
+      
+      *            PERFORM 2650-CHECK-FOR-PARA-HEADER
+      *             IF MOCKABLE-FOUND         
+      *                 SET SUPPRESS-COPY-SOURCE TO TRUE  
+      *             ELSE         
+      *                 SET COPY-SOURCE TO TRUE
+      *             END-IF          
+      *        END-IF    
+      *    END-IF
 
            IF SUPPRESS-COPY-SOURCE
                SET COPY-SOURCE TO TRUE
@@ -1585,9 +1633,6 @@
       * as-is.
       * Match on either EXEC or EXECUTE.
       *****************************************************************
-
-      *     SET COPY-SOURCE TO TRUE
-
            SET TOKEN-IX TO 1
            PERFORM VARYING EXEC-KEYWORD-IX FROM 1 BY 1
                UNTIL EXEC-KEYWORD-IX IS GREATER THAN 2
@@ -1598,7 +1643,6 @@
                MOVE EXEC-KEYWORD-LENGTH(EXEC-KEYWORD-IX) 
                     TO KEYWORD-MATCH-LENGTH
                PERFORM 7400-MATCH-KEYWORD
-
            END-PERFORM
 
       * If EXEC or EXECUTE was found, next token will be CICS or SQL
@@ -1607,6 +1651,7 @@
            ADD EXEC-KEYWORD-ADJUST(EXEC-KEYWORD-IX) TO KEYWORD-OFFSET
 
            IF KEYWORD-MATCHED
+               SET MOCKABLE-FOUND TO TRUE
                PERFORM 7640-SET-SAVE-ORIG-LINES
                PERFORM 7650-SAVE-ORIG-LINE
 
@@ -1620,6 +1665,8 @@
                    WHEN OTHER
                         CONTINUE
                END-EVALUATE
+           ELSE
+               SET MOCKABLE-NOT-FOUND TO TRUE    
            END-IF              
            SET NO-SAVE-ORIGINAL-LINES TO TRUE       
            .
@@ -1680,35 +1727,79 @@
       * lines in the program under test. Otherwise, copy the original
       * lines unchanged.
 
-           SET NO-SAVE-ORIGINAL-LINES TO TRUE
-           PERFORM VARYING SAVED-LINE-IX FROM 1 BY 1
-                   UNTIL SAVED-LINE-IX 
-                         IS GREATER THAN MAX-SAVED-LINES
-                      OR SAVED-LINE(SAVED-LINE-IX)   
-                         IS EQUAL TO SPACES
-               MOVE SAVED-LINE(SAVED-LINE-IX) TO ORIGINAL-LINE
-               IF MOCK-MATCHED
-                   PERFORM 9465-COMMENT-ORIGINAL-LINE
-               ELSE
-                   PERFORM 9460-COPY-ORIGINAL-LINE
-               END-IF        
-           END-PERFORM    
+           IF MOCK-MATCHED
+               SET COMMENT-THE-LINES TO TRUE
+           ELSE
+               SET COPY-THE-LINES TO TRUE
+           END-IF        
+           PERFORM 2900-COPY-OR-COMMENT-LINES
 
       * Generate code in the test program to perform the specified
       * behavior for this mock.
 
-           PERFORM VARYING MOCK-CICS-STATEMENTS-IX FROM 1 BY 1
-                   UNTIL MOCK-CICS-STATEMENTS-IX IS GREATER THAN
-                         MAX-MOCK-CICS-STATEMENTS
-                      OR MOCK-CICS-STATEMENT
-                         (MOCK-IX, MOCK-CICS-STATEMENTS-IX) 
-                         IS EQUAL TO SPACES
-               MOVE MOCK-CICS-STATEMENT
-                         (MOCK-IX, MOCK-CICS-STATEMENTS-IX)
-                   TO GENERATED-SOURCE-STATEMENT
-                         (MOCK-CICS-STATEMENTS-IX)          
-           END-PERFORM                 
-           PERFORM 9440-WRITE-GENERATED-STMTS    
+           PERFORM 6030-WRITE-GENERATED-STMTS
+           .
+
+       2650-CHECK-FOR-PARA-HEADER.
+      *****************************************************************
+      * Replace a paragraph with the code corresponding to the 
+      * MOCK specification. If the paragraph is not mocked, copy it 
+      * as-is.
+      * Match on either PARA or PARAGRAPH.
+      *****************************************************************
+           SET MOCKABLE-NOT-FOUND TO TRUE
+      *    IF PARA-HEADER-AREA IS EQUAL TO SPACES
+      *         CONTINUE
+      *     ELSE
+      *         PERFORM 7640-SET-SAVE-ORIG-LINES
+      *         PERFORM 2651-PROCESS-MOCKED-PARAGRAPH
+      *     END-IF        
+           .
+
+       2651-PROCESS-MOCKED-PARAGRAPH.
+
+      * See if this paragraph is to be mocked.
+
+           SET PARA-NOT-MATCHED TO TRUE
+           PERFORM VARYING MOCK-IX FROM 1 BY 1
+                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
+                      OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
+                      OR PARA-MATCHED
+
+               IF MOCK-PARAGRAPH(MOCK-IX)
+                   IF MOCK-PARA-NAME(MOCK-IX)
+                           IS EQUAL TO PARAGRAPH-NAME
+                       SET PARA-MATCHED TO TRUE 
+                   END-IF
+               END-IF    
+           END-PERFORM           
+           SET MOCK-IX DOWN BY 1
+
+      * If this paragraph is to be mocked, then comment out the
+      * lines in the program under test. Otherwise, copy the original
+      * lines unchanged.
+
+           IF PARA-MATCHED
+               SET MOCK-MATCHED TO TRUE
+               SET COMMENT-THE-LINES TO TRUE
+           ELSE
+               SET COPY-THE-LINES TO TRUE
+               SET MOCK-NOT-MATCHED TO TRUE
+           END-IF        
+           PERFORM 2900-COPY-OR-COMMENT-LINES
+
+      * Generate the source lines to support this mock in the 
+      * test program.
+
+           PERFORM 6030-WRITE-GENERATED-STMTS
+
+
+      *---- resume here
+
+
+           IF PARA-MATCHED
+               SET MOCKABLE-FOUND TO TRUE
+           END-IF    
            .
 
        2700-PROCESS-SQL-COMMAND.    
@@ -1716,6 +1807,26 @@
       * EXEC SQL was found. Future implementation.
       *****************************************************************
            .
+
+       2900-COPY-OR-COMMENT-LINES.
+      *****************************************************************
+      * If current statement is to be mocked, comment the original
+      * source lines in the output file; otherwise, copy them.
+      *****************************************************************
+           SET NO-SAVE-ORIGINAL-LINES TO TRUE
+           PERFORM VARYING SAVED-LINE-IX FROM 1 BY 1
+                   UNTIL SAVED-LINE-IX 
+                         IS GREATER THAN MAX-SAVED-LINES
+                      OR SAVED-LINE(SAVED-LINE-IX)   
+                         IS EQUAL TO SPACES
+               MOVE SAVED-LINE(SAVED-LINE-IX) TO ORIGINAL-LINE
+               IF COMMENT-THE-LINES
+                   PERFORM 9465-COMMENT-ORIGINAL-LINE
+               ELSE
+                   PERFORM 9460-COPY-ORIGINAL-LINE
+               END-IF        
+           END-PERFORM    
+           .    
 
       *****************************************************************
       * 4xxx- 5xxx-
@@ -2300,6 +2411,9 @@
                     PERFORM 4900-PROCESS-MOCK-FILE-SPEC
                WHEN TOKEN(TOKEN-IX) IS EQUAL TO CICS-KEYWORD
                     PERFORM 5040-PROCESS-MOCK-CICS-SPEC
+               WHEN TOKEN(TOKEN-IX) IS EQUAL TO PARA-KEYWORD
+                                             OR PARAGRAPH-KEYWORD
+                    PERFORM 5060-PROCESS-MOCK-PARA-SPEC                              
                WHEN OTHER
                     SET MOCK-SYNTAX-ERROR TO TRUE     
            END-EVALUATE
@@ -2401,17 +2515,8 @@
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
            END-IF    
 
-      * Reset the access count for the 'new' mock
-
            SET STATEMENT-IX UP BY 1
-           STRING
-               STATEMENT-SPACER               DELIMITED BY SIZE
-               MOVE-VERB                      DELIMITED BY SIZE
-               ZERO-KEYWORD                   DELIMITED BY SIZE
-               TO-KEYWORD                     DELIMITED BY SIZE
-               'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)' DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-           END-STRING    
+           PERFORM 6010-GEN-INIT-ACCESS-COUNT
 
            EVALUATE TRUE
 
@@ -2913,38 +3018,13 @@
           
                MOVE DEFAULT-CICS-STATEMENT
                        (DEFAULT-CICS-STATEMENT-IX)
-                   TO MOCK-CICS-STATEMENT
+                   TO MOCK-STATEMENT
                        (MOCK-IX, DEFAULT-CICS-STATEMENT-IX) 
            END-PERFORM              
 
            SET TOKEN-IX UP BY 1
-           SET MOCK-CICS-STATEMENTS-IX TO DEFAULT-CICS-STATEMENT-IX
-           PERFORM VARYING MOCK-CICS-STATEMENTS-IX 
-                   FROM MOCK-CICS-STATEMENTS-IX BY 1
-                   UNTIL MOCK-CICS-STATEMENTS-IX IS GREATER THAN 
-                         MAX-MOCK-CICS-STATEMENTS
-                      OR TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
-                      OR END-OF-TEST-CASES
-                      OR SUPPRESS-TEST-CASE-READ
-               PERFORM 7100-NEXT-TOKEN-TEST-CASES
-               IF TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
-                   CONTINUE
-               ELSE     
-                   MOVE TOKEN(TOKEN-IX) TO CANDIDATE-TEST-KEYWORD
-                   IF IS-A-TEST-KEYWORD
-                       SET SUPPRESS-TEST-CASE-READ TO TRUE
-                   ELSE    
-                       INSPECT TEST-CASE-LINE
-                           REPLACING ALL SINGLE-QUOTE BY '"'
-                       MOVE TEST-CASE-LINE TO RAW-VALUE
-                       PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
-                       MOVE RAW-VALUE(1:TEMP-SUB) TO MOCK-CICS-STATEMENT
-                           (MOCK-IX, MOCK-CICS-STATEMENTS-IX)    
-                       PERFORM 9350-READ-TEST-CASES
-                       MOVE KEYWORD-START TO KEYWORD-OFFSET
-                   END-IF    
-               END-IF    
-           END-PERFORM
+           SET MOCK-STATEMENTS-IX TO DEFAULT-CICS-STATEMENT-IX
+           PERFORM 6020-SAVE-REPL-STMTS-FOR-MOCK
 
            SET STATEMENT-IX UP BY 1
            MOVE SET-FIND-CICS-MOCK-STMT
@@ -3015,6 +3095,164 @@
            END-PERFORM        
            MOVE TEMP-VALUE TO MOCK-CICS-LOOKUP-KEY          
            .           
+
+       5060-PROCESS-MOCK-PARA-SPEC.
+      *****************************************************************
+      * Process a specification to mock a paragraph. 
+      * 
+      *     MOCK PARA[GRAPH]
+      *         [any Cobol statements]
+      *     END-MOCK
+      *
+      * By the time this routine is performed, the keywords MOCK and
+      * CICS have already been processed. 
+      * 
+      *****************************************************************
+           SET MOCK-PARAGRAPH(MOCK-IX) TO TRUE
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
+
+           ADD 1 TO KEYWORD-OFFSET
+           PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+           STRING 
+               TOKEN(TOKEN-IX)          DELIMITED BY SPACE
+               PERIOD                   DELIMITED BY SIZE
+               INTO MOCK-PARA-NAME(MOCK-IX)
+           END-STRING    
+
+           MOVE TOKEN(TOKEN-IX) TO RAW-VALUE
+           PERFORM 7950-ENCLOSE-IN-QUOTES
+           SET STATEMENT-IX UP BY 1    
+           STRING 
+               STATEMENT-SPACER         DELIMITED BY SIZE
+               MOVE-VERB                DELIMITED BY SIZE
+               QUOTED-VALUE             DELIMITED BY SPACE
+               TO-KEYWORD               DELIMITED BY SIZE
+               'UT-MOCK-FIND-PARA-NAME' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+
+           SET STATEMENT-IX UP BY 1
+           PERFORM 6010-GEN-INIT-ACCESS-COUNT
+
+           SET TOKEN-IX UP BY 1
+           SET MOCK-STATEMENTS-IX TO 1
+           PERFORM 6020-SAVE-REPL-STMTS-FOR-MOCK
+
+           SET STATEMENT-IX TO 1
+           MOVE SET-FIND-PARA-MOCK-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           SET STATEMENT-IX UP BY 1
+           MOVE SET-MOCK-STMT
+                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+
+           PERFORM 9440-WRITE-GENERATED-STMTS
+           . 
+
+       6010-GEN-INIT-ACCESS-COUNT.
+      *****************************************************************
+      * Generate code for TEST-SOURCE to initialize the access count
+      * for a mock.
+      *****************************************************************
+           STRING
+               STATEMENT-SPACER               DELIMITED BY SIZE
+               MOVE-VERB                      DELIMITED BY SIZE
+               ZERO-KEYWORD                   DELIMITED BY SIZE
+               TO-KEYWORD                     DELIMITED BY SIZE
+               'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING    
+           .
+
+       6020-SAVE-REPL-STMTS-FOR-MOCK.
+      *****************************************************************
+      * Generate the replacement COBOL source statements for a MOCK.
+      *
+      * Assumptions:
+      *
+      * This is called during processing of a MOCK specification that
+      * allows replacement COBOL statements to be inserted into the
+      * test program, such as MOCK CICS or MOCK PARAGRAPH.
+      *
+      * All input statements from the unit test file up to the next
+      * END-MOCK statement will be inserted into the test program.
+      *
+      * Be sure TOKEN-IX and MOCK-STATEMENTS-IX are initialized
+      * prior to performing this paragraph.
+      *****************************************************************
+           MOVE SPACES TO MOCK-STATEMENTS(MOCK-IX)
+
+      * If last token was END-MOCK, then there are no substitution
+      * source lines to be written to the output file.
+
+           IF TOKEN(TOKEN-IX - 1) IS EQUAL TO END-MOCK-KEYWORD
+               CONTINUE
+           ELSE    
+               PERFORM 6021-EXTRACT-REPL-STMTS
+           END-IF
+           .
+
+       6021-EXTRACT-REPL-STMTS.           
+           PERFORM VARYING MOCK-STATEMENTS-IX 
+                   FROM MOCK-STATEMENTS-IX BY 1
+                   UNTIL MOCK-STATEMENTS-IX IS GREATER THAN 
+                         MAX-MOCK-STATEMENTS
+                      OR TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
+                      OR END-OF-TEST-CASES
+                      OR SUPPRESS-TEST-CASE-READ
+
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+
+      *----
+           DISPLAY 'Token is: ' TOKEN(TOKEN-IX)
+      *----     
+
+               IF TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
+                   CONTINUE
+               ELSE     
+                   MOVE TOKEN(TOKEN-IX) TO CANDIDATE-TEST-KEYWORD
+                   IF IS-A-TEST-KEYWORD 
+                       SET SUPPRESS-TEST-CASE-READ TO TRUE
+                   ELSE    
+                       INSPECT TEST-CASE-LINE
+                           REPLACING ALL SINGLE-QUOTE BY '"'
+                       MOVE TEST-CASE-LINE TO RAW-VALUE
+                       PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
+                       MOVE RAW-VALUE(1:TEMP-SUB) TO MOCK-STATEMENT
+                           (MOCK-IX, MOCK-STATEMENTS-IX)    
+
+      *----
+           DISPLAY 'Saved: ' MOCK-STATEMENT(MOCK-IX, MOCK-STATEMENTS-IX)
+      *----
+
+                       PERFORM 9350-READ-TEST-CASES  
+                       MOVE KEYWORD-START TO KEYWORD-OFFSET
+                   END-IF    
+               END-IF    
+           END-PERFORM
+           .
+
+       6030-WRITE-GENERATED-STMTS.    
+      *****************************************************************
+      * Write the source statements that express the defined behavior
+      * of a mock into TEST-SOURCE. 
+      *****************************************************************
+           IF MOCK-MATCHED
+               PERFORM VARYING MOCK-STATEMENTS-IX FROM 1 BY 1
+                       UNTIL MOCK-STATEMENTS-IX IS GREATER THAN
+                             MAX-MOCK-STATEMENTS
+                          OR MOCK-STATEMENT
+                             (MOCK-IX, MOCK-STATEMENTS-IX) 
+                             IS EQUAL TO SPACES
+                   MOVE MOCK-STATEMENT
+                             (MOCK-IX, MOCK-STATEMENTS-IX)
+                       TO GENERATED-SOURCE-STATEMENT
+                             (MOCK-STATEMENTS-IX)          
+               END-PERFORM                 
+               PERFORM 9440-WRITE-GENERATED-STMTS    
+           END-IF
+           .     
 
        6100-GEN-LOOKUP-MOCK.
       *****************************************************************
@@ -3625,7 +3863,7 @@
                SET BEYOND-PROCEDURE-HEADER TO TRUE
            END-IF    
 
-               WRITE TEST-LINE
+           WRITE TEST-LINE
 
            EVALUATE TRUE
                WHEN TEST-SOURCE-STATUS-OK
@@ -3683,6 +3921,7 @@
                    END-IF
       *         END-PERFORM                      
            END-PERFORM        
+           INITIALIZE GENERATED-SOURCE-STATEMENTS
            .
 
        9450-WRITE-COPY-LINE.
