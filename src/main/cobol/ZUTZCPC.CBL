@@ -1438,7 +1438,17 @@
                PERFORM 2510-IO-KEYWORD-MATCHED
            ELSE
                PERFORM 2600-CHECK-FOR-EXEC-COMMAND
-               SET COPY-SOURCE TO TRUE
+      *         SET COPY-SOURCE TO TRUE
+    
+      *--- new code
+               IF MOCKABLE-FOUND
+                   SET COPY-SOURCE TO TRUE
+               ELSE
+                   PERFORM 2650-CHECK-FOR-PARA-HEADER
+                   SET COPY-SOURCE TO TRUE
+               END-IF            
+      *---- end of new code                 
+
            END-IF        
 
 
@@ -1742,24 +1752,23 @@
 
        2650-CHECK-FOR-PARA-HEADER.
       *****************************************************************
-      * Replace a paragraph with the code corresponding to the 
-      * MOCK specification. If the paragraph is not mocked, copy it 
-      * as-is.
-      * Match on either PARA or PARAGRAPH.
+      * See if we have read a paragraph header line from 
+      * ORIGINAL-SOURCE.
       *****************************************************************
-           SET MOCKABLE-NOT-FOUND TO TRUE
-      *    IF PARA-HEADER-AREA IS EQUAL TO SPACES
-      *         CONTINUE
-      *     ELSE
-      *         PERFORM 7640-SET-SAVE-ORIG-LINES
-      *         PERFORM 2651-PROCESS-MOCKED-PARAGRAPH
-      *     END-IF        
+          SET MOCKABLE-NOT-FOUND TO TRUE
+          IF PARA-HEADER-AREA IS EQUAL TO SPACES
+               CONTINUE
+           ELSE
+               PERFORM 7640-SET-SAVE-ORIG-LINES
+               PERFORM 2651-CHECK-FOR-MOCKED-PARA
+           END-IF        
            .
 
-       2651-PROCESS-MOCKED-PARAGRAPH.
-
-      * See if this paragraph is to be mocked.
-
+       2651-CHECK-FOR-MOCKED-PARA.
+      *****************************************************************
+      * We are looking at a paragraph header in ORIGINAL-SOURCE.
+      * See if the paragraph was specified in a MOCK.
+      *****************************************************************
            SET PARA-NOT-MATCHED TO TRUE
            PERFORM VARYING MOCK-IX FROM 1 BY 1
                    UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
@@ -1775,22 +1784,43 @@
            END-PERFORM           
            SET MOCK-IX DOWN BY 1
 
-      * If this paragraph is to be mocked, then comment out the
-      * lines in the program under test. Otherwise, copy the original
-      * lines unchanged.
-
            IF PARA-MATCHED
-               SET MOCK-MATCHED TO TRUE
-               SET COMMENT-THE-LINES TO TRUE
+               PERFORM 2652-PROCESS-MOCKED-PARA
            ELSE
-               SET COPY-THE-LINES TO TRUE
+      * This is not the paragraph you're looking for. Move along.     
                SET MOCK-NOT-MATCHED TO TRUE
+               SET MOCKABLE-NOT-FOUND TO TRUE
+               SET COPY-THE-LINES TO TRUE
+               PERFORM 2900-COPY-OR-COMMENT-LINES
            END-IF        
+           .
+
+       2652-PROCESS-MOCKED-PARA.      
+      *****************************************************************
+      * Comment the original source lines and substitute the source
+      * lines specified for this mocked paragraph.
+      *****************************************************************
+           SET MOCK-MATCHED TO TRUE
+           SET MOCKABLE-FOUND TO TRUE
+
+      * Consume original source lines through the end of the mocked
+      * paragraph. Echo the paragraph header and ending period line
+      * (if any) and comment the rest of the lines. We currently have
+      * the paragraph header line in the input buffer.
+
+           WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
+           WRITE TEST-LINE FROM ORIGINAL-LINE
+           PERFORM 7640-SET-SAVE-ORIG-LINES
+
+           MOVE SPACES TO ORIGINAL-LINE
+           PERFORM UNTIL ORIGINAL-SOURCE-END-OF-FILE
+                      OR PARA-HEADER-AREA NOT EQUAL SPACES
+                      OR ORIGINAL-LINE(1:12) EQUAL PARAGRAPH-END-MARKER
+               PERFORM 9250-READ-ORIGINAL-SOURCE
+           END-PERFORM           
+
+           SET COMMENT-THE-LINES TO TRUE
            PERFORM 2900-COPY-OR-COMMENT-LINES
-
-      * Generate the source lines to support this mock in the 
-      * test program.
-
            PERFORM 6030-WRITE-GENERATED-STMTS
 
 
@@ -3012,6 +3042,7 @@
       * Set EIBRESP and EIBRESP2 to zero by default before the
       * user-specified Cobol statements.
 
+           MOVE SPACES TO MOCK-STATEMENTS(MOCK-IX)
            PERFORM VARYING DEFAULT-CICS-STATEMENT-IX FROM 1 BY 1
                    UNTIL DEFAULT-CICS-STATEMENT-IX
                          IS GREATER THAN DEFAULT-CICS-STATEMENT-COUNT
@@ -3137,6 +3168,7 @@
 
            SET TOKEN-IX UP BY 1
            SET MOCK-STATEMENTS-IX TO 1
+           MOVE SPACES TO MOCK-STATEMENTS(MOCK-IX)
            PERFORM 6020-SAVE-REPL-STMTS-FOR-MOCK
 
            SET STATEMENT-IX TO 1
@@ -3181,7 +3213,6 @@
       * Be sure TOKEN-IX and MOCK-STATEMENTS-IX are initialized
       * prior to performing this paragraph.
       *****************************************************************
-           MOVE SPACES TO MOCK-STATEMENTS(MOCK-IX)
 
       * If last token was END-MOCK, then there are no substitution
       * source lines to be written to the output file.
@@ -3203,11 +3234,6 @@
                       OR SUPPRESS-TEST-CASE-READ
 
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-      *----
-           DISPLAY 'Token is: ' TOKEN(TOKEN-IX)
-      *----     
-
                IF TOKEN(TOKEN-IX) IS EQUAL TO END-MOCK-KEYWORD
                    CONTINUE
                ELSE     
@@ -3221,11 +3247,6 @@
                        PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
                        MOVE RAW-VALUE(1:TEMP-SUB) TO MOCK-STATEMENT
                            (MOCK-IX, MOCK-STATEMENTS-IX)    
-
-      *----
-           DISPLAY 'Saved: ' MOCK-STATEMENT(MOCK-IX, MOCK-STATEMENTS-IX)
-      *----
-
                        PERFORM 9350-READ-TEST-CASES  
                        MOVE KEYWORD-START TO KEYWORD-OFFSET
                    END-IF    

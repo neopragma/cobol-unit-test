@@ -6,11 +6,23 @@
 
            BEFORE-EACH
                MOVE SPACES TO INPUT-RECORD
+               MOVE 'ORIG' TO WS-FIELD-A
+               MOVE 'ORIG' TO WS-FIELD-B
            END-BEFORE    
 
            AFTER-EACH
                MOVE SPACES TO INPUT-RECORD
            END-AFTER    
+   
+           TESTCASE 'IT MOCKS PARAGRAPH 1000-PARA-A'
+           MOCK
+               PARAGRAPH 1000-PARA-A
+               MOVE 'A2' TO WS-FIELD-A
+               MOVE 'A3' TO WS-FIELD-B
+           END-MOCK    
+           PERFORM 1000-PARA-A
+           EXPECT WS-FIELD-A TO BE 'A2'
+           EXPECT WS-FIELD-B TO BE 'A3'
 
            TESTCASE 'IT MOCKS SUCCESSFUL FILE OPEN INPUT' 
            MOCK

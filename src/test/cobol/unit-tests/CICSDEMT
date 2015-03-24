@@ -25,7 +25,7 @@
            MOCK
                CICS WRITE DATASET('YOURFILE') 
                     RIDFLD('AAAAA')
-                    FROM(WS-RECORD)
+                    FROM(WS-RECORD)          
            END-MOCK    
            PERFORM 0200-WRITE-DATASET
            EXPECT EIBRESP TO BE NUMERIC ZERO

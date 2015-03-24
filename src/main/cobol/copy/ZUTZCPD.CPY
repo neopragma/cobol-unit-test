@@ -157,11 +157,14 @@
       *****************************************************************
       * CREATE OR UPDATE A MOCK SPECIFICATION.
       *****************************************************************
-           IF UT-FIND-FILE-MOCK
-               PERFORM UT-SET-FILE-MOCK
-           ELSE
-               PERFORM UT-SET-CICS-MOCK    
-           END-IF    
+           EVALUATE TRUE
+               WHEN UT-FIND-FILE-MOCK
+                    PERFORM UT-SET-FILE-MOCK
+               WHEN UT-FIND-CICS-MOCK
+                    PERFORM UT-SET-CICS-MOCK
+               WHEN UT-FIND-PARA-MOCK
+                    PERFORM UT-SET-PARA-MOCK          
+           END-EVALUATE
            .
 
        UT-SET-FILE-MOCK.
@@ -195,6 +198,18 @@
            END-IF
            .    
 
+       UT-SET-PARA-MOCK.
+           PERFORM UT-LOOKUP-MOCK
+           IF UT-MOCK-FOUND
+               CONTINUE
+           ELSE
+               ADD 1 TO UT-MOCK-COUNT
+               SET UT-MOCK-IX TO UT-MOCK-COUNT
+               MOVE UT-MOCK-FIND-PARA-NAME
+                   TO UT-MOCK-PARA-NAME(UT-MOCK-IX)
+           END-IF            
+           .
+
        UT-LOOKUP-MOCK.
       *****************************************************************
       * LOOK UP A MOCK SPECIFICATION.
@@ -217,7 +232,13 @@
                               UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
                            SET UT-MOCK-FOUND TO TRUE
                            CONTINUE
-                       END-IF            
+                       END-IF         
+                   WHEN UT-FIND-PARA-MOCK
+                       IF UT-MOCK-FIND-PARA-NAME IS EQUAL TO
+                              UT-MOCK-PARA-NAME(UT-MOCK-IX)
+                           SET UT-MOCK-FOUND TO TRUE
+                           CONTINUE
+                       END-IF               
                END-EVALUATE
            END-PERFORM    
            SET UT-MOCK-IX DOWN BY 1

@@ -36,6 +36,10 @@
            05  WS-INPUT-RECORD        PIC X(200).
            05  WS-OUTPUT-RECORD       PIC X(200).    
 
+       01  WS-TEST-AREAS.
+           05  WS-FIELD-A             PIC X(04) VALUE 'ORIG'.    
+           05  WS-FIELD-B             PIC X(04) VALUE 'ORIG'.    
+
        PROCEDURE DIVISION.
            
 
@@ -47,10 +51,13 @@
            READ INPUT-FILE
            .    
 
-       0500-WRITE-OUTPUT-FILE.
-      *     WRITE OUTPUT-RECORD
+       1000-PARA-A.
+           MOVE 'A1' TO WS-FIELD-A
            .
 
+       2000-PARA-B.
+           MOVE 'B1' TO WS-FIELD-B
+           .
 
 
        9999-END.
