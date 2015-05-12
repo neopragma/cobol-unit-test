@@ -13,4 +13,6 @@ target
 
 # Windows specific
 
+*.dll
 *.exe
+*.so
