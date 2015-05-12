@@ -10,3 +10,7 @@
 
 target
 *TESTPRG*
+
+# Windows specific
+
+*.exe
