@@ -10,9 +10,9 @@
 
 target
 *TESTPRG*
+*.so
 
 # Windows specific
 
 *.dll
 *.exe
-*.so
