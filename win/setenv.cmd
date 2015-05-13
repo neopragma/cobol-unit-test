@@ -21,6 +21,7 @@ REM COB_LIBRARY_PATH Used by GNU Cobol to locate .dll files
 REM =====================================================================
 
 set "VERSION=0.2.1 May 12 2015"
+set "COBOL=true"
 
 REM Settings for GnuCOBOL
 
