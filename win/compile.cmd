@@ -23,13 +23,24 @@ rem ============================================================================
 rem Process command-line arguments
 rem ================================================================================
 
-set CLEAN=
+set CLEAN=false
 set SOURCE=
-set SUBPROGRAM=
-set TEST=
+set SUBPROGRAM=false
+set TEST=false
+set PROGRAMNAME=
+
 if (%1)==() goto showhelp
-:getopts
-if (%1)==() goto getoptsx
+:cmdline
+
+rem If the next item does not begin with a dash, assume it''s the program name
+
+echo.%~1 | findstr /r "^-" 1>nul
+if errorlevel 1 (
+  set PROGRAMNAME=%~1
+  shift
+)
+
+if (%1)==() goto cmdlinex
 if /I "%~1"=="-h" goto showhelp
 if /I "%~1"=="--help" goto showhelp
 if /I "%~1"=="-c" set CLEAN=true & shift
@@ -38,42 +49,36 @@ if /I "%~1"=="-s" set SUBPROGRAM=true & shift
 if /I "%~1"=="--subprogram" set SUBPROGRAM=true & shift
 if /I "%~1"=="-t" set TEST=true & shift
 if /I "%~1"=="--test" set TEST=true & shift
-if not (%1)==() goto getopts
-:getoptsx
 
+if not (%1)==() goto cmdline
+:cmdlinex
+
+echo PROGRAMNAME is %PROGRAMNAME%
 
 if /I %TEST% equ true (set SOURCE=%TESTSRC%) else (set SOURCE=%MAINSRC%)  
 
-echo SOURCE is %SOURCE%
-echo SUBPROGRAM is %SUBPROGRAM%
-
 if /I %SUBPROGRAM% equ true (
-
-  echo in if block
   set SUFFIX=.dll
   set COBOPTS=^-m
 ) else (
-  echo in else block
   set SUFFIX=
   set COBOPTS=^-x
 )
 
+if /I %CLEAN% equ true (
 
-echo SUFFIX is %SUFFIX%
-echo COBOPTS is %COBOPTS%
+  echo CLEAN is true
+
+  echo filename is %TARGET%\%PROGRAMNAME%%SUFFIX%
+
+  if exist %TARGET%\%PROGRAMNAME%%SUFFIX% (
+    del %TARGET%\%PROGRAMNAME%%SUFFIX%
+  )
+)
 
 goto eof
 
 
-
-
-if [ $SUBPROGRAM == true ]; then        # make a dynamic link module
-  SUFFIX='.so'
-  COBOPTS='-m'
-else                                    # make an executable
-  SUFFIX=
-  COBOPTS='-x'
-fi
 
                                         # remove existing output file, if any
 if [ $CLEAN == true ] && [ -e "$TARGET/${1}${SUFFIX}" ]; then
