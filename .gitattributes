@@ -1,4 +1,4 @@
 # .gitattributes file for cobol-unit-test project
 
-* text=auto
+* text=lf
 *.cmd text eol=crlf
