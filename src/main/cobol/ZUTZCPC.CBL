@@ -50,10 +50,14 @@
                88  FILE-SECTION-HEADER       VALUE 'FILE SECTI'.
                88  WORKING-STORAGE-HEADER    VALUE 'WORKING-ST'.
                88  PROCEDURE-DIVISION-HEADER VALUE 'PROCEDURE '.
-           05  FILLER REDEFINES SECTION-HEADER.
-               10  FILLER                PIC X(06).
-                   88  SELECT-STATEMENT      VALUE 'SELECT'.
-               10  FILLER                PIC X(04).
+
+      *---- SELECT will be somewhere after column 12 on mainframe
+      *---- could appear in column 8 or later on other platforms.
+      *---- Current implementation doesn't handle those variations.         
+      *    05  FILLER REDEFINES SECTION-HEADER.
+      *         10  FILLER                PIC X(06).
+      *             88  SELECT-STATEMENT      VALUE 'SELECT'.
+      *         10  FILLER                PIC X(04).
            05  FILLER REDEFINES SECTION-HEADER.
                10  FILLER                PIC X(03).
                    88  FD-STATEMENT          VALUE 'FD '.
@@ -422,6 +426,7 @@
            05  PARA-KEYWORD                 PIC X(04) VALUE 'PARA'.
            05  PARAGRAPH-KEYWORD            PIC X(09) VALUE 'PARAGRAPH'.
            05  PERFORMED-KEYWORD            PIC X(09) VALUE 'PERFORMED'.
+           05  SELECT-KEYWORD               PIC X(06) VALUE 'SELECT'.
            05  SQL-KEYWORD                  PIC X(03) VALUE 'SQL'.
            05  TO-KEYWORD                   PIC X(04) VALUE ' TO '.
            05  TRUE-KEYWORD                 PIC X(04) VALUE 'TRUE'.
@@ -941,6 +946,9 @@
            05  FILLER                    PIC X(01) VALUE 'N'.
                88  MOCKABLE-FOUND              VALUE 'Y'.
                88  MOCKABLE-NOT-FOUND          VALUE 'N'.
+           05  FILLER                    PIC X(01) VALUE 'N'.
+               88  SELECT-STATEMENT              VALUE 'Y'.
+               88  NOT-SELECT-STATEMENT          VALUE 'N'.
 
       *****************************************************************
       * Areas to build COPY statements to insert in the test program.
@@ -1161,6 +1169,8 @@
       * Copy the source statements from ORIGINAL-SOURCE to TEST-SOURCE
       * and insert unit test code at appropriate points in the program.
       *****************************************************************
+           PERFORM 2050-IS-THIS-A-SELECT-STMT
+
            EVALUATE TRUE
                WHEN WORKING-STORAGE-HEADER
                     PERFORM 2100-INSERT-WORKING-STG-CODE
@@ -1175,6 +1185,22 @@
                WHEN OTHER
                     PERFORM 9460-COPY-ORIGINAL-LINE         
            END-EVALUATE         
+           .
+
+       2050-IS-THIS-A-SELECT-STMT.
+      *****************************************************************
+      * See if the first token on the current original source line is
+      * 'SELECT'.
+      *****************************************************************
+           SET NOT-SELECT-STATEMENT TO TRUE
+
+           MOVE ZERO TO WS-CHARS
+           INSPECT ORIGINAL-LINE
+               TALLYING WS-CHARS FOR CHARACTERS BEFORE INITIAL 'SELECT'
+
+           IF WS-CHARS IS LESS THAN KEYWORD-END
+               SET SELECT-STATEMENT TO TRUE
+           END-IF    
            .
 
        2100-INSERT-WORKING-STG-CODE.
@@ -3555,9 +3581,16 @@
       *****************************************************************
            PERFORM VARYING KEYWORD-OFFSET FROM KEYWORD-OFFSET BY 1
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
-      *---                   KEYWORD-SEARCH-LIMIT
                          KEYWORD-END
                       OR KEYWORD-MATCHED  
+
+      *----
+           IF KEYWORD-TO-MATCH EQUAL SELECT-KEYWORD
+               DISPLAY 'Matching: <' 
+                   LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
+                   '>'
+           END-IF        
+      *----
 
                IF KEYWORD-TO-MATCH IS EQUAL TO
                    LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
