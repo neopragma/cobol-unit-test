@@ -20,13 +20,14 @@ REM COBCPY       Used by GNU Cobol to locate copybooks
 REM COB_LIBRARY_PATH Used by GNU Cobol to locate .dll files
 REM =====================================================================
 
-set "VERSION=0.2.1 May 12 2015"
+set "VERSION=0.2.2 May 26 2015"
 set "COBOL=true"
 
 REM Settings for GnuCOBOL
 
 set "COMPAT=ibm"
-set "COBCONFIG=c:\GnuCOBOL\config\%COMPAT%.conf"
+set "CONFIGPATH=c:\GnuCOBOL\config"
+set "COBCONFIG=%CONFIGPATH%\%COMPAT%.conf"
 
 REM Settings for the project
 
