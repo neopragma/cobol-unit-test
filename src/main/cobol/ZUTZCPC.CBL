@@ -2962,20 +2962,8 @@
 
            PERFORM 5065-GEN-VERIFY-CODE
 
-      *----
-           DISPLAY 'About to perform 9440-WRITE-GENERATED-STMTS'
-           IF SAVE-ORIGINAL-LINES
-               DISPLAY '    SAVE-ORIGINAL-LINES is TRUE'
-           ELSE
-               DISPLAY '    SAVE-ORIGINAL-LINES is FALSE'
-           END-IF     
-      *----
-
-
            PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE        
-      *----
-
            .
 
        5030-VERIFY-CICS-MOCK.
