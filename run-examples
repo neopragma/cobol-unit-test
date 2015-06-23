@@ -47,6 +47,11 @@ echo 'This example demonstrates mocking batch file accesses'
 echo
 ./run-ut MOCKDEMC MOCKDEMO MOCKDEMT
 
+echo 'CALLDEMO'
+echo 'This example demonstrates mocking CALL statements'
+echo
+./run-ut CALLDEMC CALLDEMO CALLDEMT
+
 echo 'SUBPROG'
 echo 'This example demonstrates how to set up unit tests for'
 echo 'a called subprogram'

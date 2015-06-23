@@ -462,6 +462,8 @@
                                         VALUE '       UT-END.'.
            05  INCR-TESTCASE-COUNT-STMT     PIC X(80) VALUE
                '           ADD 1 TO UT-TEST-CASE-COUNT'.
+           05  INCR-MOCK-ACCESS-COUNT-STMT  PIC X(80) VALUE
+               '           ADD 1 TO UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'.
            05  SET-REVERSE-TRUE-STMT        PIC X(80) VALUE
                '           SET UT-REVERSE-COMPARE TO TRUE'.    
            05  SET-NORMAL-TRUE-STMT        PIC X(80) VALUE
@@ -2725,18 +2727,26 @@
            ELSE
                MOVE TEMP-SUB TO KEYWORD-OFFSET
                SUBTRACT 5 FROM KEYWORD-OFFSET
-               PERFORM 5003-CHECK-VERIFY-CICS
+               PERFORM 5003-CHECK-VERIFY-CALL
                IF KEYWORD-MATCHED
-                   PERFORM 5020-VERIFY-CICS-MOCK
-               ELSE
+                   PERFORM 5020-VERIFY-CALL-MOCK
+               ELSE    
+
                    MOVE TEMP-SUB TO KEYWORD-OFFSET
                    SUBTRACT 5 FROM KEYWORD-OFFSET
-                   PERFORM 5004-CHECK-VERIFY-PARA
+                   PERFORM 5004-CHECK-VERIFY-CICS
                    IF KEYWORD-MATCHED
-                       PERFORM 5030-VERIFY-PARA-MOCK
-                   ELSE    
-                       PERFORM 5070-DISPLAY-VERIFY-ERROR
-                   END-IF    
+                       PERFORM 5030-VERIFY-CICS-MOCK
+                   ELSE
+                       MOVE TEMP-SUB TO KEYWORD-OFFSET
+                       SUBTRACT 5 FROM KEYWORD-OFFSET
+                       PERFORM 5005-CHECK-VERIFY-PARA
+                       IF KEYWORD-MATCHED
+                           PERFORM 5040-VERIFY-PARA-MOCK
+                       ELSE    
+                           PERFORM 5070-DISPLAY-VERIFY-ERROR
+                       END-IF
+                   END-IF        
                END-IF
            END-IF                
            .
@@ -2750,7 +2760,16 @@
            PERFORM 7400-MATCH-KEYWORD
            .
 
-       5003-CHECK-VERIFY-CICS.
+       5003-CHECK-VERIFY-CALL.
+      *****************************************************************
+      * Are we verifying a mocked CALL statement?
+      *****************************************************************
+           MOVE 'CALL ' TO KEYWORD-TO-MATCH
+           MOVE 5 TO KEYWORD-MATCH-LENGTH
+           PERFORM 7400-MATCH-KEYWORD
+           .
+
+       5004-CHECK-VERIFY-CICS.
       *****************************************************************
       * Are we verifying a mocked EXEC CICS command?
       *****************************************************************
@@ -2759,7 +2778,7 @@
            PERFORM 7400-MATCH-KEYWORD
            .
 
-       5004-CHECK-VERIFY-PARA.
+       5005-CHECK-VERIFY-PARA.
       *****************************************************************
       * Are we verifying a mocked paragraph?
       *****************************************************************
@@ -2848,7 +2867,118 @@
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .
 
-       5020-VERIFY-CICS-MOCK.
+       5020-VERIFY-CALL-MOCK.
+      *****************************************************************
+      * Generate code for TEST-SOURCE to verify that a given CICS MOCK
+      * was accessed the expected number of times.
+      *****************************************************************
+           MOVE CALL-KEYWORD TO MOCK-LOOKUP-TYPE
+
+      * Expect next tokens to be the name of the called routine and
+      * the argument list.
+      * When we encounter HAPPENED or NEVER it's the end of the tokens.
+
+           ADD 3 TO KEYWORD-OFFSET
+           SET MOCK-LOOKUP-IX TO 1
+           MOVE SPACES TO MOCK-LOOKUP-KEY
+           MOVE SPACES TO MOCK-LOOKUP-KEYWORDS
+           SET MORE-TOKENS TO TRUE
+           PERFORM UNTIL NO-MORE-TOKENS
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES
+               IF TOKEN(TOKEN-IX) IS EQUAL TO 
+                  HAPPENED-KEYWORD OR NEVER-KEYWORD
+                  SET NO-MORE-TOKENS TO TRUE
+               ELSE
+                  MOVE TOKEN(TOKEN-IX)
+                      TO MOCK-LOOKUP-KEYWORD
+                          (MOCK-LOOKUP-IX)
+                  SET MOCK-LOOKUP-IX UP BY 1
+               END-IF
+           END-PERFORM
+
+      * This will put a single string containing the command keywords
+      * separated by single spaces into MOCK-LOOKUP-KEY.
+
+           PERFORM 5090-STRINGIFY-KEYWORDS
+
+      * Look up the mock     
+
+           SET MOCK-NOT-MATCHED TO TRUE
+           PERFORM VARYING MOCK-IX FROM 1 BY 1 
+                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
+                      OR MOCK-MATCHED
+               IF MOCK-CICS(MOCK-IX) 
+               AND MOCK-LOOKUP-KEY IS EQUAL TO
+                       MOCK-CICS-KEYWORDS-KEY(MOCK-IX)
+                   SET MOCK-MATCHED TO TRUE
+               END-IF    
+           END-PERFORM
+
+           PERFORM 5060-PARSE-HAPPENED-SPEC
+
+      * Generate statements in TEST-SOURCE to do the verification
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENTS
+           SET STATEMENT-IX TO 1
+           MOVE SET-FIND-CICS-MOCK-STMT
+                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           MOVE MOCK-LOOKUP-KEY TO RAW-VALUE
+           PERFORM 7960-FIND-LENGTH-OF-RAW-VALUE
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               STATEMENT-SPACER             DELIMITED BY SIZE
+               MOVE-VERB                    DELIMITED BY SIZE
+               SINGLE-QUOTE                 DELIMITED BY SIZE
+               RAW-VALUE(1:TEMP-SUB)        DELIMITED BY SIZE
+               SINGLE-QUOTE                 DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           STRING
+               STATEMENT-SPACER             DELIMITED BY SIZE
+               TO-KEYWORD                   DELIMITED BY SIZE
+               'UT-MOCK-FIND-CALL-TOKENS' DELIMITED BY SIZE
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           END-STRING
+           SET STATEMENT-IX UP BY 1
+
+           PERFORM 6100-GEN-LOOKUP-MOCK
+           MOVE TEMP-STATEMENT 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           MOVE '           IF UT-MOCK-FOUND' 
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1
+
+           MOVE INCR-MOCK-ACCESS-COUNT-STMT
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           SET STATEMENT-IX UP BY 1               
+
+           PERFORM 5065-GEN-VERIFY-CODE
+
+      *----
+           DISPLAY 'About to perform 9440-WRITE-GENERATED-STMTS'
+           IF SAVE-ORIGINAL-LINES
+               DISPLAY '    SAVE-ORIGINAL-LINES is TRUE'
+           ELSE
+               DISPLAY '    SAVE-ORIGINAL-LINES is FALSE'
+           END-IF     
+      *----
+
+
+           PERFORM 9440-WRITE-GENERATED-STMTS
+           SET SUPPRESS-COPY-SOURCE TO TRUE        
+      *----
+
+           .
+
+       5030-VERIFY-CICS-MOCK.
       *****************************************************************
       * Generate code for TEST-SOURCE to verify that a given CICS MOCK
       * was accessed the expected number of times.
@@ -2941,7 +3071,7 @@
            SET SUPPRESS-COPY-SOURCE TO TRUE        
            .  
 
-       5030-VERIFY-PARA-MOCK.
+       5040-VERIFY-PARA-MOCK.
       *****************************************************************
       * Generate code for TEST-SOURCE to verify that a given paragraph
       * mock was accessed the expected number of times.
