@@ -320,7 +320,12 @@
       * the ORIGINAL-SOURCE file.
       *****************************************************************
        01  TOKENS.
-           05  TOKEN OCCURS 100 TIMES INDEXED BY TOKEN-IX PIC X(80).
+           05  WS-COUNT               PIC S9(04) COMP.
+           05  FILLER OCCURS 100 TIMES INDEXED BY TOKEN-IX.
+               10  TOKEN              PIC X(80).
+               10  FILLER             PIC X(01).
+                   88  TOKEN-HAS-PERIOD    VALUE 'Y'.
+                   88  TOKEN-HAS-NO-PERIOD VALUE 'N'.
 
       *****************************************************************
       * This area is used for parsing keywords out of input records.
@@ -1437,7 +1442,6 @@
            ELSE
                PERFORM 2580-CHECK-FOR-CALL-STATEMENT
                IF MOCKABLE-FOUND
-      *             SET COPY-SOURCE TO TRUE
                    SET SUPPRESS-COPY-SOURCE TO TRUE
                ELSE
                    PERFORM 2600-CHECK-FOR-EXEC-COMMAND
@@ -1648,8 +1652,9 @@
                SET MOCK-LOOKUP-IX TO 1
                PERFORM UNTIL NO-MORE-TOKENS
                    PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
+                   PERFORM 7800-STRIP-PERIOD
                    IF TOKEN(TOKEN-IX) IS EQUAL TO END-CALL-KEYWORD
-                                               OR PERIOD
+                   OR TOKEN-HAS-PERIOD(TOKEN-IX)
                        SET NO-MORE-TOKENS TO TRUE
                    ELSE
                        PERFORM 7900-STRIP-QUOTES
@@ -3807,7 +3812,14 @@
       *****************************************************************
       * Remove period-space from the current token.
       *****************************************************************
-           INSPECT TOKEN(TOKEN-IX) REPLACING ALL '. ' BY '  '
+           MOVE ZERO TO WS-COUNT
+           INSPECT TOKEN(TOKEN-IX) TALLYING WS-COUNT FOR ALL '.'
+           IF WS-COUNT IS GREATER THAN ZERO
+               SET TOKEN-HAS-PERIOD(TOKEN-IX) TO TRUE
+               INSPECT TOKEN(TOKEN-IX) REPLACING ALL '. ' BY '  '
+           ELSE
+               SET TOKEN-HAS-NO-PERIOD(TOKEN-IX) TO TRUE
+           END-IF        
            .    
 
        7900-STRIP-QUOTES.
