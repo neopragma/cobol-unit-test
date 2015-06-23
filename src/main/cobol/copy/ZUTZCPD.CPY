@@ -160,6 +160,8 @@
            EVALUATE TRUE
                WHEN UT-FIND-FILE-MOCK
                     PERFORM UT-SET-FILE-MOCK
+               WHEN UT-FIND-CALL-MOCK
+                    PERFORM UT-SET-CALL-MOCK
                WHEN UT-FIND-CICS-MOCK
                     PERFORM UT-SET-CICS-MOCK
                WHEN UT-FIND-PARA-MOCK
@@ -184,6 +186,18 @@
                 TO UT-MOCK-RECORD(UT-MOCK-IX)
            MOVE UT-MOCK-SET-FILE-STATUS 
                 TO UT-MOCK-FILE-STATUS(UT-MOCK-IX)
+           .    
+
+       UT-SET-CALL-MOCK.
+           PERFORM UT-LOOKUP-MOCK
+           IF UT-MOCK-FOUND
+               CONTINUE
+           ELSE    
+               ADD 1 TO UT-MOCK-COUNT
+               SET UT-MOCK-IX TO UT-MOCK-COUNT
+               MOVE UT-MOCK-FIND-CALL-TOKENS
+                   TO UT-MOCK-CALL-TOKENS-KEY(UT-MOCK-IX)
+           END-IF
            .    
 
        UT-SET-CICS-MOCK.
@@ -227,6 +241,12 @@
                            SET UT-MOCK-FOUND TO TRUE
                            CONTINUE
                        END-IF
+                   WHEN UT-FIND-CALL-MOCK
+                       IF UT-MOCK-FIND-CALL-TOKENS IS EQUAL TO
+                              UT-MOCK-CALL-TOKENS-KEY(UT-MOCK-IX)
+                           SET UT-MOCK-FOUND TO TRUE
+                           CONTINUE
+                       END-IF         
                    WHEN UT-FIND-CICS-MOCK
                        IF UT-MOCK-FIND-CICS-KEYWORDS IS EQUAL TO
                               UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)

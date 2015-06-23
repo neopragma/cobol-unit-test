@@ -46,12 +46,15 @@
                88  UT-MOCK-NOT-FOUND               VALUE SPACES.
            05  UT-MOCK-FIND-TYPE         PIC X(04).
                88  UT-FIND-FILE-MOCK     VALUE 'FILE'.
+               88  UT-FIND-CALL-MOCK     VALUE 'CALL'.
                88  UT-FIND-CICS-MOCK     VALUE 'CICS'.
                88  UT-FIND-SQL-MOCK      VALUE 'SQL'.
                88  UT-FIND-PARA-MOCK     VALUE 'PARA'.
            05  UT-MOCK-FIND-FILENAME     PIC X(31).
            05  UT-MOCK-FIND-PARA-NAME    PIC X(31).
            05  UT-MOCK-FIND-OPERATION    PIC X(04).
+           05  UT-MOCK-FIND-CALL-TOKENS.
+               10  UT-MOCK-FIND-CALL-TOKEN OCCURS 25 PIC X(31).
            05  UT-MOCK-FIND-CICS-KEYWORDS.
                10  UT-MOCK-FIND-CICS-KEYWORD OCCURS 25 PIC X(31).
            05  UT-MOCK-SET-RECORD        PIC X(2048).
@@ -61,6 +64,7 @@
            05  UT-MOCK OCCURS 20 INDEXED BY UT-MOCK-IX.
                10  UT-MOCK-TYPE          PIC X(04).
                    88  UT-MOCK-FILE          VALUE 'FILE'.
+                   88  UT-MOCK-CALL          VALUE 'CALL'.
                    88  UT-MOCK-CICS          VALUE 'CICS'.
                    88  UT-MOCK-SQL           VALUE 'SQL'.
                    88  UT-MOCK-PARA          VALUE 'PARA'.
@@ -72,6 +76,8 @@
                    15  UT-MOCK-OPERATION      PIC X(20).  
                    15  UT-MOCK-FILE-STATUS    PIC X(02).
                    15  FILLER                 PIC X(753).
+               10  UT-MOCK-CALL-DATA REDEFINES UT-MOCK-DATA.
+                   15  UT-MOCK-CALL-TOKENS-KEY PIC X(806).
                10  UT-MOCK-CICS-DATA REDEFINES UT-MOCK-DATA.
                    15  UT-MOCK-CICS-KEYWORDS-KEY PIC X(806).
                10  UT-MOCK-PARA-DATA REDEFINES UT-MOCK-DATA.
