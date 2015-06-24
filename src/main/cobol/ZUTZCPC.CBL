@@ -150,7 +150,9 @@
                    88  MOCK-PARAGRAPH     VALUE 'PARA'.
                    88  MOCK-SQL           VALUE 'SQL'.
                10  MOCK-RECORD            PIC X(2048).    
-               10  MOCK-DATA              PIC X(3200).
+               10  MOCK-DATA.
+                   15  MOCK-KEY           PIC X(320).
+                   15  FILLER             PIC X(2880).
                10  MOCK-FILE-DATA REDEFINES MOCK-DATA.        
                    15  MOCK-FILENAME      PIC X(31).    
                    15  MOCK-OPERATION     PIC X(20).  
@@ -1178,25 +1180,25 @@
       * Copy the source statements from ORIGINAL-SOURCE to TEST-SOURCE
       * and insert unit test code at appropriate points in the program.
       *****************************************************************
-           PERFORM 2050-IS-THIS-A-SELECT-STMT
+           PERFORM 2600-IS-THIS-A-SELECT-STMT
 
            EVALUATE TRUE
                WHEN WORKING-STORAGE-HEADER
-                    PERFORM 2100-INSERT-WORKING-STG-CODE
+                    PERFORM 2700-INSERT-WORKING-STG-CODE
                WHEN PROCEDURE-DIVISION-HEADER
-                    PERFORM 2400-INSERT-PROC-DIV-CODE
+                    PERFORM 3000-INSERT-PROC-DIV-CODE
                WHEN SELECT-STATEMENT
-                    PERFORM 2200-PROCESS-SELECT
+                    PERFORM 2800-PROCESS-SELECT
                WHEN FD-STATEMENT
-                    PERFORM 2300-PROCESS-FD
+                    PERFORM 2900-PROCESS-FD
                WHEN CHECK-FOR-MOCKABLES
-                    PERFORM 2500-CHECK-FOR-MOCKABLES
+                    PERFORM 3100-CHECK-FOR-MOCKABLES
                WHEN OTHER
                     PERFORM 9460-COPY-ORIGINAL-LINE         
            END-EVALUATE         
            .
 
-       2050-IS-THIS-A-SELECT-STMT.
+       2600-IS-THIS-A-SELECT-STMT.
       *****************************************************************
       * See if the first token on the current original source line is
       * 'SELECT'.
@@ -1212,7 +1214,7 @@
            END-IF    
            .
 
-       2100-INSERT-WORKING-STG-CODE.
+       2700-INSERT-WORKING-STG-CODE.
       *****************************************************************
       * Insert a COPY statement at the top of the WORKING-STORAGE
       * section to bring in the common unit test definitions.
@@ -1222,7 +1224,7 @@
            PERFORM 9450-WRITE-COPY-LINE
            .    
 
-       2200-PROCESS-SELECT.
+       2800-PROCESS-SELECT.
       *****************************************************************
       * Parse a SELECT statement from the ORIGINAL-SOURCE file to
       * capture information that will be needed if the user has
@@ -1326,7 +1328,7 @@
            SET FILE-IX UP BY 1      
            .
 
-       2300-PROCESS-FD.
+       2900-PROCESS-FD.
       *****************************************************************
       * Parse an FD and its first 01 level item from the ORIGINAL-SOURCE 
       * file to capture information that will be needed if the user has
@@ -1400,7 +1402,7 @@
            END-STRING               
            .
 
-       2400-INSERT-PROC-DIV-CODE.
+       3000-INSERT-PROC-DIV-CODE.
       *****************************************************************
       * Insert the unit test cases and standard unit test code at the
       * top of the PROCEDURE DIVISION.
@@ -1433,24 +1435,24 @@
            SET CHECK-FOR-MOCKABLES TO TRUE
            .
 
-       2500-CHECK-FOR-MOCKABLES.
+       3100-CHECK-FOR-MOCKABLES.
       *****************************************************************
       * See if the current original source statement looks like
       * something that can be mocked, and handle it accordingly.
       *****************************************************************
-           PERFORM 2505-CHECK-FOR-IO-STATEMENT
+           PERFORM 3200-CHECK-FOR-IO-STATEMENT
            IF KEYWORD-MATCHED
-               PERFORM 2510-IO-KEYWORD-MATCHED
+               PERFORM 3220-IO-KEYWORD-MATCHED
            ELSE
-               PERFORM 2580-CHECK-FOR-CALL-STATEMENT
+               PERFORM 3400-CHECK-FOR-CALL-STATEMENT
                IF MOCKABLE-FOUND
                    SET SUPPRESS-COPY-SOURCE TO TRUE
                ELSE
-                   PERFORM 2600-CHECK-FOR-EXEC-COMMAND
+                   PERFORM 3500-CHECK-FOR-EXEC-COMMAND
                    IF MOCKABLE-FOUND
                        SET COPY-SOURCE TO TRUE
                    ELSE
-                       PERFORM 2650-CHECK-FOR-PARA-HEADER
+                       PERFORM 3700-CHECK-FOR-PARA-HEADER
                        SET COPY-SOURCE TO TRUE
                    END-IF
                END-IF
@@ -1463,7 +1465,7 @@
            END-IF        
            .
 
-       2505-CHECK-FOR-IO-STATEMENT.
+       3200-CHECK-FOR-IO-STATEMENT.
       *****************************************************************
       * First check to see if the current source line is potentially a
       * mocked file I/O statement. If not then see if it is potentially
@@ -1487,7 +1489,7 @@
            END-PERFORM
            .
 
-       2510-IO-KEYWORD-MATCHED.
+       3220-IO-KEYWORD-MATCHED.
       *****************************************************************
       * An I/O verb was found in ORIGINAL-SOURCE.
       *****************************************************************
@@ -1501,15 +1503,15 @@
                PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
            END-PERFORM
 
-           PERFORM 2520-FIND-CORR-FILE-MOCK
+           PERFORM 3240-FIND-CORR-FILE-MOCK
            IF MOCK-MATCHED
-               PERFORM 2540-FIND-CORR-FILE-INFO
+               PERFORM 3260-FIND-CORR-FILE-INFO
            ELSE
                SET COPY-SOURCE TO TRUE    
            END-IF        
            .
 
-       2520-FIND-CORR-FILE-MOCK.
+       3240-FIND-CORR-FILE-MOCK.
       *****************************************************************
       * Found an I/O statement in ORIGINAL-SOURCE. See if a MOCK was
       * specified for this filename.
@@ -1530,7 +1532,7 @@
            SET MOCK-IX DOWN BY 1
            .
 
-       2540-FIND-CORR-FILE-INFO.
+       3260-FIND-CORR-FILE-INFO.
       *****************************************************************
       * Found an I/O statement for which a MOCK was specified.
       * Generate code in TEST-SOURCE to substitute mock functionality
@@ -1540,7 +1542,7 @@
            SET FILENAME-NOT-MATCHED TO TRUE
            PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
-               PERFORM 2550-GEN-MOCK-REPLACEMENT-STMTS
+               PERFORM 3300-GEN-MOCK-REPLACEMENT-STMTS
            ELSE
                SET COPY-SOURCE TO TRUE
                MOVE MOCK-FILENAME(MOCK-IX) 
@@ -1553,7 +1555,7 @@
            END-IF        
            .
 
-       2550-GEN-MOCK-REPLACEMENT-STMTS.
+       3300-GEN-MOCK-REPLACEMENT-STMTS.
       *****************************************************************
       * Generate code in TEST-SOURCE to substitute mock behavior for
       * the real I/O functionality.
@@ -1575,7 +1577,7 @@
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
 
            SET STATEMENT-IX UP BY 1
-           MOVE '           ADD 1 TO UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'   
+           MOVE INCR-MOCK-ACCESS-COUNT-STMT
                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
 
            PERFORM 6300-GEN-SET-FILENAME-TO-FIND
@@ -1637,18 +1639,18 @@
            PERFORM 9465-COMMENT-ORIGINAL-LINE
            PERFORM 9440-WRITE-GENERATED-STMTS
            .
-       2580-CHECK-FOR-CALL-STATEMENT.
+       3400-CHECK-FOR-CALL-STATEMENT.
       *****************************************************************
       * See if the current original source line contains a CALL
-      * statement.
+      * statement. If the CALL is to be mocked, then comment out the
+      * lines in the program under test and substitute the code
+      * defined for the mock. Otherwise, copy the original lines.
       *****************************************************************
            SET MOCKABLE-NOT-FOUND TO TRUE
            IF TOKEN(TOKEN-IX) IS EQUAL TO CALL-KEYWORD
                SET MOCKABLE-FOUND TO TRUE
                PERFORM 7640-SET-SAVE-ORIG-LINES
                PERFORM 7650-SAVE-ORIG-LINE
-
-      * Collect tokens until the next END-CALL or period
 
                SET MORE-TOKENS TO TRUE
                SET MOCK-LOOKUP-IX TO 1
@@ -1667,43 +1669,18 @@
                END-PERFORM
 
                PERFORM 5090-STRINGIFY-KEYWORDS
-
-      * See if this set of tokens corresponds to a defined MOCK.
-
-               SET MOCK-NOT-MATCHED TO TRUE
-               PERFORM VARYING MOCK-IX FROM 1 BY 1
-                       UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
-                          OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
-                          OR MOCK-MATCHED
-
-                   IF MOCK-CALL(MOCK-IX)
-                       IF MOCK-CALL-TOKENS-KEY(MOCK-IX)
-                               IS EQUAL TO MOCK-LOOKUP-KEY
-                           SET MOCK-MATCHED TO TRUE                       
-                       END-IF
-                   END-IF    
-               END-PERFORM           
-               SET MOCK-IX DOWN BY 1
-
-      * If this CALL statement is to be mocked, then comment out the
-      * lines in the program under test. Otherwise, copy the original
-      * lines unchanged.
-
+               PERFORM 3900-LOOKUP-MOCK
                IF MOCK-MATCHED
                    SET COMMENT-THE-LINES TO TRUE
                ELSE
                    SET COPY-THE-LINES TO TRUE
                END-IF        
-               PERFORM 2900-COPY-OR-COMMENT-LINES
-
-      * Generate code in the test program to perform the specified
-      * behavior for this mock.
-
+               PERFORM 3960-COPY-OR-COMMENT-LINES
                PERFORM 6030-WRITE-GENERATED-STMTS
            END-IF
            .
 
-       2600-CHECK-FOR-EXEC-COMMAND.
+       3500-CHECK-FOR-EXEC-COMMAND.
       *****************************************************************
       * See if the current original source line contains an EXEC
       * command.
@@ -1734,9 +1711,9 @@
 
                EVALUATE TRUE
                    WHEN TOKEN(TOKEN-IX) IS EQUAL TO CICS-KEYWORD
-                        PERFORM 2610-PROCESS-CICS-COMMAND
+                        PERFORM 3600-PROCESS-CICS-COMMAND
                    WHEN TOKEN(TOKEN-IX) IS EQUAL TO SQL-KEYWORD
-                        PERFORM 2700-PROCESS-SQL-COMMAND
+                        PERFORM 3800-PROCESS-SQL-COMMAND
                    WHEN OTHER
                         CONTINUE
                END-EVALUATE
@@ -1746,12 +1723,12 @@
            SET NO-SAVE-ORIGINAL-LINES TO TRUE       
            .
         
-       2610-PROCESS-CICS-COMMAND.    
+       3600-PROCESS-CICS-COMMAND.    
       *****************************************************************
-      * EXEC CICS was found. See if it corresponds with a MOCK.
+      * EXEC CICS was found. See the command is to be mocked, comment
+      * out the original lines and substitute the code specified in 
+      * the mock. Otherwise, copy the original lines.
       *****************************************************************
-
-      * Collect tokens until we encounter END-EXEC or END-EXECUTE
 
            SET MOCK-LOOKUP-IX TO 1
            MOVE SPACES TO MOCK-LOOKUP-KEY
@@ -1761,7 +1738,6 @@
                    UNTIL TOKEN(TOKEN-IX) IS EQUAL TO END-EXEC-KEYWORD
 
                PERFORM 7200-NEXT-TOKEN-ORIG-SOURCE
-
                IF TOKEN(TOKEN-IX) IS EQUAL TO END-EXEC-KEYWORD
                    CONTINUE
                ELSE    
@@ -1772,7 +1748,6 @@
                        DELIMITED BY SPACE
                        INTO CANDIDATE-CICS-RESERVED-WORD
                    END-STRING
-
                    MOVE TOKEN(TOKEN-IX) TO MOCK-LOOKUP-KEYWORD
                            (MOCK-LOOKUP-IX)
                    SET MOCK-LOOKUP-IX UP BY 1 
@@ -1780,42 +1755,17 @@
            END-PERFORM
 
            PERFORM 5090-STRINGIFY-KEYWORDS
-
-      * See if this set of tokens corresponds to a defined MOCK.
-
-           SET MOCK-NOT-MATCHED TO TRUE
-           PERFORM VARYING MOCK-IX FROM 1 BY 1
-                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
-                      OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
-                      OR MOCK-MATCHED
-
-               IF MOCK-CICS(MOCK-IX)
-                   IF MOCK-CICS-KEYWORDS-KEY(MOCK-IX)
-                           IS EQUAL TO MOCK-LOOKUP-KEY
-                       SET MOCK-MATCHED TO TRUE                       
-                   END-IF
-               END-IF    
-           END-PERFORM           
-           SET MOCK-IX DOWN BY 1
-
-      * If this EXEC CICS command is to be mocked, then comment out the
-      * lines in the program under test. Otherwise, copy the original
-      * lines unchanged.
-
+           PERFORM 3900-LOOKUP-MOCK
            IF MOCK-MATCHED
                SET COMMENT-THE-LINES TO TRUE
            ELSE
                SET COPY-THE-LINES TO TRUE
            END-IF        
-           PERFORM 2900-COPY-OR-COMMENT-LINES
-
-      * Generate code in the test program to perform the specified
-      * behavior for this mock.
-
+           PERFORM 3960-COPY-OR-COMMENT-LINES
            PERFORM 6030-WRITE-GENERATED-STMTS
            .
 
-       2650-CHECK-FOR-PARA-HEADER.
+       3700-CHECK-FOR-PARA-HEADER.
       *****************************************************************
       * See if we have read a paragraph header line from 
       * ORIGINAL-SOURCE.
@@ -1825,42 +1775,28 @@
                CONTINUE
            ELSE
                PERFORM 7640-SET-SAVE-ORIG-LINES
-               PERFORM 2651-CHECK-FOR-MOCKED-PARA
+               PERFORM 3720-CHECK-FOR-MOCKED-PARA
            END-IF        
            .
 
-       2651-CHECK-FOR-MOCKED-PARA.
+       3720-CHECK-FOR-MOCKED-PARA.
       *****************************************************************
-      * We are looking at a paragraph header in ORIGINAL-SOURCE.
-      * See if the paragraph was specified in a MOCK.
+      * If this paragraph is to be mocked, substitute the code
+      * specified in the mock. Otherwise, copy the original lines.
       *****************************************************************
-           SET PARA-NOT-MATCHED TO TRUE
-           PERFORM VARYING MOCK-IX FROM 1 BY 1
-                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
-                      OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
-                      OR PARA-MATCHED
-
-               IF MOCK-PARAGRAPH(MOCK-IX)
-                   IF MOCK-PARA-NAME(MOCK-IX)
-                           IS EQUAL TO PARAGRAPH-NAME
-                       SET PARA-MATCHED TO TRUE 
-                   END-IF
-               END-IF    
-           END-PERFORM           
-           SET MOCK-IX DOWN BY 1
-
-           IF PARA-MATCHED
-               PERFORM 2652-PROCESS-MOCKED-PARA
+           MOVE PARAGRAPH-NAME TO MOCK-LOOKUP-KEY
+           PERFORM 3900-LOOKUP-MOCK
+           IF MOCK-MATCHED
+               PERFORM 3740-PROCESS-MOCKED-PARA
            ELSE
-      * This is not the paragraph you're looking for. Move along.     
                SET MOCK-NOT-MATCHED TO TRUE
                SET MOCKABLE-NOT-FOUND TO TRUE
                SET COPY-THE-LINES TO TRUE
-               PERFORM 2900-COPY-OR-COMMENT-LINES
+               PERFORM 3960-COPY-OR-COMMENT-LINES
            END-IF        
            .
 
-       2652-PROCESS-MOCKED-PARA.      
+       3740-PROCESS-MOCKED-PARA.      
       *****************************************************************
       * Comment the original source lines and substitute the source
       * lines specified for this mocked paragraph.
@@ -1887,11 +1823,11 @@
       * Comment out the original behavior of the mocked paragraph.     
 
            SET COMMENT-THE-LINES TO TRUE
-           PERFORM 2900-COPY-OR-COMMENT-LINES
+           PERFORM 3960-COPY-OR-COMMENT-LINES
 
       * Replace the original behavior with the mocked behavior.
 
-           MOVE '           ADD 1 TO UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)'
+           MOVE INCR-MOCK-ACCESS-COUNT-STMT
                TO TEST-LINE
            WRITE TEST-LINE
            PERFORM 6030-WRITE-GENERATED-STMTS
@@ -1901,13 +1837,29 @@
            END-IF    
            .
 
-       2700-PROCESS-SQL-COMMAND.    
+       3800-PROCESS-SQL-COMMAND.    
       *****************************************************************
       * EXEC SQL was found. Future implementation.
       *****************************************************************
            .
 
-       2900-COPY-OR-COMMENT-LINES.
+       3900-LOOKUP-MOCK.    
+      *****************************************************************
+      * Find the mock that matches MOCK-LOOKUP-KEY, if any.
+      *****************************************************************
+           SET MOCK-NOT-MATCHED TO TRUE
+           PERFORM VARYING MOCK-IX FROM 1 BY 1
+                   UNTIL MOCK-IX IS GREATER THAN MAX-MOCKS
+                      OR MOCK-DATA(MOCK-IX) IS EQUAL TO SPACES
+                      OR MOCK-MATCHED
+               IF MOCK-KEY(MOCK-IX) EQUAL MOCK-LOOKUP-KEY
+                   SET MOCK-MATCHED TO TRUE
+               END-IF           
+           END-PERFORM           
+           SET MOCK-IX DOWN BY 1
+           .
+
+       3960-COPY-OR-COMMENT-LINES.
       *****************************************************************
       * If current statement is to be mocked, comment the original
       * source lines in the output file; otherwise, copy them.
