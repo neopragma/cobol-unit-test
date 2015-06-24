@@ -1,0 +1,33 @@
+           TESTSUITE 'DEMONSTRATE FILE MOCKS' 
+
+      *****************************************************************
+      * UNIT TESTS TO DEMONSTRATE PARAGRAPH MOCKING FEATURES OF ZUTZCPC
+      *****************************************************************  
+
+           BEFORE-EACH
+               MOVE SPACES TO INPUT-RECORD
+               MOVE 'ORIG' TO WS-FIELD-A
+               MOVE 'ORIG' TO WS-FIELD-B
+           END-BEFORE    
+ 
+           TESTCASE 'IT MOCKS PARAGRAPH 2000-PARA-B'
+           MOCK
+               PARAGRAPH 2000-PARA-B
+               MOVE 'B2' TO WS-FIELD-A
+               MOVE 'B3' TO WS-FIELD-B
+           END-MOCK    
+           PERFORM 2000-PARA-B
+           EXPECT WS-FIELD-A TO BE 'B2'
+           EXPECT WS-FIELD-B TO BE 'B3'
+           VERIFY PARAGRAPH 2000-PARA-B WAS PERFORMED ONCE
+            
+           TESTCASE 'IT MOCKS PARAGRAPH 1000-PARA-A'
+           MOCK
+               PARAGRAPH 1000-PARA-A
+               MOVE 'A2' TO WS-FIELD-A
+               MOVE 'A3' TO WS-FIELD-B
+           END-MOCK    
+           PERFORM 1000-PARA-A
+           EXPECT WS-FIELD-A TO BE 'A2'
+           EXPECT WS-FIELD-B TO BE 'A3'
+           VERIFY PARAGRAPH 1000-PARA-A WAS PERFORMED NO MORE THAN ONCE

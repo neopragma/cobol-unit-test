@@ -1,0 +1,47 @@
+           TESTSUITE 'DEMONSTRATE CALL STATEMENT MOCKS' 
+
+      *****************************************************************
+      * DEMONSTRATE MOCKING CALL STATEMENTS WITH ZUTZCPC.
+      *****************************************************************  
+
+           TESTCASE 'Mock behavior of basic CALL statement' 
+           MOCK
+               CALL 'NOTREALNAME' 
+                   USING WS-ALPHA WS-OMEGA
+               END-CALL    
+               MOVE 'B' TO WS-ALPHA 
+               MOVE 'Y' TO WS-OMEGA 
+           END-MOCK    
+           PERFORM 1000-BASIC-CALL
+           EXPECT WS-ALPHA TO BE 'B'
+           EXPECT WS-OMEGA TO BE 'Y'
+           VERIFY 
+               CALL 'NOTREALNAME' USING WS-ALPHA WS-OMEGA
+           HAPPENED ONCE
+
+           TESTCASE 'Mock behavior of classic CALL statement' 
+           MOCK
+               CALL 'NOTREALNAME' 
+                   USING WS-ALPHA WS-OMEGA
+               END-CALL    
+               MOVE 'B' TO WS-ALPHA 
+               MOVE 'Y' TO WS-OMEGA 
+           END-MOCK    
+           PERFORM 2000-CLASSIC-CALL
+           EXPECT WS-ALPHA TO BE 'B'
+           EXPECT WS-OMEGA TO BE 'Y'
+
+           TESTCASE 'Mock CALL to dynamic subprogram' 
+           MOCK
+               CALL WS-SUBPROGRAM-NAME 
+                   USING WS-ALPHA WS-OMEGA
+               END-CALL    
+               MOVE 'B' TO WS-ALPHA 
+               MOVE 'Y' TO WS-OMEGA 
+           END-MOCK    
+           PERFORM 3000-DYNAMIC-CALL
+           EXPECT WS-ALPHA TO BE 'B'
+           EXPECT WS-OMEGA TO BE 'Y'
+
+
+               
