@@ -42,15 +42,20 @@ echo 'dependency on the system clock'
 echo
 ./run-ut INVDATEC INVDATE INVDATET
 
-echo 'MOCKDEMO'
+echo 'FILEDEMO'
 echo 'This example demonstrates mocking batch file accesses'
 echo
-./run-ut MOCKDEMC MOCKDEMO MOCKDEMT
+./run-ut FILEDEMC FILEDEMO FILEDEMT
 
 echo 'CALLDEMO'
 echo 'This example demonstrates mocking CALL statements'
 echo
 ./run-ut CALLDEMC CALLDEMO CALLDEMT
+
+echo 'PARADEMO'
+echo 'This example demonstrates mocking paragraphs'
+echo
+./run-ut PARADEMC PARADEMO PARADEMT
 
 echo 'SUBPROG'
 echo 'This example demonstrates how to set up unit tests for'
