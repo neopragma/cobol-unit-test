@@ -44,6 +44,8 @@ if [ $# -eq 0 ]
     exit 0
 fi
 
+mkdir -p "$TARGET" 
+
 if [ $TEST == true ]; then              # compile test source
 	SOURCE="$TESTSRC"
 else

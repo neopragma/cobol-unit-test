@@ -65,6 +65,8 @@ rem ============================================================================
 
 if /I %TEST% equ true (set SOURCE=%TESTSRC%) else (set SOURCE=%MAINSRC%)  
 
+if not exist %TARGET% md %TARGET%
+
 if /I %VERBOSE% equ true (
   echo INFO: SOURCE=%SOURCE%
   echo INFO: TARGET=%TARGET%
