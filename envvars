@@ -30,5 +30,5 @@ export TESTRSC="$PROJECT/src/test/resources"
 export TARGET="$PROJECT/target"
 export COBCPY="$MAINCPY:$TESTCPY"
 export COB_LIBRARY_PATH="$TARGET"
-export PATH="$PROJCT:$TARGET:$PATH"
+export PATH="$PROJECT:$TARGET:$PATH"
 
