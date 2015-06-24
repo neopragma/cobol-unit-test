@@ -3,7 +3,7 @@
       * DATE:      23 JAN 2015
       * PURPOSE:   "CLASSIC" COBOL CODING STYLE VERSION OF FIZZBUZZ.
       *
-      * USAGE:     FIZZBUZZ FROM TO
+      * USAGE:     VIZZBUZZ FROM TO
       ******************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. VIZZBUZZ.
@@ -40,8 +40,15 @@
        0000-MAIN.
 
            PERFORM 0500-INITIALIZE.
-           PERFORM 1000-PROCESS-NUMBER.
-           PERFORM 3000-DISPLAY-RESULT.
+           PERFORM
+               VARYING CURRENT-NUMBER 
+               FROM STARTING-NUMBER BY 1
+               UNTIL CURRENT-NUMBER GREATER THAN ENDING-NUMBER
+
+               PERFORM 1000-PROCESS-NUMBER
+               DISPLAY 'Result for ' CURRENT-NUMBER
+                       ' is ' CURRENT-RESULT
+           END-PERFORM.            
            GOBACK.
 
        0500-INITIALIZE.
@@ -54,19 +61,19 @@
            MOVE SPACES TO CURRENT-RESULT FIZZ-OUT BUZZ-OUT.
            MOVE 15 TO THE-DIVISOR.
            PERFORM 2000-DIVIDE.
-           IF THE-REMAINDER = 0
+           IF THE-REMAINDER EQUAL ZERO
                MOVE "FIZZBUZZ" TO CURRENT-RESULT.
-           IF  CURRENT-RESULT = SPACES
+           IF CURRENT-RESULT EQUAL SPACES
                MOVE 3 TO THE-DIVISOR
                PERFORM 2000-DIVIDE
-               IF THE-REMAINDER = 0
+               IF THE-REMAINDER EQUAL 0
                    MOVE "FIZZ" TO CURRENT-RESULT.
-           IF  CURRENT-RESULT = SPACES        
+           IF CURRENT-RESULT EQUAL SPACES        
                MOVE 5 TO THE-DIVISOR
                PERFORM 2000-DIVIDE
-               IF THE-REMAINDER = 0
+               IF THE-REMAINDER EQUAL 0
                    MOVE "BUZZ" TO CURRENT-RESULT.
-           IF  CURRENT-RESULT = SPACES 
+           IF CURRENT-RESULT EQUAL SPACES 
                MOVE CURRENT-NUMBER TO CURRENT-RESULT.
 
        2000-DIVIDE.
@@ -74,6 +81,7 @@
                GIVING THE-QUOTIENT 
                REMAINDER THE-REMAINDER. 
 
-       3000-DISPLAY-RESULT.
-                   
+       9999-END.
+           .
+                 
    

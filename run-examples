@@ -15,12 +15,12 @@ echo 'an implementation of FizzBuzz'
 echo
 ./run-ut FIZZBUZC FIZZBUZZ FIZZBUZT
 
-echo 'VIZZBUZZ'
-echo 'This example is the same as the FIZZBUZZ example,'
-echo 'but the program under test is written with the'
-echo '"classic" Cobol style (period after every statement)'
-echo
-./run-ut FIZZBUZC VIZZBUZZ FIZZBUZT
+#echo 'VIZZBUZZ'
+#echo 'This example is the same as the FIZZBUZZ example,'
+#echo 'but the program under test is written with the'
+#echo '"classic" Cobol style (period after every statement)'
+#echo
+#./run-ut FIZZBUZC VIZZBUZZ FIZZBUZT
 
 echo 'CONVERT'
 echo 'This example demonstrates unit tests for a batch program'

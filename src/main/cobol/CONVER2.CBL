@@ -130,19 +130,16 @@
                    MOVE STATE-TABLE-NAME (STATE-INDEX) TO STATE-NAME-OUT.
 
        2300-CONVERT-TEXT-FIELD-2.
-           IF  TEXT-VALUE-2 = LOW-VALUES
-               MOVE SPACES TO TEXT-VALUE-2
-           ELSE    
-               CALL "C$TOUPPER" 
-                   USING TEXT-VALUE-2
-                   BY VALUE 
-                   LENGTH 1
-
-               CALL "C$JUSTIFY" 
-                   USING TEXT-VALUE-2
-                   "C".
-
+           CALL "C$TOUPPER" 
+               USING TEXT-VALUE-2
+               BY VALUE 
+               LENGTH 1.
+           CALL "C$JUSTIFY" 
+               USING TEXT-VALUE-2
+               "C".
            MOVE TEXT-VALUE-2 TO TEXT-OUT-2.
+           IF TEXT-OUT-2 EQUAL LOW-VALUES
+               MOVE SPACES TO TEXT-OUT-2.
 
        3000-WRITE-OUTPUT.
            WRITE 

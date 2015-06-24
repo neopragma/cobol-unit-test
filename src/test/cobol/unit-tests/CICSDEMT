@@ -18,7 +18,7 @@
                CICS READ DATASET('MYFILE') 
                     RIDFLD('AAAAA') 
                     INTO(WS-RECORD) 
-               HAPPENED 3 TIMES
+               HAPPENED ONCE
 
 
            TESTCASE 'Mock behavior of EXEC CICS WRITE DATASET'
