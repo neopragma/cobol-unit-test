@@ -22,7 +22,7 @@
                USING WS-ALPHA WS-OMEGA
            END-CALL
            .
-
+ 
        2000-CLASSIC-CALL.
            MOVE 'A' TO WS-ALPHA.
            MOVE 'Z' TO WS-OMEGA.

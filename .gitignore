@@ -9,7 +9,7 @@
 # project specific
 
 target
-*TESTPRG*
+src/test/cobol/TESTPRG.CBL
 *.so
 
 # Windows specific
