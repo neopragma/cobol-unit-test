@@ -83,13 +83,15 @@ Run all the provided examples.
 
 The sample programs are:
 
-* SAMPLE - minimal unit test code for a "Hello, World!" program.
+* CALLDEMO - demonstration of testing a called subprogram.
+* CICSDEMO - demonstration of testing a CICS program.
 * CONVERT - convert a CSV file into a fixed-format file.
+* FILEDEMO - demonstration of batch file mocks.
 * FIZZBUZZ - the classic FizzBuzz exercise.
 * INVDATE - calculate the date of the last day of the month.
-* MOCKDEMO - demonstration of mocking batch file access.
+* PARADEMO - demonstration of mocking paragraphs.
+* SAMPLE - minimal unit test code for a "Hello, World!" program.
 * SUBPROG - demonstration of testing a called subprogram.
-* CICSDEMO - demonstration of testing a CICS program.
 
 The unit test framework comprises:
 
