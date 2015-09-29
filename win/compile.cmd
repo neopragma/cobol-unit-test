@@ -109,9 +109,7 @@ if /I %VERBOSE% equ true (
 
 echo ====== COMPILE IS NEXT ======
 
-
-rem cobc -I %COBCPY% -conf=%COBCONFIG% %COBOPTS% %SOURCE%\%PROGRAMNAME%.CBL
-cobc -I c:\projects\cobol-unit-test\src\main\cobol\copy -I c:\projects\cobol-unit-test\src\test\cobol\unit-tests -conf=%COBCONFIG% %COBOPTS% %SOURCE%\%PROGRAMNAME%.CBL
+cobc -I %MAINCPY% -I %TESTCPY% -conf=%COBCONFIG% %COBOPTS% %SOURCE%\%PROGRAMNAME%.CBL
 
 if errorlevel 0 (
   if /I %VERBOSE% equ true (
