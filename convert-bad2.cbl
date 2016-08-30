@@ -47,7 +47,6 @@
        01  to-upper-case        pic x(30).
 
        01  state-values.
-           05  filler           pic x(32) value "AKAlaska".
            05  filler           pic x(32) value "ARArkansas".
            05  filler           pic x(32) value "AZArizona".
 
