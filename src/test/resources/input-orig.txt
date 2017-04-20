@@ -1,0 +1,2 @@
+alpha,az,weasel,10.45
+beta,ak,ferret,3.875

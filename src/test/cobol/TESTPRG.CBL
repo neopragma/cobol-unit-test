@@ -1,60 +1,369 @@
       **********************************************************************
       * AUTHOR:    DAVE NICOLETTE
-      * DATE:      07 AUG 2014
-      * PURPOSE:   SAMPLE PROGRAM THAT WORKS WITH DATES.
-      *
-      * USAGE:     INVDATE
+      * DATE:      13 APR 2017
+      * PURPOSE:   CREDIT CARD IDENTIFIER - BEFORE REFACTORING.
       **********************************************************************
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. INVDATE.
+       PROGRAM-ID. CARD3.
        ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+       SELECT INPUT-FILE ASSIGN TO INPUT-FILENAME
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS WS-INPUT-STATUS.
+
+       SELECT OUTPUT-FILE ASSIGN TO OUTPUT-FILENAME
+           ORGANIZATION IS LINE SEQUENTIAL
+           FILE STATUS IS WS-OUTPUT-STATUS.
+
        DATA DIVISION.
+       FILE SECTION.
+
+       FD INPUT-FILE.
+       01 INPUT-RECORD PIC X(200).
+
+       FD OUTPUT-FILE.
+       01 OUTPUT-RECORD PIC X(200).
+
        WORKING-STORAGE SECTION.
             COPY ZUTZCWS     .
-           COPY DATETIME.
-       01  WS-NEXT-INVOICE-DATE PIC X(8).
-       01  WS-QUOTIENT          PIC S9(4) COMP.
-       01  WS-REMAINDER         PIC S9(4) COMP.
+
+       01  ARGS PIC X(500).
+
+       01  ARG-VALUES.
+           05  INPUT-FILENAME PIC X(120).
+           05  OUTPUT-FILENAME   PIC X(120).
+
+       01  WS-FILE-STATUS.
+           05  WS-INPUT-STATUS        PIC X(02).
+               88  INPUT-OK           VALUE '00'.
+               88  INPUT-EOF          VALUE '10'.
+           05  WS-OUTPUT-STATUS       PIC X(02).
+               88  OUTPUT-OK          VALUE '00'.
+        01 WS-ALL-FILE-STATUS REDEFINES WS-FILE-STATUS PIC X(04).
+               88  FILES-OK           VALUE '0000'.
+
+       01  WS-RECORD-AREAS.
+           05  WS-INPUT-RECORD.
+               10  FILLER             PIC X(10).
+               10  IN-ACCOUNT-NUMBER  PIC X(16).
+               10  FILLER             PIC X(174).
+           05  WS-OUTPUT-RECORD.
+               10  OUT-ACCOUNT-NUMBER PIC X(16).
+               10  OUT-MESSAGE        PIC X(184).
+
+       01  WS-MESSAGE.
+           05  FILLER                 PIC X(04) VALUE ' IS '.
+           05  WS-CARD-TYPE           PIC X(60).
+               88  UNKNOWN-CARD          VALUE 'UNKNOWN'.
+               88  AMERICAN-EXPRESS-CARD VALUE 'AMERICAN EXPRESS'.
+               88  DISCOVER-CARD         VALUE 'DISCOVER'.
+               88  MASTERCARD-CARD       VALUE 'MASTERCARD'.
+               88  VISA-CARD             VALUE 'VISA'.
+               88  DINERS-CLUB-CARD      VALUE 'DINERS CLUB'.
+
        PROCEDURE DIVISION.
-            COPY INVDATET    .
+           PERFORM UT-INITIALIZE
 
-       0000-MAIN.
+           DISPLAY SPACE
+           DISPLAY "TEST SUITE:"
+           DISPLAY
+           'IDENTIFY CARD TYPE BY ACCOUNT NUMBER'
+           DISPLAY SPACE
 
-           PERFORM 0500-INITIALIZE
-           PERFORM 1000-PROCESS-INVOICES
-           GOBACK
+           MOVE 'STARTS WITH 4: VISA'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '4111111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'VISA'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 51: MASTERCARD'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '5111111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'MASTERCARD'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 53: MASTERCARD'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '5311111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'MASTERCARD'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 55: MASTERCARD'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '5511111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'MASTERCARD'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 36: DINERS CLUB'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3611111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'DINERS CLUB'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 38: DINERS CLUB'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3811111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'DINERS CLUB'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 6011: DISCOVER'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '6011111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'DISCOVER'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 65: DISCOVER'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '6511111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'DISCOVER'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 6012: UNKNOWN'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '6012111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'UNKNOWN'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 34: AMERICAN EXPRESS'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3411111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'AMERICAN EXPRESS'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 37: AMERICAN EXPRESS'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3711111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'AMERICAN EXPRESS'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 35: JAPAN CREDIT BUREAU'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3511111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'JAPAN CREDIT BUREAU'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+           PERFORM UT-AFTER
+           MOVE 'STARTS WITH 39: UNKNOWN'
+               TO UT-TEST-CASE-NAME
+           PERFORM UT-BEFORE
+           MOVE '3911111111111111' TO IN-ACCOUNT-NUMBER
+           PERFORM 2200-IDENTIFY-CARD-TYPE
+           ADD 1 TO UT-TEST-CASE-COUNT
+           SET UT-NORMAL-COMPARE TO TRUE
+           MOVE WS-CARD-TYPE TO UT-ACTUAL
+           MOVE 'UNKNOWN'
+                       TO UT-EXPECTED
+           SET UT-COMPARE-DEFAULT TO TRUE
+           PERFORM UT-ASSERT-EQUAL
+
+
+
+
+
+
+
+           PERFORM UT-AFTER
+            COPY ZUTZCPD     .
            .
+       UT-BEFORE.
 
-       0500-INITIALIZE.
            .
+       UT-AFTER.
 
-       1000-PROCESS-INVOICES.
-           PERFORM 2000-NEXT-INVOICE-DATE
            .
+       UT-INITIALIZE.
+           MOVE SPACES TO UT-FILE-INFORMATION
 
-       2000-NEXT-INVOICE-DATE.
-           EVALUATE TRUE
-               WHEN FEBRUARY
-                    PERFORM 2100-HANDLE-FEBRUARY
-               WHEN 30-DAY-MONTH
-                    MOVE 30 TO WS-CURRENT-DAY
-               WHEN OTHER
-                    MOVE 31 TO WS-CURRENT-DAY
-           END-EVALUATE
-           MOVE WS-CURRENT-DATE TO WS-NEXT-INVOICE-DATE
            .
+       UT-END.
 
-       2100-HANDLE-FEBRUARY.
-           DIVIDE 4 INTO WS-CURRENT-YEAR
-               GIVING WS-QUOTIENT
-               REMAINDER WS-REMAINDER
-           END-DIVIDE
-           IF  WS-REMAINDER EQUAL ZERO
-               MOVE 29 TO WS-CURRENT-DAY
-           ELSE
-               MOVE 28 TO WS-CURRENT-DAY
+
+           PERFORM 9100-OPEN-FILES
+           IF INPUT-OK
+               PERFORM 2000-IDENTIFY-CARD-TYPES UNTIL INPUT-EOF
+               PERFORM 9400-CLOSE-FILES
            END-IF
-           .
 
+
+           .
+       2000-IDENTIFY-CARD-TYPES.
+           PERFORM 9200-READ-INPUT-FILE
+           IF FILES-OK
+               PERFORM 2200-IDENTIFY-CARD-TYPE
+           PERFORM 9300-WRITE-OUTPUT-FILE
+
+           .
+       2200-IDENTIFY-CARD-TYPE.
+
+           SET UNKNOWN-CARD TO TRUE
+           IF IN-ACCOUNT-NUMBER(1:2) = '34'
+           OR IN-ACCOUNT-NUMBER(1:2) = '37'
+               SET AMERICAN-EXPRESS-CARD TO TRUE
+               PERFORM 2290-POPULATE-MESSAGE
+           ELSE
+               IF IN-ACCOUNT-NUMBER(1:2) = '65'
+               OR IN-ACCOUNT-NUMBER(1:4) = '6011'
+                   SET DISCOVER-CARD TO TRUE
+                   PERFORM 2290-POPULATE-MESSAGE
+               ELSE
+                   IF IN-ACCOUNT-NUMBER(1:2) >= '51'
+                   AND IN-ACCOUNT-NUMBER(1:2) <= '55'
+                       SET MASTERCARD-CARD TO TRUE
+                       PERFORM 2290-POPULATE-MESSAGE
+                   ELSE
+                       IF IN-ACCOUNT-NUMBER(1:1) = '4'
+                           SET VISA-CARD TO TRUE
+                           PERFORM 2290-POPULATE-MESSAGE
+                       ELSE
+                           IF IN-ACCOUNT-NUMBER(1:2) = '36'
+                           OR IN-ACCOUNT-NUMBER(1:2) = '38'
+                               SET DINERS-CLUB-CARD TO TRUE
+                               PERFORM 2290-POPULATE-MESSAGE
+                           ELSE
+                               PERFORM 2290-POPULATE-MESSAGE
+
+           .
+       2290-POPULATE-MESSAGE.
+           MOVE IN-ACCOUNT-NUMBER TO OUT-ACCOUNT-NUMBER
+           MOVE WS-MESSAGE TO OUT-MESSAGE
+
+           DISPLAY 'OUT-ACCOUNT-NUMBER ' OUT-ACCOUNT-NUMBER
+           DISPLAY 'WS-MESSAGE ' WS-MESSAGE
+           DISPLAY 'WS-CARD-TYPE ' WS-CARD-TYPE
+
+           .
+       9100-OPEN-FILES.
+
+           ACCEPT ARGS FROM COMMAND-LINE END-ACCEPT
+           UNSTRING ARGS DELIMITED BY SPACE
+               INTO INPUT-FILENAME OUTPUT-FILENAME
+           END-UNSTRING
+
+           IF  INPUT-FILENAME = SPACES
+           OR OUTPUT-FILENAME = SPACES
+               DISPLAY 'USAGE: CARD1 INPUT-FILENAME'
+                   ' OUTPUT-FILENAME'
+               GOBACK
+           END-IF
+
+           OPEN INPUT INPUT-FILE
+           OPEN OUTPUT OUTPUT-FILE
+
+
+           .
+       9200-READ-INPUT-FILE.
+           READ INPUT-FILE
+
+
+           .
+       9300-WRITE-OUTPUT-FILE.
+           WRITE OUTPUT-RECORD FROM WS-OUTPUT-RECORD
+
+
+           .
+       9400-CLOSE-FILES.
+           CLOSE OUTPUT-FILE
+           CLOSE INPUT-FILE
+
+
+           .
        9999-END.
+
            .
