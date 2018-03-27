@@ -20,7 +20,7 @@
 #=====================================================================
 
 export VERSION="0.2.0 Jan 5 2015"
-export PROJECT="$HOME/projects/cobol-unit-test"
+export PROJECT="$(dirname "$0")"
 export MAINSRC="$PROJECT/src/main/cobol"
 export TESTSRC="$PROJECT/src/test/cobol"
 export MAINCPY="$MAINSRC/copy"
