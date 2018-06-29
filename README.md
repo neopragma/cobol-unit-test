@@ -63,6 +63,8 @@ The precompiler ignores Cobol-style comment lines.
 
 ### Examples
 
+Copy the `envvars` file and update the `PROJECT` variable: `cp envvars.example envvars`
+
 Compile the program ```SAMPLE```, located at ```src/main/cobol/SAMPLE.CBL```
 
 ```sh
