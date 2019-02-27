@@ -63,7 +63,7 @@
                10  PARA-HEADER-AREA      PIC X(04).                             
                10  FILLER                PIC X(06).                             
            05  FILLER                    PIC X(63).                             
-         03  FILLER REDEFINES ORIGINAL-LINE.                                      
+         03  FILLER REDEFINES ORIGINAL-LINE-FOR-REDEFINE.                                      
            05  FILLER                    PIC X(07).                             
            05  PARAGRAPH-NAME            PIC X(31).                             
            05  FILLER                    PIC X(42).                             
