@@ -395,6 +395,18 @@
                    15  KEYWORD-TO-IGNORE-LENGTH PIC S9(02).    
 
       *****************************************************************
+      * Track current input phase for better error messages
+      *****************************************************************
+       01  FILLER.
+           05  CURRENT-PHASE                PIC X(09) VALUE SPACES.
+               88 PARSE-WORKING-STORAGE     VALUE 'WS-HEADER'.
+               88 PARSE-PROCEDURE-DIVISION  VALUE 'PROC-DIV'.
+               88 PARSE-SELECT-STATEMENT    VALUE 'SELECT'.
+               88 PARSE-FD-STATEMENT        VALUE 'FD'.
+               88 PARSE-CHECK-FOR-MOCKABLES VALUE 'MOCKS'.
+               88 PARSE-OTHER               VALUE 'MAIN CODE'.
+                   
+      *****************************************************************
       * Constants
       *****************************************************************
        01  FILLER.
@@ -995,9 +1007,12 @@
                10  FILLER PIC X(36) VALUE
                    'ORIGINAL SOURCE FILE SRCPRG STATUS '.
                10  MSG-ORIG-SOURCE-STATUS    PIC 9(02).
-               10  FILLER                   PIC X(04) VALUE ' ON '.
+               10  FILLER                    PIC X(04) VALUE ' ON '.
                10  MSG-ORIG-SOURCE-OPERATION PIC X(04).
-               10  FILLER                   PIC X(28) VALUE SPACES.
+               10  FILLER PIC X(10) VALUE
+                   ' IN PHASE '.
+               10  MSG-ORIG-SOURCE-PHASE     PIC X(09).
+               10  FILLER                    PIC X(09) VALUE SPACES.
 
            05  MSG-TEST-CASES-NOT-FOUND.
                10  FILLER PIC X(06) VALUE '004-E '.
@@ -1183,17 +1198,23 @@
            PERFORM 2600-IS-THIS-A-SELECT-STMT
 
            EVALUATE TRUE
-               WHEN WORKING-STORAGE-HEADER
+               WHEN WORKING-STORAGE-HEADER 
+                    SET PARSE-WORKING-STORAGE     TO TRUE
                     PERFORM 2700-INSERT-WORKING-STG-CODE
                WHEN PROCEDURE-DIVISION-HEADER
+                    SET PARSE-PROCEDURE-DIVISION  TO TRUE
                     PERFORM 3000-INSERT-PROC-DIV-CODE
                WHEN SELECT-STATEMENT
+                    SET PARSE-SELECT-STATEMENT    TO TRUE
                     PERFORM 2800-PROCESS-SELECT
                WHEN FD-STATEMENT
+                    SET PARSE-FD-STATEMENT        TO TRUE
                     PERFORM 2900-PROCESS-FD
                WHEN CHECK-FOR-MOCKABLES
+                    SET PARSE-CHECK-FOR-MOCKABLES TO TRUE
                     PERFORM 3100-CHECK-FOR-MOCKABLES
                WHEN OTHER
+                    SET PARSE-OTHER               TO TRUE
                     PERFORM 9460-COPY-ORIGINAL-LINE         
            END-EVALUATE         
            .
@@ -4116,6 +4137,7 @@
                     MOVE ORIGINAL-SOURCE-STATUS 
                          TO MSG-ORIG-SOURCE-STATUS
                     MOVE OPEN-VERB TO MSG-ORIG-SOURCE-OPERATION
+                    MOVE CURRENT-PHASE TO MSG-ORIG-SOURCE-PHASE
                     DISPLAY THIS-PROGRAM MSG-ORIG-SOURCE-ERROR   
            END-EVALUATE
            .
@@ -4150,6 +4172,7 @@
                     MOVE ORIGINAL-SOURCE-STATUS 
                          TO MSG-ORIG-SOURCE-STATUS
                     MOVE READ-VERB TO MSG-ORIG-SOURCE-OPERATION
+                    MOVE CURRENT-PHASE TO MSG-ORIG-SOURCE-PHASE
                     DISPLAY MSG-ORIG-SOURCE-ERROR  
                     PERFORM 9290-CLOSE-ORIGINAL-SOURCE
                     PERFORM 9490-CLOSE-TEST-SOURCE
