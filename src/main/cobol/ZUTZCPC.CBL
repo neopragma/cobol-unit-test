@@ -2014,6 +2014,8 @@
        4310-KEYWORD-EXPECT.    
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           
+           PERFORM 4315-HANDLE-QUALIFIERS
 
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'NOT ' TO KEYWORD-TO-MATCH
@@ -2040,7 +2042,29 @@
                DISPLAY MSG-EXPECT-SYNTAX-3
            END-IF
            .
-
+       4315-HANDLE-QUALIFIERS.                                  
+           PERFORM WITH TEST AFTER UNTIL KEYWORD-NOT-MATCHED    
+             SET KEYWORD-NOT-MATCHED TO TRUE                    
+             MOVE 'IN ' TO KEYWORD-TO-MATCH                     
+             MOVE 3 TO KEYWORD-MATCH-LENGTH                     
+             MOVE KEYWORD-OFFSET TO TEMP-SUB                    
+             PERFORM 7400-MATCH-KEYWORD                         
+             IF KEYWORD-MATCHED                                 
+               COMPUTE KEYWORD-OFFSET = KEYWORD-OFFSET         
+                 + KEYWORD-MATCH-LENGTH - 1                
+               SET TOKEN-IX UP BY 1                             
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES               
+               STRING TOKEN (TOKEN-IX - 1) DELIMITED BY SPACE   
+                      '#IN#'  DELIMITED BY SIZE                 
+                      TOKEN (TOKEN-IX) DELIMITED BY SPACE       
+                 INTO TOKEN (TOKEN-IX - 1)                      
+               SET TOKEN-IX DOWN BY 1                                                                       
+             ELSE                                               
+               MOVE TEMP-SUB TO KEYWORD-OFFSET                  
+               SUBTRACT 5 FROM KEYWORD-OFFSET                   
+             END-IF                                             
+           END-PERFORM                                          
+           .                                                     
        4320-EXPECT-EQUALITY.
       *****************************************************************     
       * Generate code in TEST-SOURCE to assert expected and actual
@@ -2083,6 +2107,11 @@
                WHEN OTHER
                     PERFORM 4350-GENERATE-PIC-X-COMPARE
            END-EVALUATE              
+      
+           PERFORM VARYING TALLY FROM 1 BY 1 UNTIL TALLY > STATEMENT-IX
+             INSPECT GENERATED-SOURCE-STATEMENT(TALLY)                 
+               REPLACING ALL '#IN#' BY ' IN '                          
+           END-PERFORM                                                 
 
            PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE
