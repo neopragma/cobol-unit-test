@@ -43,6 +43,7 @@
        FD  ORIGINAL-SOURCE
            DATA RECORD IS ORIGINAL-LINE.
        01  ORIGINAL-LINE.
+         03  ORIGINAL-LINE-FOR-REDEFINE. 
            05  FILLER                    PIC X(07).
            05  SECTION-HEADER            PIC X(10).
                88  DATA-DIVISION-HEADER      VALUE 'DATA DIVIS'.
@@ -58,7 +59,7 @@
                10  PARA-HEADER-AREA      PIC X(04).
                10  FILLER                PIC X(06).    
            05  FILLER                    PIC X(63).
-       01  FILLER REDEFINES ORIGINAL-LINE.
+         03  FILLER REDEFINES ORIGINAL-LINE-FOR-REDEFINE. 
            05  FILLER                    PIC X(07).
            05  PARAGRAPH-NAME            PIC X(31).
            05  FILLER                    PIC X(42).    
@@ -270,7 +271,7 @@
        01  GENERATED-SOURCE-STATEMENTS.
            05  GENERATED-SOURCE-STATEMENT 
                OCCURS 100 
-               INDEXED BY STATEMENT-IX   PIC X(160).
+               INDEXED BY STATEMENT-IX   PIC X(160) VALUE SPACES.
                    
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -279,7 +280,7 @@
        01  INITIALIZATION-STATEMENTS.
            05  INITIALIZATION-STATEMENT 
                OCCURS 50 
-               INDEXED BY INITIALIZATION-IX PIC X(80).
+               INDEXED BY INITIALIZATION-IX PIC X(80) VALUE SPACES.
 
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -288,7 +289,7 @@
        01  BEFORE-EACH-STATEMENTS.
            05  BEFORE-EACH-STATEMENT
                OCCURS 50
-               INDEXED BY BEFORE-EACH-IX PIC X(80).        
+               INDEXED BY BEFORE-EACH-IX PIC X(80) VALUE SPACES.        
 
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -297,7 +298,7 @@
        01  AFTER-EACH-STATEMENTS.
            05  AFTER-EACH-STATEMENT
                OCCURS 50
-               INDEXED BY AFTER-EACH-IX PIC X(80).        
+               INDEXED BY AFTER-EACH-IX PIC X(80) VALUE SPACES.        
 
       *****************************************************************
       * Build source statements for the UT-MOCK-INFO table to be
@@ -306,7 +307,7 @@
        01  MOCK-INFO-LINES.
            05  MOCK-INFO-LINE
                OCCURS 50
-               INDEXED BY MOCK-INFO-IX PIC X(80).
+               INDEXED BY MOCK-INFO-IX PIC X(80) VALUE SPACES.
 
       *****************************************************************
       * Build source statements for the UT-LOOKUP-MOCK paragraph to be
@@ -315,7 +316,7 @@
        01  LOOKUP-MOCK-REPLACEMENT-STMTS.
            05  LOOKUP-MOCK-REPLACEMENT-STMT
                OCCURS 50
-               INDEXED BY LOOKUP-MOCK-IX PIC X(80).
+               INDEXED BY LOOKUP-MOCK-IX PIC X(80) VALUE SPACES.
 
       *****************************************************************
       * This is a work area used when tokenizing a line of input from
@@ -341,15 +342,15 @@
            05  KEYWORD-MATCHED-INDICATOR PIC X(01) VALUE 'N'.
                88  KEYWORD-MATCHED              VALUE 'Y'.
                88  KEYWORD-NOT-MATCHED          VALUE 'N'.
-           05  WS-CHARS               PIC 9(02) VALUE ZERO.  
-           05  WS-NEXT                PIC 9(02) VALUE ZERO.
+           05  WS-CHARS               PIC 9(02) VALUE ZERO COMP.  
+           05  WS-NEXT                PIC 9(02) VALUE ZERO COMP.
            05  WS-STRING-DELIMITER    PIC X(01) VALUE SPACE.  
            05  KEYWORD-TO-MATCH       PIC X(20) VALUE SPACES.
            05  KEYWORD-MATCH-LENGTH   PIC 9(02) VALUE ZERO.
-           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0.
+           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0 COMP.
            05  KEYWORD-SEARCH-LIMIT   PIC 9(02) VALUE 0.
-           05  KEYWORD-END            PIC 9(02) VALUE 72.
-           05  KEYWORD-START          PIC 9(02) VALUE 12.
+           05  KEYWORD-END            PIC 9(02) VALUE 72 COMP.
+           05  KEYWORD-START          PIC 9(02) VALUE 12 COMP.
            05  MAX-KEYWORDS           PIC 9(02) VALUE 8.
            05  KEYWORD-VALUES.
                10  FILLER PIC X(20) VALUE 'EXPECT'.
@@ -1547,7 +1548,7 @@
            SET FILENAME-NOT-MATCHED TO TRUE
            PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
-               PERFORM 3300-GEN-MOCK-REPLACEMENT-STMTS
+               PERFORM 3300-GEN-MOCK-REPLACE-STMTS
            ELSE
                SET COPY-SOURCE TO TRUE
                MOVE MOCK-FILENAME(MOCK-IX) 
@@ -1560,7 +1561,7 @@
            END-IF        
            .
 
-       3300-GEN-MOCK-REPLACEMENT-STMTS.
+       3300-GEN-MOCK-REPLACE-STMTS.
       *****************************************************************
       * Generate code in TEST-SOURCE to substitute mock behavior for
       * the real I/O functionality.
@@ -1775,8 +1776,8 @@
       * See if we have read a paragraph header line from 
       * ORIGINAL-SOURCE.
       *****************************************************************
-          SET MOCKABLE-NOT-FOUND TO TRUE
-          IF PARA-HEADER-AREA IS EQUAL TO SPACES
+           SET MOCKABLE-NOT-FOUND TO TRUE
+           IF PARA-HEADER-AREA IS EQUAL TO SPACES
                CONTINUE
            ELSE
                PERFORM 7640-SET-SAVE-ORIG-LINES
@@ -3243,7 +3244,7 @@
       *             [tokens]
       *             END-CALL
       *         [any Cobol statements]
-      *     END-CALL
+      *     END-MOCK
       *
       * By the time this routine is performed, the keyword CALL has
       * already been processed.
@@ -3626,10 +3627,11 @@
                           OR MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX) 
                              IS EQUAL TO SPACES
+                   SET STATEMENT-IX TO MOCK-REPLACEMENT-STMTS-IX 
                    MOVE MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX)
                        TO GENERATED-SOURCE-STATEMENT
-                             (MOCK-REPLACEMENT-STMTS-IX)          
+                             (STATEMENT-IX)       
                END-PERFORM                 
                PERFORM 9440-WRITE-GENERATED-STMTS    
            END-IF
@@ -3795,6 +3797,15 @@
                    MOVE KEYWORD-START TO KEYWORD-OFFSET
                END-IF            
            END-PERFORM
+           .                                                           
+       7315-IS-END-OF-TEST-CASES.                                      
+      *****************************************************************
+      * Dev has forgotten a . as end of test case file.                
+      *****************************************************************
+           IF END-OF-TEST-CASES                                        
+             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
+             DISPLAY MSG-TEST-CASES-MISSING-END                        
+           END-IF                                                      
            .
        7315-IS-END-OF-TEST-CASES.                                      
       *****************************************************************
@@ -4173,7 +4184,7 @@
            .
 
        9290-CLOSE-ORIGINAL-SOURCE.
-           CLOSE ORIGINAL-SOURCE.
+           CLOSE ORIGINAL-SOURCE
            .
 
       *****************************************************************
@@ -4224,7 +4235,7 @@
            .
 
        9390-CLOSE-TEST-CASES.
-           CLOSE TEST-CASES.
+           CLOSE TEST-CASES
            .
 
       *****************************************************************
