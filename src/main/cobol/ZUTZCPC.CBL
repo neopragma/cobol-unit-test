@@ -43,7 +43,6 @@
        FD  ORIGINAL-SOURCE
            DATA RECORD IS ORIGINAL-LINE.
        01  ORIGINAL-LINE.
-         03  ORIGINAL-LINE-FOR-REDEFINE. 
            05  FILLER                    PIC X(07).
            05  SECTION-HEADER            PIC X(10).
                88  DATA-DIVISION-HEADER      VALUE 'DATA DIVIS'.
@@ -59,7 +58,7 @@
                10  PARA-HEADER-AREA      PIC X(04).
                10  FILLER                PIC X(06).    
            05  FILLER                    PIC X(63).
-         03  FILLER REDEFINES ORIGINAL-LINE-FOR-REDEFINE. 
+       01  FILLER REDEFINES ORIGINAL-LINE.
            05  FILLER                    PIC X(07).
            05  PARAGRAPH-NAME            PIC X(31).
            05  FILLER                    PIC X(42).    
@@ -271,7 +270,7 @@
        01  GENERATED-SOURCE-STATEMENTS.
            05  GENERATED-SOURCE-STATEMENT 
                OCCURS 100 
-               INDEXED BY STATEMENT-IX   PIC X(160) VALUE SPACES.
+               INDEXED BY STATEMENT-IX   PIC X(160).
                    
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -280,7 +279,7 @@
        01  INITIALIZATION-STATEMENTS.
            05  INITIALIZATION-STATEMENT 
                OCCURS 50 
-               INDEXED BY INITIALIZATION-IX PIC X(80) VALUE SPACES.
+               INDEXED BY INITIALIZATION-IX PIC X(80).
 
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -289,7 +288,7 @@
        01  BEFORE-EACH-STATEMENTS.
            05  BEFORE-EACH-STATEMENT
                OCCURS 50
-               INDEXED BY BEFORE-EACH-IX PIC X(80) VALUE SPACES.        
+               INDEXED BY BEFORE-EACH-IX PIC X(80).        
 
       *****************************************************************
       * Accumulate source statements that will be inserted into the 
@@ -298,7 +297,7 @@
        01  AFTER-EACH-STATEMENTS.
            05  AFTER-EACH-STATEMENT
                OCCURS 50
-               INDEXED BY AFTER-EACH-IX PIC X(80) VALUE SPACES.        
+               INDEXED BY AFTER-EACH-IX PIC X(80).        
 
       *****************************************************************
       * Build source statements for the UT-MOCK-INFO table to be
@@ -307,7 +306,7 @@
        01  MOCK-INFO-LINES.
            05  MOCK-INFO-LINE
                OCCURS 50
-               INDEXED BY MOCK-INFO-IX PIC X(80) VALUE SPACES.
+               INDEXED BY MOCK-INFO-IX PIC X(80).
 
       *****************************************************************
       * Build source statements for the UT-LOOKUP-MOCK paragraph to be
@@ -316,7 +315,7 @@
        01  LOOKUP-MOCK-REPLACEMENT-STMTS.
            05  LOOKUP-MOCK-REPLACEMENT-STMT
                OCCURS 50
-               INDEXED BY LOOKUP-MOCK-IX PIC X(80) VALUE SPACES.
+               INDEXED BY LOOKUP-MOCK-IX PIC X(80).
 
       *****************************************************************
       * This is a work area used when tokenizing a line of input from
@@ -342,15 +341,15 @@
            05  KEYWORD-MATCHED-INDICATOR PIC X(01) VALUE 'N'.
                88  KEYWORD-MATCHED              VALUE 'Y'.
                88  KEYWORD-NOT-MATCHED          VALUE 'N'.
-           05  WS-CHARS               PIC 9(02) VALUE ZERO COMP.  
-           05  WS-NEXT                PIC 9(02) VALUE ZERO COMP.
+           05  WS-CHARS               PIC 9(02) VALUE ZERO.  
+           05  WS-NEXT                PIC 9(02) VALUE ZERO.
            05  WS-STRING-DELIMITER    PIC X(01) VALUE SPACE.  
            05  KEYWORD-TO-MATCH       PIC X(20) VALUE SPACES.
            05  KEYWORD-MATCH-LENGTH   PIC 9(02) VALUE ZERO.
-           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0 COMP.
+           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0.
            05  KEYWORD-SEARCH-LIMIT   PIC 9(02) VALUE 0.
-           05  KEYWORD-END            PIC 9(02) VALUE 72 COMP.
-           05  KEYWORD-START          PIC 9(02) VALUE 12 COMP.
+           05  KEYWORD-END            PIC 9(02) VALUE 72.
+           05  KEYWORD-START          PIC 9(02) VALUE 12.
            05  MAX-KEYWORDS           PIC 9(02) VALUE 8.
            05  KEYWORD-VALUES.
                10  FILLER PIC X(20) VALUE 'EXPECT'.
@@ -1141,11 +1140,6 @@
            05  MSG-EXPECT-SYNTAX-3.
                10  FILLER PIC X(80) VALUE 
                '    EXPECT [actual] TO BE [expected]'.
-      
-           05  MSG-TEST-CASES-MISSING-END.                  
-               10  FILLER PIC X(06) VALUE '017-E '.         
-               10  FILLER                   PIC X(33) VALUE 
-               'TEST CASE NEEDS A . AS LAST TOKEN'.     
 
        LINKAGE SECTION.
 
@@ -1548,7 +1542,7 @@
            SET FILENAME-NOT-MATCHED TO TRUE
            PERFORM 6400-GET-FILE-INFO-FOR-MOCK
            IF FILENAME-MATCHED
-               PERFORM 3300-GEN-MOCK-REPLACE-STMTS
+               PERFORM 3300-GEN-MOCK-REPLACEMENT-STMTS
            ELSE
                SET COPY-SOURCE TO TRUE
                MOVE MOCK-FILENAME(MOCK-IX) 
@@ -1561,7 +1555,7 @@
            END-IF        
            .
 
-       3300-GEN-MOCK-REPLACE-STMTS.
+       3300-GEN-MOCK-REPLACEMENT-STMTS.
       *****************************************************************
       * Generate code in TEST-SOURCE to substitute mock behavior for
       * the real I/O functionality.
@@ -1776,8 +1770,8 @@
       * See if we have read a paragraph header line from 
       * ORIGINAL-SOURCE.
       *****************************************************************
-           SET MOCKABLE-NOT-FOUND TO TRUE
-           IF PARA-HEADER-AREA IS EQUAL TO SPACES
+          SET MOCKABLE-NOT-FOUND TO TRUE
+          IF PARA-HEADER-AREA IS EQUAL TO SPACES
                CONTINUE
            ELSE
                PERFORM 7640-SET-SAVE-ORIG-LINES
@@ -2020,6 +2014,8 @@
        4310-KEYWORD-EXPECT.    
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
+           
+           PERFORM 4315-HANDLE-QUALIFIERS
 
            INITIALIZE KEYWORD-MATCHED-INDICATOR
            MOVE 'NOT ' TO KEYWORD-TO-MATCH
@@ -2046,7 +2042,29 @@
                DISPLAY MSG-EXPECT-SYNTAX-3
            END-IF
            .
-
+       4315-HANDLE-QUALIFIERS.                                  
+           PERFORM WITH TEST AFTER UNTIL KEYWORD-NOT-MATCHED    
+             SET KEYWORD-NOT-MATCHED TO TRUE                    
+             MOVE 'IN ' TO KEYWORD-TO-MATCH                     
+             MOVE 3 TO KEYWORD-MATCH-LENGTH                     
+             MOVE KEYWORD-OFFSET TO TEMP-SUB                    
+             PERFORM 7400-MATCH-KEYWORD                         
+             IF KEYWORD-MATCHED                                 
+               COMPUTE KEYWORD-OFFSET = KEYWORD-OFFSET         
+                 + KEYWORD-MATCH-LENGTH - 1                
+               SET TOKEN-IX UP BY 1                             
+               PERFORM 7100-NEXT-TOKEN-TEST-CASES               
+               STRING TOKEN (TOKEN-IX - 1) DELIMITED BY SPACE   
+                      '#IN#'  DELIMITED BY SIZE                 
+                      TOKEN (TOKEN-IX) DELIMITED BY SPACE       
+                 INTO TOKEN (TOKEN-IX - 1)                      
+               SET TOKEN-IX DOWN BY 1                                                                       
+             ELSE                                               
+               MOVE TEMP-SUB TO KEYWORD-OFFSET                  
+               SUBTRACT 5 FROM KEYWORD-OFFSET                   
+             END-IF                                             
+           END-PERFORM                                          
+           .                                                     
        4320-EXPECT-EQUALITY.
       *****************************************************************     
       * Generate code in TEST-SOURCE to assert expected and actual
@@ -2089,6 +2107,11 @@
                WHEN OTHER
                     PERFORM 4350-GENERATE-PIC-X-COMPARE
            END-EVALUATE              
+      
+           PERFORM VARYING TALLY FROM 1 BY 1 UNTIL TALLY > STATEMENT-IX
+             INSPECT GENERATED-SOURCE-STATEMENT(TALLY)                 
+               REPLACING ALL '#IN#' BY ' IN '                          
+           END-PERFORM                                                 
 
            PERFORM 9440-WRITE-GENERATED-STMTS
            SET SUPPRESS-COPY-SOURCE TO TRUE
@@ -3244,7 +3267,7 @@
       *             [tokens]
       *             END-CALL
       *         [any Cobol statements]
-      *     END-MOCK
+      *     END-CALL
       *
       * By the time this routine is performed, the keyword CALL has
       * already been processed.
@@ -3627,11 +3650,10 @@
                           OR MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX) 
                              IS EQUAL TO SPACES
-                   SET STATEMENT-IX TO MOCK-REPLACEMENT-STMTS-IX 
                    MOVE MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX)
                        TO GENERATED-SOURCE-STATEMENT
-                             (STATEMENT-IX)       
+                             (MOCK-REPLACEMENT-STMTS-IX)          
                END-PERFORM                 
                PERFORM 9440-WRITE-GENERATED-STMTS    
            END-IF
@@ -3787,7 +3809,6 @@
                ELSE
                    IF SCANNING-TEST-CASES
                        PERFORM 9350-READ-TEST-CASES
-                       PERFORM 7315-IS-END-OF-TEST-CASES
                        MOVE TEST-CASE-LINE TO LINE-TO-PARSE   
                    ELSE
                        PERFORM 9460-COPY-ORIGINAL-LINE
@@ -3797,25 +3818,7 @@
                    MOVE KEYWORD-START TO KEYWORD-OFFSET
                END-IF            
            END-PERFORM
-           .                                                           
-       7315-IS-END-OF-TEST-CASES.                                      
-      *****************************************************************
-      * Dev has forgotten a . as end of test case file.                
-      *****************************************************************
-           IF END-OF-TEST-CASES                                        
-             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
-             DISPLAY MSG-TEST-CASES-MISSING-END                        
-           END-IF                                                      
            .
-       7315-IS-END-OF-TEST-CASES.                                      
-      *****************************************************************
-      * Dev has forgotten a . as end of test case file.                
-      *****************************************************************
-           IF END-OF-TEST-CASES                                        
-             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
-             DISPLAY MSG-TEST-CASES-MISSING-END                        
-           END-IF                                                      
-           .                                                           
 
        7320-FIND-NEXT-SPACE.
            IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE
@@ -4184,7 +4187,7 @@
            .
 
        9290-CLOSE-ORIGINAL-SOURCE.
-           CLOSE ORIGINAL-SOURCE
+           CLOSE ORIGINAL-SOURCE.
            .
 
       *****************************************************************
@@ -4235,7 +4238,7 @@
            .
 
        9390-CLOSE-TEST-CASES.
-           CLOSE TEST-CASES
+           CLOSE TEST-CASES.
            .
 
       *****************************************************************
