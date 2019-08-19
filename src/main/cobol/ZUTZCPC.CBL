@@ -43,7 +43,7 @@
        FD  ORIGINAL-SOURCE
            DATA RECORD IS ORIGINAL-LINE.
        01  ORIGINAL-LINE.
-         03  ORIGINAL-LINE-FOR-REDEFINE.
+         03  ORIGINAL-LINE-FOR-REDEFINE. 
            05  FILLER                    PIC X(07).
            05  SECTION-HEADER            PIC X(10).
                88  DATA-DIVISION-HEADER      VALUE 'DATA DIVIS'.
@@ -1142,10 +1142,10 @@
                10  FILLER PIC X(80) VALUE 
                '    EXPECT [actual] TO BE [expected]'.
       
-           05  MSG-TEST-CASES-MISSING-END.                   
-               10  FILLER PIC X(06) VALUE '017-E '.          
-               10  FILLER                   PIC X(33) VALUE  
-               'TEST CASE NEEDS A . AS LAST TOKEN'.      
+           05  MSG-TEST-CASES-MISSING-END.                  
+               10  FILLER PIC X(06) VALUE '017-E '.         
+               10  FILLER                   PIC X(33) VALUE 
+               'TEST CASE NEEDS A . AS LAST TOKEN'.     
 
        LINKAGE SECTION.
 
@@ -3627,11 +3627,11 @@
                           OR MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX) 
                              IS EQUAL TO SPACES
-                   SET STATEMENT-IX TO MOCK-REPLACEMENT-STMTS-IX
+                   SET STATEMENT-IX TO MOCK-REPLACEMENT-STMTS-IX 
                    MOVE MOCK-REPLACEMENT-STMT
                              (MOCK-IX, MOCK-REPLACEMENT-STMTS-IX)
                        TO GENERATED-SOURCE-STATEMENT
-                             (STATEMENT-IX)        
+                             (STATEMENT-IX)       
                END-PERFORM                 
                PERFORM 9440-WRITE-GENERATED-STMTS    
            END-IF
@@ -3797,16 +3797,25 @@
                    MOVE KEYWORD-START TO KEYWORD-OFFSET
                END-IF            
            END-PERFORM
-           .                                                            
-       7315-IS-END-OF-TEST-CASES.                                       
-      ***************************************************************** 
-      * Dev has forgotten a . as end of test case file.                 
-      ***************************************************************** 
-           IF END-OF-TEST-CASES                                         
-             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE                
-             DISPLAY MSG-TEST-CASES-MISSING-END                         
-           END-IF                                                       
+           .                                                           
+       7315-IS-END-OF-TEST-CASES.                                      
+      *****************************************************************
+      * Dev has forgotten a . as end of test case file.                
+      *****************************************************************
+           IF END-OF-TEST-CASES                                        
+             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
+             DISPLAY MSG-TEST-CASES-MISSING-END                        
+           END-IF                                                      
            .
+       7315-IS-END-OF-TEST-CASES.                                      
+      *****************************************************************
+      * Dev has forgotten a . as end of test case file.                
+      *****************************************************************
+           IF END-OF-TEST-CASES                                        
+             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
+             DISPLAY MSG-TEST-CASES-MISSING-END                        
+           END-IF                                                      
+           .                                                           
 
        7320-FIND-NEXT-SPACE.
            IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE

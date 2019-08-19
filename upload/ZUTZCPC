@@ -43,6 +43,7 @@
        FD  ORIGINAL-SOURCE                                                      
            DATA RECORD IS ORIGINAL-LINE.                                        
        01  ORIGINAL-LINE.                                                       
+         03 ORIGINAL-LINE-FOR-REDEFINE. 
            05  FILLER                    PIC X(07).                             
            05  SECTION-HEADER            PIC X(10).                             
                88  DATA-DIVISION-HEADER      VALUE 'DATA DIVIS'.                
@@ -62,7 +63,7 @@
                10  PARA-HEADER-AREA      PIC X(04).                             
                10  FILLER                PIC X(06).                             
            05  FILLER                    PIC X(63).                             
-       01  FILLER REDEFINES ORIGINAL-LINE.                                      
+         03  FILLER REDEFINES ORIGINAL-LINE-FOR-REDEFINE.                                      
            05  FILLER                    PIC X(07).                             
            05  PARAGRAPH-NAME            PIC X(31).                             
            05  FILLER                    PIC X(42).                             
@@ -332,15 +333,15 @@
            05  KEYWORD-MATCHED-INDICATOR PIC X(01) VALUE 'N'.                   
                88  KEYWORD-MATCHED              VALUE 'Y'.                      
                88  KEYWORD-NOT-MATCHED          VALUE 'N'.                      
-           05  WS-CHARS               PIC 9(02) VALUE ZERO.                     
-           05  WS-NEXT                PIC 9(02) VALUE ZERO.                     
+           05  WS-CHARS               PIC 9(02) VALUE ZERO COMP.                     
+           05  WS-NEXT                PIC 9(02) VALUE ZERO COMP.                     
            05  WS-STRING-DELIMITER    PIC X(01) VALUE SPACE.                    
            05  KEYWORD-TO-MATCH       PIC X(20) VALUE SPACES.                   
            05  KEYWORD-MATCH-LENGTH   PIC 9(02) VALUE ZERO.                     
-           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0.                        
+           05  KEYWORD-OFFSET         PIC 9(02) VALUE 0 COMP.                        
            05  KEYWORD-SEARCH-LIMIT   PIC 9(02) VALUE 0.                        
-           05  KEYWORD-END            PIC 9(02) VALUE 72.                       
-           05  KEYWORD-START          PIC 9(02) VALUE 12.                       
+           05  KEYWORD-END            PIC 9(02) VALUE 72 COMP.                       
+           05  KEYWORD-START          PIC 9(02) VALUE 12 COMP.                       
            05  MAX-KEYWORDS           PIC 9(02) VALUE 8.                        
            05  KEYWORD-VALUES.                                                  
                10  FILLER PIC X(20) VALUE 'EXPECT'.                             
@@ -1121,6 +1122,11 @@
            05  MSG-EXPECT-SYNTAX-3.                                             
                10  FILLER PIC X(80) VALUE                                       
                '    EXPECT [actual] TO BE [expected]'.                          
+               
+           05  MSG-TEST-CASES-MISSING-END.                  
+               10  FILLER PIC X(06) VALUE '017-E '.         
+               10  FILLER                   PIC X(33) VALUE 
+               'TEST CASE NEEDS A . AS LAST TOKEN'.     
                                                                                 
        LINKAGE SECTION.                                                         
                                                                                 
@@ -1715,8 +1721,8 @@
       * See if we have read a paragraph header line from                        
       * ORIGINAL-SOURCE.                                                        
       *****************************************************************         
-          SET MOCKABLE-NOT-FOUND TO TRUE                                        
-          IF PARA-HEADER-AREA IS EQUAL TO SPACES                                
+           SET MOCKABLE-NOT-FOUND TO TRUE                                        
+           IF PARA-HEADER-AREA IS EQUAL TO SPACES                                
                CONTINUE                                                         
            ELSE                                                                 
                PERFORM 7640-SET-SAVE-ORIG-LINES                                 
@@ -1800,6 +1806,7 @@
       *****************************************************************         
       * EXEC SQL was found. Future implementation.                              
       *****************************************************************         
+           CONTINUE
            .                                                                    
                                                                                 
        2900-COPY-OR-COMMENT-LINES.                                              
@@ -3519,7 +3526,8 @@
                    SET NON-SPACE-FOUND TO TRUE                                  
                ELSE                                                             
                    IF SCANNING-TEST-CASES                                       
-                       PERFORM 9350-READ-TEST-CASES                             
+                       PERFORM 9350-READ-TEST-CASES
+                       PERFORM 7315-IS-END-OF-TEST-CASES
                        MOVE TEST-CASE-LINE TO LINE-TO-PARSE                     
                    ELSE                                                         
                        PERFORM 9460-COPY-ORIGINAL-LINE                          
@@ -3530,6 +3538,15 @@
                END-IF                                                           
            END-PERFORM                                                          
            .                                                                    
+       7315-IS-END-OF-TEST-CASES.                                      
+      *****************************************************************
+      * Dev has forgotten a . as end of test case file.                
+      *****************************************************************
+       IF END-OF-TEST-CASES                                        
+         MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
+         DISPLAY MSG-TEST-CASES-MISSING-END                        
+       END-IF                                                      
+       .                                                           
                                                                                 
        7320-FIND-NEXT-SPACE.                                                    
            IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE                 
@@ -3893,7 +3910,7 @@
            .                                                                    
                                                                                 
        9290-CLOSE-ORIGINAL-SOURCE.                                              
-           CLOSE ORIGINAL-SOURCE.                                               
+           CLOSE ORIGINAL-SOURCE                                               
            .                                                                    
                                                                                 
       *****************************************************************         
@@ -3944,7 +3961,7 @@
            .                                                                    
                                                                                 
        9390-CLOSE-TEST-CASES.                                                   
-           CLOSE TEST-CASES.                                                    
+           CLOSE TEST-CASES                                                    
            .                                                                    
                                                                                 
       *****************************************************************         
