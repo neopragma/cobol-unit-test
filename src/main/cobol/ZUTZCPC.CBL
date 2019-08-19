@@ -328,6 +328,12 @@
       *****************************************************************
        01  TOKENS.
            05  WS-COUNT               PIC S9(04) COMP.
+           05  TOKEN-TYPE             PIC X(8).
+            88 UNKNOWN-TOKEN VALUE 'UNKNOWN'.
+            88 IN-TOKEN      VALUE 'IN'.
+            88 NOT-TOKEN     VALUE 'NOT'.
+            88 TO-TOKEN      VALUE 'TO'.
+            88 BE-TOKEN      VALUE 'BE'.
            05  FILLER OCCURS 100 TIMES INDEXED BY TOKEN-IX.
                10  TOKEN              PIC X(80).
                10  FILLER             PIC X(01).
@@ -2061,25 +2067,40 @@
        4310-KEYWORD-EXPECT.    
            PERFORM 7600-ADJUST-OFFSETS
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
-
-           INITIALIZE KEYWORD-MATCHED-INDICATOR
-           MOVE 'NOT ' TO KEYWORD-TO-MATCH
-           MOVE 4 TO KEYWORD-MATCH-LENGTH
-           MOVE KEYWORD-OFFSET TO TEMP-SUB
-           PERFORM 7400-MATCH-KEYWORD
-           IF KEYWORD-MATCHED
-               SET REVERSE-COMPARE TO TRUE
-           ELSE    
-               SET NORMAL-COMPARE TO TRUE
-               MOVE TEMP-SUB TO KEYWORD-OFFSET
-               SUBTRACT 6 FROM KEYWORD-OFFSET
-           END-IF
-
-           INITIALIZE KEYWORD-MATCHED-INDICATOR
-           MOVE 'TO BE ' TO KEYWORD-TO-MATCH
-           MOVE 6 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
-           IF KEYWORD-MATCHED
+           MOVE SPACES TO CANDIDATE-TEST-KEYWORD
+           SET UNKNOWN-TOKEN TO TRUE
+           SET NORMAL-COMPARE TO TRUE
+      
+           PERFORM UNTIL IS-A-TEST-KEYWORD
+                      OR TOKEN-IX > 100
+                      OR END-OF-TEST-CASES
+           EVALUATE TRUE
+               WHEN TOKEN(TOKEN-IX) = 'IN'
+                    SET IN-TOKEN TO TRUE
+               WHEN TOKEN(TOKEN-IX) = 'TO'
+                    SET TO-TOKEN TO TRUE
+               WHEN TOKEN(TOKEN-IX) = 'BE'
+                AND TO-TOKEN
+                    MOVE ' TO BE ' TO TOKEN (TOKEN-IX - 1)
+                    MOVE SPACES TO TOKEN(TOKEN-IX)
+                    SET TOKEN-IX DOWN BY 1
+               WHEN TOKEN(TOKEN-IX) = 'NOT'
+                    SET REVERSE-COMPARE TO TRUE
+                    MOVE SPACES TO TOKEN(TOKEN-IX) 
+                    SET TOKEN-IX DOWN BY 1
+               WHEN IN-TOKEN
+                    STRING TOKEN (TOKEN-IX - 2) DELIMITED BY SPACE
+                           '#IN#'  DELIMITED BY SIZE
+                           TOKEN (TOKEN-IX) DELIMITED BY SPACE
+                      INTO TOKEN (TOKEN-IX - 2)
+                    MOVE SPACES TO TOKEN(TOKEN-IX)
+                    SET TOKEN-IX DOWN BY 1
+                    MOVE SPACES TO TOKEN(TOKEN-IX)
+                    SET TOKEN-IX DOWN BY 1
+                    SET UNKNOWN-TOKEN TO TRUE
+           END-EVALUATE
+      
+           IF TOKEN-IX <= 100
                PERFORM 4320-EXPECT-EQUALITY
            ELSE
                DISPLAY MSG-EXPECT-SYNTAX-1
