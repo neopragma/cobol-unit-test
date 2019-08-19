@@ -1142,10 +1142,10 @@
                10  FILLER PIC X(80) VALUE 
                '    EXPECT [actual] TO BE [expected]'.
       
-           05  MSG-TEST-CASES-MISSING-END.                   
-               10  FILLER PIC X(06) VALUE '017-E '.          
-               10  FILLER                   PIC X(33) VALUE  
-                   'TEST CASE NEEDS A . AS LAST TOKEN'.      
+           05  MSG-TEST-CASES-MISSING-END.                  
+               10  FILLER PIC X(06) VALUE '017-E '.         
+               10  FILLER                   PIC X(33) VALUE 
+               'TEST CASE NEEDS A . AS LAST TOKEN'.     
 
        LINKAGE SECTION.
 
@@ -3787,7 +3787,7 @@
                ELSE
                    IF SCANNING-TEST-CASES
                        PERFORM 9350-READ-TEST-CASES
-                       PERFORM 7315-IS-END-OF-TEST-CASES 
+                       PERFORM 7315-IS-END-OF-TEST-CASES
                        MOVE TEST-CASE-LINE TO LINE-TO-PARSE   
                    ELSE
                        PERFORM 9460-COPY-ORIGINAL-LINE
@@ -3807,6 +3807,15 @@
              DISPLAY MSG-TEST-CASES-MISSING-END                        
            END-IF                                                      
            .
+       7315-IS-END-OF-TEST-CASES.                                      
+      *****************************************************************
+      * Dev has forgotten a . as end of test case file.                
+      *****************************************************************
+           IF END-OF-TEST-CASES                                        
+             MOVE PARAGRAPH-END-MARKER TO TEST-CASE-LINE               
+             DISPLAY MSG-TEST-CASES-MISSING-END                        
+           END-IF                                                      
+           .                                                           
 
        7320-FIND-NEXT-SPACE.
            IF LINE-TO-PARSE(KEYWORD-OFFSET:1) IS EQUAL TO SPACE
