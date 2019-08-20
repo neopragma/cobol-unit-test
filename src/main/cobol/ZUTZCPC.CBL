@@ -2090,7 +2090,7 @@
                     SET TOKEN-IX DOWN BY 1
                WHEN IN-TOKEN
                     STRING TOKEN (TOKEN-IX - 2) DELIMITED BY SPACE
-                           '#IN#'  DELIMITED BY SIZE
+                           ' IN '  DELIMITED BY SIZE
                            TOKEN (TOKEN-IX) DELIMITED BY SPACE
                       INTO TOKEN (TOKEN-IX - 2)
                     MOVE SPACES TO TOKEN(TOKEN-IX)
@@ -2160,7 +2160,7 @@
        4330-GENERATE-NUMERIC-COMPARE.
            STRING
                MOVE-VERB            DELIMITED BY SIZE
-               TOKEN(2)             DELIMITED BY SPACE
+               TOKEN(2)             DELIMITED BY '  '
                TO-KEYWORD           DELIMITED BY SIZE
                'UT-ACTUAL-NUMERIC' DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -2169,7 +2169,7 @@
            SET STATEMENT-IX UP BY 1
            STRING 
                MOVE-VERB             DELIMITED BY SIZE
-               TOKEN(5)              DELIMITED BY SPACE
+               TOKEN(5)              DELIMITED BY '  '
                TO-KEYWORD            DELIMITED BY SIZE
                'UT-EXPECTED-NUMERIC' DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -2219,7 +2219,7 @@
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
            STRING
                IF-VERB              DELIMITED BY SIZE
-               TOKEN(2)             DELIMITED BY SPACE
+               TOKEN(2)             DELIMITED BY '  '
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                          (STATEMENT-OFFSET:STATEMENT-LENGTH)
            END-STRING
@@ -2288,7 +2288,7 @@
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
            STRING 
                MOVE-VERB            DELIMITED BY SIZE
-               TOKEN(2)             DELIMITED BY SPACE
+               TOKEN(2)             DELIMITED BY '  '
                TO-KEYWORD           DELIMITED BY SIZE
                'UT-ACTUAL'          DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
