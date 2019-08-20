@@ -2101,6 +2101,7 @@
            END-EVALUATE
       
            IF TOKEN-IX <= 100
+           AND TOKEN(3) = ' TO BE '  
                PERFORM 4320-EXPECT-EQUALITY
            ELSE
                DISPLAY MSG-EXPECT-SYNTAX-1
