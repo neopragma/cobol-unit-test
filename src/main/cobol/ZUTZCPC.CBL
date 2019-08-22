@@ -2103,6 +2103,7 @@
            IF TOKEN-IX <= 100
            AND TOKEN(3) = ' TO BE '  
                PERFORM 4320-EXPECT-EQUALITY
+               SET SUPPRESS-TEST-CASE-READ TO TRUE   
            ELSE
                DISPLAY MSG-EXPECT-SYNTAX-1
                DISPLAY MSG-EXPECT-SYNTAX-2
