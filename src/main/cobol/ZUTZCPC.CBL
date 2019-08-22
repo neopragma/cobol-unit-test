@@ -291,6 +291,7 @@
       * UT-BEFORE paragraph in the TEST-SOURCE file. 
       *****************************************************************
        01  BEFORE-EACH-STATEMENTS.
+           05  BEFORE-EACH-MAX PIC 9(4) COMP.
            05  BEFORE-EACH-STATEMENT
                OCCURS 50
                INDEXED BY BEFORE-EACH-IX PIC X(80).        
@@ -300,6 +301,7 @@
       * UT-AFTER paragraph in the TEST-SOURCE file. 
       *****************************************************************
        01  AFTER-EACH-STATEMENTS.
+           05  AFTER-EACH-MAX PIC 9(4) COMP.
            05  AFTER-EACH-STATEMENT
                OCCURS 50
                INDEXED BY AFTER-EACH-IX PIC X(80).        
@@ -2008,6 +2010,7 @@
                             ELSE    
                                 PERFORM 4300-KEYWORD-EXPECT
                             END-IF
+                            EXIT PERFORM
                        WHEN TOKEN(1) IS EQUAL TO 'VERIFY'
                             IF IGNORE-TESTCASE
                                 SET SUPPRESS-COPY-SOURCE TO TRUE
@@ -4604,10 +4607,10 @@
       *****************************************************************
            MOVE BEFORE-PARAGRAPH-HEADER TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
+           SET BEFORE-EACH-MAX TO BEFORE-EACH-IX 
            PERFORM VARYING BEFORE-EACH-IX FROM 1 BY 1
-                   UNTIL BEFORE-EACH-IX IS GREATER THAN 50
-                   OR BEFORE-EACH-STATEMENT(BEFORE-EACH-IX)
-                   IS EQUAL TO SPACES
+                     UNTIL BEFORE-EACH-IX > 50             
+                        OR BEFORE-EACH-IX > BEFORE-EACH-MAX
                MOVE BEFORE-EACH-STATEMENT(BEFORE-EACH-IX) TO TEST-LINE
                PERFORM 9420-WRITE-TEST-LINE    
            END-PERFORM
@@ -4623,10 +4626,10 @@
       *****************************************************************
            MOVE AFTER-PARAGRAPH-HEADER TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
+           SET AFTER-EACH-MAX TO AFTER-EACH-IX
            PERFORM VARYING AFTER-EACH-IX FROM 1 BY 1
-                   UNTIL AFTER-EACH-IX IS GREATER THAN 50
-                   OR AFTER-EACH-STATEMENT(AFTER-EACH-IX)
-                   IS EQUAL TO SPACES
+                   UNTIL AFTER-EACH-IX > 50
+                      OR AFTER-EACH-IX > AFTER-EACH-MAX
                MOVE AFTER-EACH-STATEMENT(AFTER-EACH-IX) TO TEST-LINE    
                PERFORM 9420-WRITE-TEST-LINE
            END-PERFORM
