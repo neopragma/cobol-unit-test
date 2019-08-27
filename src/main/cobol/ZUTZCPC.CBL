@@ -4500,10 +4500,18 @@
                    IF TEST-LINE(8:4) IS EQUAL TO SPACES 
                        INSPECT TEST-LINE REPLACING ALL '. ' BY '  '
                    ELSE
-      * A paragraph header             
-                      MOVE TEST-LINE TO TEMP-STATEMENT
-                      WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
-                      MOVE TEMP-STATEMENT TO TEST-LINE    
+      * A paragraph header
+                      MOVE ZERO TO WS-COUNT                     
+                      INSPECT TEST-LINE(8:5)                    
+                              TALLYING WS-COUNT FOR ALL '*>'    
+                      IF TEST-LINE(7:1) IS EQUAL TO '*'         
+                      OR WS-COUNT > 0                           
+                         CONTINUE                               
+                      ELSE                                      
+                         MOVE TEST-LINE TO TEMP-STATEMENT
+                         WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
+                         MOVE TEMP-STATEMENT TO TEST-LINE    
+                      END-IF
                    END-IF    
                END-IF
            END-IF
