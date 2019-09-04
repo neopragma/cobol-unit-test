@@ -487,7 +487,7 @@
                '           SET UT-NORMAL-COMPARE TO TRUE'.    
            05  SET-MOCK-STMT                PIC X(80) VALUE
                '           PERFORM UT-SET-MOCK'.    
-           05  ENDIF-STMT                   PIC X(18) VALUE
+           05  ENDIF-STMT                   PIC X(80) VALUE
                '           END-IF'.    
            05  SET-VERIFY-EXACT-STMT        PIC X(80) VALUE
                '           SET UT-VERIFY-EXACT TO TRUE'.    
@@ -3139,8 +3139,6 @@
       * Expect next token to be WAS, PERFORMED, HAPPENED, or NEVER
       * Need to skip past variable-length paragraph name
 
-           ADD 1 TO KEYWORD-OFFSET
-           PERFORM 7320-FIND-NEXT-SPACE
            PERFORM 7100-NEXT-TOKEN-TEST-CASES
 
       * If token is syntactic sugar 'WAS', skip to the next token.
@@ -3229,9 +3227,7 @@
                                                                    
       * Expect next token to be WAS, PERFORMED, HAPPENED, or NEVER       
       * Need to skip past variable-length paragraph name                 
-                                                                   
-           ADD 1 TO KEYWORD-OFFSET                                       
-           PERFORM 7320-FIND-NEXT-SPACE                                  
+
            PERFORM 7100-NEXT-TOKEN-TEST-CASES                            
                                                                    
       * If token is syntactic sugar 'WAS', skip to the next token.       
@@ -3337,7 +3333,8 @@
                IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
                    MOVE 1 TO MOCK-TEST-COUNT
                ELSE     
-                   MOVE TOKEN(TOKEN-IX) TO MOCK-TEST-COUNT    
+                   COMPUTE MOCK-TEST-COUNT                   
+                         = FUNCTION NUMVAL(TOKEN(TOKEN-IX))  
                    PERFORM 7100-NEXT-TOKEN-TEST-CASES
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
                        CONTINUE
