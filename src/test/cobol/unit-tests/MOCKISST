@@ -1,0 +1,39 @@
+           TESTSUITE 'DEMONSTRATE FILE MOCKS' 
+
+      *****************************************************************
+      * UNIT TESTS TO DEMONSTRATE MOCKING FEATURES OF ZUTZCPC.
+      *****************************************************************
+ 
+           TESTCASE 'IT MOCKS PARAGRAPH 2000-PARA-B'
+               MOCK
+                   PARAGRAPH 2000-PARA-B
+       *           do nothing
+               END-MOCK
+               PERFORM 2000-PARA-B
+               VERIFY PARAGRAPH 2000-PARA-B WAS PERFORMED ONCE
+
+           TESTCASE 'IT MOCKS PARAGRAPH 1000-PARA-A'
+               MOCK
+                   PARAGRAPH 1000-PARA-A
+       *           do nothing
+               END-MOCK
+               PERFORM 1000-PARA-A
+               VERIFY PARAGRAPH 1000-PARA-A WAS PERFORMED ONCE
+
+            TESTCASE 'IT MOCKS PARAGRAPH 1000-PARA-A and 2000-PARA-B'
+               MOCK
+                   PARAGRAPH 1000-PARA-A
+       *           do nothing
+               END-MOCK
+               MOCK
+                   PARAGRAPH 2000-PARA-B
+       *           do nothing
+               END-MOCK
+
+               PERFORM 1000-PARA-A
+               VERIFY PARAGRAPH 1000-PARA-A WAS PERFORMED ONCE
+               VERIFY PARAGRAPH 2000-PARA-B WAS NEVER PERFORMED
+
+
+
+
