@@ -6,7 +6,7 @@ Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/) for mo
 
 ## Notice
 
-This is the current version used in Bankdata Denmark. 
+This is the current version used in Bankdata, Denmark. 
 Atm. we are not making more pull requests to the original source, as the ones we allready have made, are not processed.
 The only new feature in this version is SECTION mocking.
 The rest is bug fixing, stability fixes, performance fixes, and removal of warnings from the z/OS compiler. 
