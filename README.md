@@ -4,6 +4,13 @@ The goal of the project is to enable isolated unit testing of individual paragra
 
 Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/) for more information.
 
+## Notice
+
+This is the current version used in Bankdata Denmark. 
+Atm. we are not making more pull requests to the original source, as the ones we allready have made, are not processed.
+The only new feature in this version is SECTION mocking.
+The rest is bug fixing, stability fixes, performance fixes, and removal of warnings from the z/OS compiler. 
+
 ## Description
 
 The unit test precompiler copies the program under test and inserts test code into the WORKING-STORAGE SECTION and PROCEDURE DIVISION. You can then run the copy of the program, which executes the isolated unit test cases without running the program from start to finish.
