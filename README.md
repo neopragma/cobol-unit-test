@@ -1,30 +1,33 @@
 # Cobol unit testing framework for mainframe programs
 
-The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system. 
+The goal of the project is to enable isolated unit testing of individual paragraphs in Cobol programs in a standalone environment with no connection to a zOS system.
 
 Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/) for more information.
 
 ## Notice
 
 This is the current version used in Bankdata, Denmark. 
+
 Atm. we are not making more pull requests to the original source, as the ones we allready have made, are not processed.
+
 The only new feature in this version is SECTION mocking.
+
 The rest is bug fixing, stability fixes, performance fixes, and removal of warnings from the z/OS compiler. 
 
 ## Changes from master
 ### Features:
-Added section mocking.
-Validating more numbers, pic s9(8) is no longer the limit.
-Removed the z/OS version, as it is a very minor fix to use the pc version. Added description of how to fix it.
+* Added section mocking.
+* Validating more numbers, pic s9(8) is no longer the limit.
+* Removed the z/OS version, as it is a very minor fix to use the pc version. Added description of how to fix it.
 
 ### Bugfixes:
-Avoid infinite loops when missing . at end of testsuite file.
-Comments in area A of the COBOL program no longer breaks the unit test.
-Resets mock counters between testcases.
-Handling of IN structures in expect statements.
-Handling of expect statements that span multiple lines.
-Handling of arrays in expect statements.
-Using max value as end point, when traversing occurs structures containing lines of code, instead of relying on spaces as end marker.
+* Avoid infinite loops when missing . at end of testsuite file.
+* Comments in area A of the COBOL program no longer breaks the unit test.
+* Resets mock counters between testcases.
+* Handling of IN structures in expect statements.
+* Handling of expect statements that span multiple lines.
+* Handling of arrays in expect statements.
+* Using max value as end point, when traversing occurs structures containing lines of code, instead of relying on spaces as end marker.
 
 ### Other fixes:
-Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
+* Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
