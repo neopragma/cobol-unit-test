@@ -10,10 +10,6 @@ This is the current version used in Bankdata, Denmark.
 
 Atm. we are not making more pull requests to the original source, as the ones we allready have made, are not processed.
 
-The only new feature in this version is SECTION mocking.
-
-The rest is bug fixing, stability fixes, performance fixes, and removal of warnings from the z/OS compiler. 
-
 ## Changes from master
 ### Features:
 * Added section mocking.
@@ -28,6 +24,8 @@ The rest is bug fixing, stability fixes, performance fixes, and removal of warni
 * Handling of expect statements that span multiple lines.
 * Handling of arrays in expect statements.
 * Using max value as end point, when traversing occurs structures containing lines of code, instead of relying on spaces as end marker.
+* Multi mock issue from sfauvel.
+* fix parsing of multiline SELECT statements without FILE STATUS from mmitch.
 
 ### Other fixes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
