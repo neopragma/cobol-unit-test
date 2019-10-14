@@ -140,6 +140,7 @@
                10  MOCK-LOOKUP-OPERATION  PIC X(20).
                10  MOCK-LOOKUP-PARA-NAME  PIC X(31).
                10  MOCK-LOOKUP-SECT-NAME  PIC X(31). 
+               10  MOCK-LOOKUP-NAME       PIC X(31).
            05  MOCK OCCURS 10 INDEXED BY MOCK-IX.
                10  MOCK-TYPE              PIC X(04).
                    88  MOCK-CALL          VALUE 'CALL'.
@@ -287,6 +288,15 @@
                INDEXED BY INITIALIZATION-IX PIC X(80).
 
       *****************************************************************
+      * Accumulate source statements that will be part of the of the   
+      * UT-INITIALIZE-MOCK paragraph in the TEST-SOURCE file.          
+      *****************************************************************
+       01  INITIALIZE-MOCK-STATEMENTS.                                 
+           05  INITIALIZE-MOCK-STATEMENT                               
+               OCCURS 50                                               
+               INDEXED BY INITIALIZE-MOCK-IX PIC X(80) VALUE SPACES.   
+      
+      *****************************************************************
       * Accumulate source statements that will be inserted into the 
       * UT-BEFORE paragraph in the TEST-SOURCE file. 
       *****************************************************************
@@ -356,6 +366,11 @@
                88  KEYWORD-NOT-MATCHED          VALUE 'N'.
            05  WS-CHARS               PIC 9(02) VALUE ZERO.  
            05  WS-NEXT                PIC 9(02) VALUE ZERO.
+           05  WS-LEFT                PIC 9(04) COMP-5 VALUE ZERO.
+           05  WS-IX                  PIC 9(04) COMP-5 VALUE ZERO.
+           05  WS-SUBSCRIPT           PIC X(80) VALUE SPACE.      
+           05  WS-SUB-PTR             PIC 9(04) COMP-5 VALUE ZERO.
+           05  WS-LEADING             PIC 9(04) COMP-5 VALUE ZERO.
            05  WS-STRING-DELIMITER    PIC X(01) VALUE SPACE.  
            05  KEYWORD-TO-MATCH       PIC X(20) VALUE SPACES.
            05  KEYWORD-MATCH-LENGTH   PIC 9(02) VALUE ZERO.
@@ -462,6 +477,7 @@
            05  READ-VERB                    PIC X(04) VALUE 'READ'.
            05  SET-VERB                     PIC X(03) VALUE 'SET'.
            05  WRITE-VERB                   PIC X(05) VALUE 'WRITE'.
+           05  DISPLAY-VERB                 PIC X(08) VALUE 'DISPLAY '.
 
            05  SINGLE-QUOTE                 PIC X(01) VALUE "'".
            05  COMMENT-MARKER               PIC X(01) VALUE '*'.
@@ -475,6 +491,8 @@
                                             VALUE '       UT-AFTER.'.
            05  INIT-PARAGRAPH-HEADER        PIC X(22) 
                                         VALUE '       UT-INITIALIZE.'.
+           05  INIT-MOCK-PARAGRAPH-HEADER   PIC X(27)                  
+                                    VALUE '       UT-INITIALIZE-MOCK.'.
            05  END-PARAGRAPH-HEADER         PIC X(22) 
                                         VALUE '       UT-END.'.
            05  INCR-TESTCASE-COUNT-STMT     PIC X(80) VALUE
@@ -1444,6 +1462,7 @@
            PERFORM 9450-WRITE-COPY-LINE
            PERFORM 9470-WRITE-BEFORE-PARAGRAPH
            PERFORM 9480-WRITE-AFTER-PARAGRAPH
+           PERFORM 9490-WRITE-INIT-MOCK-PARAGRAPH
            PERFORM 9485-WRITE-INIT-PARAGRAPH
 
       * Enable checking for IO statements in subsequent PROCEDURE
@@ -1809,7 +1828,10 @@
            MOVE PARAGRAPH-NAME TO MOCK-LOOKUP-KEY
            PERFORM 3900-LOOKUP-MOCK
            IF MOCK-MATCHED
-               PERFORM 3740-PROCESS-MOCKED-PARA
+               MOVE SPACES TO MOCK-LOOKUP-NAME       
+               STRING PARAGRAPH-NAME DELIMITED '.'   
+               INTO MOCK-LOOKUP-NAME                 
+               PERFORM 3740-PROCESS-MOCKED-PARA-SECT 
            ELSE
                SET MOCK-NOT-MATCHED TO TRUE
                SET MOCKABLE-NOT-FOUND TO TRUE
@@ -1818,7 +1840,7 @@
            END-IF        
            .
 
-       3740-PROCESS-MOCKED-PARA.      
+       3740-PROCESS-MOCKED-PARA-SECT.      
       *****************************************************************
       * Comment the original source lines and substitute the source
       * lines specified for this mocked paragraph.
@@ -1850,6 +1872,23 @@
 
       * Replace the original behavior with the mocked behavior.
 
+           INITIALIZE TEST-LINE                               
+           STRING '           MOVE "' MOCK-LOOKUP-NAME '"'    
+               DELIMITED SIZE                                 
+               INTO TEST-LINE                                 
+           WRITE TEST-LINE                                    
+           IF MOCK-PARAGRAPH(MOCK-IX)                         
+             MOVE '             TO UT-MOCK-FIND-PARA-NAME'    
+               TO TEST-LINE                                   
+           ELSE                                               
+             MOVE '             TO UT-MOCK-FIND-SECT-NAME'    
+               TO TEST-LINE                                   
+           END-IF                                             
+           WRITE TEST-LINE                                    
+           MOVE '           PERFORM UT-LOOKUP-MOCK'           
+               TO TEST-LINE                                   
+           WRITE TEST-LINE                                    
+                                                        
            MOVE INCR-MOCK-ACCESS-COUNT-STMT
                TO TEST-LINE
            WRITE TEST-LINE
@@ -1884,7 +1923,8 @@
            MOVE SECTION-NAME TO MOCK-LOOKUP-KEY                         
            PERFORM 3900-LOOKUP-MOCK                                     
            IF MOCK-MATCHED                                              
-               PERFORM 3740-PROCESS-MOCKED-PARA                         
+               MOVE SECTION-NAME TO MOCK-LOOKUP-NAME 
+               PERFORM 3740-PROCESS-MOCKED-PARA-SECT                          
            ELSE                                                         
                SET MOCK-NOT-MATCHED TO TRUE                             
                SET MOCKABLE-NOT-FOUND TO TRUE                           
@@ -2103,6 +2143,8 @@
                     SET UNKNOWN-TOKEN TO TRUE
            END-EVALUATE
       
+           PERFORM 4315-EXTRACT-SUBSCRIPT
+      
            IF TOKEN-IX <= 100
            AND TOKEN(3) = ' TO BE '  
                PERFORM 4320-EXPECT-EQUALITY
@@ -2113,7 +2155,37 @@
                DISPLAY MSG-EXPECT-SYNTAX-3
            END-IF
            .
-
+      
+       4315-EXTRACT-SUBSCRIPT.                                         
+      *****************************************************************
+      * Extract and remove subscript from token list and put it        
+      * into WS-SUBSCRIPT                                              
+      *****************************************************************
+                                                                 
+           MOVE 1 TO WS-SUB-PTR                                        
+           MOVE SPACE TO WS-SUBSCRIPT                                  
+           PERFORM VARYING TALLY FROM 3 BY 1                           
+              UNTIL TALLY = TOKEN-IX                                   
+                 OR TOKEN (TALLY) = ' TO BE '                          
+              MOVE 1 TO WS-LEADING                                     
+              INSPECT TOKEN(TALLY) TALLYING WS-LEFT FOR ALL '('        
+                                    WS-LEADING FOR LEADING SPACES      
+              IF WS-LEFT > 0                                           
+                STRING TOKEN (TALLY) (WS-LEADING:) DELIMITED BY SPACE  
+                  INTO WS-SUBSCRIPT WITH POINTER WS-SUB-PTR            
+                ADD 1 TO WS-SUB-PTR                                    
+              END-IF                                                   
+           END-PERFORM                                                 
+                                                                 
+           IF WS-SUBSCRIPT NOT = SPACE AND TOKEN (TALLY) = ' TO BE '   
+             MOVE 3 TO WS-IX                                           
+             PERFORM VARYING TALLY FROM TALLY BY 1                     
+               UNTIL TALLY > TOKEN-IX                                
+               MOVE TOKEN (TALLY) TO TOKEN (WS-IX)                     
+               ADD 1 TO WS-IX                                          
+             END-PERFORM                                               
+           END-IF                                                      
+           .                                                           
        4320-EXPECT-EQUALITY.
       *****************************************************************     
       * Generate code in TEST-SOURCE to assert expected and actual
@@ -2162,37 +2234,102 @@
            .
 
        4330-GENERATE-NUMERIC-COMPARE.
-           STRING
-               MOVE-VERB            DELIMITED BY SIZE
-               TOKEN(2)             DELIMITED BY '  '
-               TO-KEYWORD           DELIMITED BY SIZE
-               'UT-ACTUAL-NUMERIC' DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-           STRING 
-               MOVE-VERB             DELIMITED BY SIZE
-               TOKEN(5)              DELIMITED BY '  '
-               TO-KEYWORD            DELIMITED BY SIZE
-               'UT-EXPECTED-NUMERIC' DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-           STRING 
-               SET-VERB              DELIMITED BY SIZE
-               ' UT-COMPARE-NUMERIC' DELIMITED BY SIZE
-               TO-KEYWORD            DELIMITED BY SIZE
-               TRUE-KEYWORD          DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                         (STATEMENT-OFFSET:STATEMENT-LENGTH)
-           END-STRING
-           SET STATEMENT-IX UP BY 1
-
-           MOVE 'PERFORM UT-ASSERT-EQUAL'
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-                   (STATEMENT-OFFSET:STATEMENT-LENGTH)
+      * This sections creates the following code lines:    
+      * IF x =                                             
+      *    y                                               
+      *   SET UT-COMPARE-PASSED TO TRUE                    
+      * ELSE                                               
+      *   SET UT-COMPARE-FAILED TO TRUE                    
+      * END-IF                                             
+      * PERFORM UT-NUMERIC-COMPARE                         
+      * IF UT-COMPARE-FAILED                               
+      *   DISPLAY '    EXPECTED ' y                        
+      *             ' , WAS ' x                            
+      * END-IF                                             
+      
+           STRING                                            
+               IF-VERB              DELIMITED BY SIZE        
+               TOKEN(2)             DELIMITED BY '  '        
+               WS-SUBSCRIPT         DELIMITED BY '  '        
+               ' = '                DELIMITED BY SIZE        
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               TOKEN(5)             DELIMITED BY '  '        
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING '  '               DELIMITED BY SIZE       
+               SET-VERB              DELIMITED BY SIZE       
+               ' UT-COMPARE-PASSED'  DELIMITED BY SIZE       
+               TO-KEYWORD            DELIMITED BY SIZE       
+               TRUE-KEYWORD          DELIMITED BY SIZE       
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                                                                      
+           SET STATEMENT-IX UP BY 1                          
+           MOVE 'ELSE'                                       
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)   
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)       
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING '  '               DELIMITED BY SIZE       
+               SET-VERB              DELIMITED BY SIZE       
+               ' UT-COMPARE-FAILED'  DELIMITED BY SIZE       
+               TO-KEYWORD            DELIMITED BY SIZE       
+               TRUE-KEYWORD          DELIMITED BY SIZE       
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           MOVE 'END-IF'                                     
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)   
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)       
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               PERFORM-VERB          DELIMITED BY SIZE       
+               ' UT-NUMERIC-COMPARE' DELIMITED BY SIZE       
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               IF-VERB              DELIMITED BY SIZE        
+               'UT-COMPARE-FAILED'  DELIMITED BY SIZE        
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING '  '               DELIMITED BY SIZE       
+               DISPLAY-VERB          DELIMITED BY SIZE       
+               "'    EXPECTED '"     DELIMITED BY SIZE       
+               TOKEN(5)             DELIMITED BY '  '        
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           STRING '  '              DELIMITED BY SIZE        
+               "' , WAS '"          DELIMITED BY SIZE        
+               TOKEN(2)             DELIMITED BY '  '        
+               WS-SUBSCRIPT         DELIMITED BY '  '        
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+                                                       
+           SET STATEMENT-IX UP BY 1                          
+           MOVE 'END-IF'                                     
+               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)   
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)       
            .
 
        4340-GENERATE-88-COMPARE.
@@ -2224,6 +2361,7 @@
            STRING
                IF-VERB              DELIMITED BY SIZE
                TOKEN(2)             DELIMITED BY '  '
+               WS-SUBSCRIPT         DELIMITED BY '  '  
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                          (STATEMENT-OFFSET:STATEMENT-LENGTH)
            END-STRING
@@ -2293,6 +2431,7 @@
            STRING 
                MOVE-VERB            DELIMITED BY SIZE
                TOKEN(2)             DELIMITED BY '  '
+               WS-SUBSCRIPT         DELIMITED BY '  '  
                TO-KEYWORD           DELIMITED BY SIZE
                'UT-ACTUAL'          DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -2381,6 +2520,11 @@
            SET STATEMENT-IX UP BY 1        
 
            MOVE 'PERFORM UT-BEFORE' TO        
+               GENERATED-SOURCE-STATEMENT(STATEMENT-IX)   
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)    
+           SET STATEMENT-IX UP BY 1                       
+                                                    
+           MOVE 'PERFORM UT-INITIALIZE-MOCK' TO           
                GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                    (STATEMENT-OFFSET:STATEMENT-LENGTH)
 
@@ -3701,19 +3845,16 @@
                QUOTED-VALUE             DELIMITED BY SPACE
                TO-KEYWORD               DELIMITED BY SIZE
                'UT-MOCK-FIND-PARA-NAME' DELIMITED BY SIZE
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+               INTO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX) 
            END-STRING    
-           SET STATEMENT-IX UP BY 1    
+           SET INITIALIZE-MOCK-IX UP BY 1   
 
            MOVE SET-FIND-PARA-MOCK-STMT
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-           SET STATEMENT-IX UP BY 1
+               TO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX) 
+           SET INITIALIZE-MOCK-IX UP BY 1
 
-           MOVE SET-MOCK-STMT
-                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
-           SET STATEMENT-IX UP BY 1
-
-           PERFORM 6010-GEN-INIT-ACCESS-COUNT
+           PERFORM 6015-GEN-INIT-MOCK-COUNT  
+           SET INITIALIZE-MOCK-IX UP BY 1
 
            SET TOKEN-IX UP BY 1
            SET MOCK-REPLACEMENT-STMTS-IX TO 1
@@ -3755,19 +3896,15 @@
                QUOTED-VALUE             DELIMITED BY SPACE              
                TO-KEYWORD               DELIMITED BY SIZE               
                'UT-MOCK-FIND-SECT-NAME' DELIMITED BY SIZE               
-               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)            
+               INTO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)      
            END-STRING                                                   
-           SET STATEMENT-IX UP BY 1                                     
+           SET INITIALIZE-MOCK-IX UP BY 1                     
                                                                   
            MOVE SET-FIND-SECT-MOCK-STMT                                 
-               TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)              
-           SET STATEMENT-IX UP BY 1                                     
+               TO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)  
+           SET INITIALIZE-MOCK-IX UP BY 1                                                          
                                                                   
-           MOVE SET-MOCK-STMT                                           
-                TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)             
-           SET STATEMENT-IX UP BY 1                                     
-                                                                  
-           PERFORM 6010-GEN-INIT-ACCESS-COUNT                           
+           PERFORM 6015-GEN-INIT-MOCK-COUNT                          
                                                                   
            SET TOKEN-IX UP BY 1                                         
            SET MOCK-REPLACEMENT-STMTS-IX TO 1                           
@@ -3792,6 +3929,26 @@
            END-STRING    
            .
 
+       6015-GEN-INIT-MOCK-COUNT.                                         
+      *****************************************************************  
+      * Generate code for TEST-SOURCE to initialize the access count     
+      * for a mock.                                                      
+      *****************************************************************  
+                                                                   
+           MOVE SET-MOCK-STMT                                            
+                TO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)         
+           SET INITIALIZE-MOCK-IX UP BY 1                                
+                                                                   
+           STRING                                                        
+               STATEMENT-SPACER               DELIMITED BY SIZE          
+               MOVE-VERB                      DELIMITED BY SIZE          
+               ZERO-KEYWORD                   DELIMITED BY SIZE          
+               TO-KEYWORD                     DELIMITED BY SIZE          
+               'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)' DELIMITED BY SIZE      
+               INTO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)        
+           END-STRING                                                    
+           .                                                             
+                                                                   
        6020-SAVE-REPL-STMTS-FOR-MOCK.
       *****************************************************************
       * Generate the replacement COBOL source statements for a MOCK.
@@ -4294,6 +4451,7 @@
            SET FILE-IX TO 1
            MOVE SPACES TO INITIALIZATION-STATEMENTS
            SET INITIALIZATION-IX TO 1
+           SET INITIALIZE-MOCK-IX TO 1
            .    
 
       *****************************************************************
@@ -4395,7 +4553,7 @@
                     MOVE READ-VERB TO MSG-ORIG-SOURCE-OPERATION
                     DISPLAY MSG-ORIG-SOURCE-ERROR  
                     PERFORM 9290-CLOSE-ORIGINAL-SOURCE
-                    PERFORM 9490-CLOSE-TEST-SOURCE
+                    PERFORM 9495-CLOSE-TEST-SOURCE
                     GOBACK    
            END-EVALUATE
            .
@@ -4671,7 +4829,32 @@
            PERFORM 9420-WRITE-TEST-LINE
            .
 
-       9490-CLOSE-TEST-SOURCE.
+       9490-WRITE-INIT-MOCK-PARAGRAPH.                                 
+      *****************************************************************
+      * Write the UT-INITIALIZE paragraph into the TEST-SOURCE file.   
+      * This contains the statements generated as a result of parsing  
+      * the SELECT and FD entries in the program under test.           
+      *****************************************************************
+           MOVE INIT-MOCK-PARAGRAPH-HEADER TO TEST-LINE                
+           PERFORM 9420-WRITE-TEST-LINE                                
+           SET MAX-GENERATED-STATEMENTS                                
+            TO INITIALIZE-MOCK-IX                                      
+                                                                 
+           PERFORM VARYING INITIALIZE-MOCK-IX FROM 1 BY 1              
+                   UNTIL INITIALIZE-MOCK-IX IS GREATER THAN 50         
+                   OR INITIALIZE-MOCK-IX = MAX-GENERATED-STATEMENTS    
+               MOVE INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)      
+                   TO TEST-LINE                                        
+               PERFORM 9420-WRITE-TEST-LINE                            
+           END-PERFORM                                                 
+                                                                 
+           MOVE PARAGRAPH-EMPTY-PREVENTER TO TEST-LINE                 
+           PERFORM 9420-WRITE-TEST-LINE                                
+           MOVE PARAGRAPH-END-MARKER TO TEST-LINE                      
+           PERFORM 9420-WRITE-TEST-LINE                                
+           .                                                           
+                                                                 
+       9495-CLOSE-TEST-SOURCE.
            CLOSE TEST-SOURCE
            .    
 
