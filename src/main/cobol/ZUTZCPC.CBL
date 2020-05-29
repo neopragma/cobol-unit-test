@@ -344,6 +344,12 @@
       * the ORIGINAL-SOURCE file.
       *****************************************************************
        01  TOKENS.
+           05                        PIC 9(1).          
+             88 NOT-IN-SINGLE-QUOTE        VALUE 0.     
+             88     IN-SINGLE-QUOTE        VALUE 1.     
+           05                        PIC 9(1).          
+             88 NOT-IN-DOUBLE-QUOTE        VALUE 0.     
+             88     IN-DOUBLE-QUOTE        VALUE 1.     
            05  WS-COUNT               PIC S9(04) COMP.
            05  TOKEN-TYPE             PIC X(8).
             88 UNKNOWN-TOKEN VALUE 'UNKNOWN'.
@@ -2268,7 +2274,7 @@
                     MOVE SPACES TO TOKEN(TOKEN-IX) 
                     SET TOKEN-IX DOWN BY 1
                WHEN IN-TOKEN
-                    STRING TOKEN (TOKEN-IX - 2) DELIMITED BY SPACE
+                    STRING TOKEN (TOKEN-IX - 2) DELIMITED BY '  ' 
                            ' IN '  DELIMITED BY SIZE
                            TOKEN (TOKEN-IX) DELIMITED BY SPACE
                       INTO TOKEN (TOKEN-IX - 2)
@@ -4368,14 +4374,34 @@
       *****************************************************************
       * Look for a specific keyword on the current input line.
       *****************************************************************
+           SET NOT-IN-SINGLE-QUOTE TO TRUE
+           SET NOT-IN-DOUBLE-QUOTE TO TRUE
+      
            PERFORM VARYING KEYWORD-OFFSET FROM KEYWORD-OFFSET BY 1
                    UNTIL KEYWORD-OFFSET IS GREATER THAN 
                          KEYWORD-END
                       OR KEYWORD-MATCHED  
-               IF KEYWORD-TO-MATCH IS EQUAL TO
-                   LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
-                   SET KEYWORD-MATCHED TO TRUE
-               END-IF
+       
+               EVALUATE TRUE                                    
+                 WHEN LINE-TO-PARSE(KEYWORD-OFFSET:1) = '"'     
+                  AND IN-DOUBLE-QUOTE                           
+                   SET NOT-IN-DOUBLE-QUOTE TO TRUE              
+                 WHEN LINE-TO-PARSE(KEYWORD-OFFSET:1) = "'"     
+                  AND IN-SINGLE-QUOTE                           
+                   SET NOT-IN-SINGLE-QUOTE TO TRUE              
+                 WHEN NOT (IN-SINGLE-QUOTE OR IN-DOUBLE-QUOTE ) 
+                   EVALUATE LINE-TO-PARSE(KEYWORD-OFFSET:1)     
+                     WHEN "'" SET IN-SINGLE-QUOTE TO TRUE       
+                     WHEN '"' SET IN-DOUBLE-QUOTE TO TRUE       
+                     WHEN OTHER                                 
+      
+                 IF KEYWORD-TO-MATCH IS EQUAL TO
+                     LINE-TO-PARSE(KEYWORD-OFFSET:KEYWORD-MATCH-LENGTH)
+                     SET KEYWORD-MATCHED TO TRUE
+                 END-IF
+      
+                   END-EVALUATE 
+               END-EVALUATE    
            END-PERFORM    
            .    
 
@@ -4706,16 +4732,7 @@
                       PERFORM 7650-SAVE-ORIG-LINE
                     END-IF     
                WHEN ORIGINAL-SOURCE-END-OF-FILE
-                    SET NOT-FIRST-TOKEN TO TRUE
-                    PERFORM VARYING TEMP-SUB FROM 12 BY 1
-                            UNTIL TEMP-SUB GREATER THAN KEYWORD-END
-                        IF TEST-LINE(TEMP-SUB:1) EQUAL '.'
-                            SET IS-FIRST-TOKEN TO TRUE
-                        END-IF
-                    END-PERFORM
-                    IF NOT-FIRST-TOKEN
-                        WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
-                    END-IF            
+                    WRITE TEST-LINE FROM PARAGRAPH-END-MARKER
                WHEN OTHER
                     MOVE ORIGINAL-SOURCE-STATUS 
                          TO MSG-ORIG-SOURCE-STATUS
@@ -4837,10 +4854,15 @@
              ELSE                                                   
       * Not a paragraph header                                      
                IF TEST-LINE(8:4) IS EQUAL TO SPACES                 
-                 MOVE ZERO TO WS-COUNT                              
-                 INSPECT TEST-LINE TALLYING WS-COUNT FOR ALL '. '   
-                         REPLACING ALL '. ' BY '  '                 
-                 IF WS-COUNT > 0                                    
+                 MOVE 1  TO KEYWORD-OFFSET          
+                 MOVE 72 TO KEYWORD-END             
+                 MOVE TEST-LINE TO LINE-TO-PARSE    
+                 MOVE '.' TO KEYWORD-TO-MATCH       
+                 MOVE 1 TO KEYWORD-MATCH-LENGTH     
+                 SET KEYWORD-NOT-MATCHED TO TRUE    
+                 PERFORM 7400-MATCH-KEYWORD         
+                                   
+                 IF KEYWORD-MATCHED                 
                    EXIT PARAGRAPH                                   
                  END-IF                                             
                ELSE                                                 
