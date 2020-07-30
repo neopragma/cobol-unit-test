@@ -3043,27 +3043,19 @@
            PERFORM 5002-CHECK-VERIFY-FILE
            IF KEYWORD-MATCHED
              PERFORM 5010-VERIFY-FILE-MOCK             
-           ELSE                                        
-             MOVE TEMP-SUB TO KEYWORD-OFFSET           
-             SUBTRACT 5 FROM KEYWORD-OFFSET            
+           ELSE                                                   
              PERFORM 5003-CHECK-VERIFY-CALL            
              IF KEYWORD-MATCHED                        
                PERFORM 5020-VERIFY-CALL-MOCK           
              ELSE                                      
-               MOVE TEMP-SUB TO KEYWORD-OFFSET         
-               SUBTRACT 5 FROM KEYWORD-OFFSET          
                PERFORM 5004-CHECK-VERIFY-CICS          
                IF KEYWORD-MATCHED                      
                  PERFORM 5030-VERIFY-CICS-MOCK         
                ELSE                                    
-                 MOVE TEMP-SUB TO KEYWORD-OFFSET       
-                 SUBTRACT 5 FROM KEYWORD-OFFSET        
                  PERFORM 5005-CHECK-VERIFY-PARA        
                  IF KEYWORD-MATCHED                    
                    PERFORM 5040-VERIFY-PARA-MOCK       
                  ELSE                                  
-                   MOVE TEMP-SUB TO KEYWORD-OFFSET     
-                   SUBTRACT 5 FROM KEYWORD-OFFSET      
                    PERFORM 5006-CHECK-VERIFY-SECT      
                    IF KEYWORD-MATCHED                  
                      PERFORM 5045-VERIFY-SECT-MOCK     
@@ -3080,57 +3072,43 @@
       *****************************************************************
       * Are we verifying a mocked batch file access?
       *****************************************************************
-           MOVE 'FILE ' TO KEYWORD-TO-MATCH
-           MOVE 5 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
+           IF TOKEN (TOKEN-IX) = 'FILE'   
+             SET KEYWORD-MATCHED TO TRUE  
+           END-IF                         
            .
 
        5003-CHECK-VERIFY-CALL.
       *****************************************************************
       * Are we verifying a mocked CALL statement?
       *****************************************************************
-           MOVE 'CALL ' TO KEYWORD-TO-MATCH
-           MOVE 5 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
+           IF TOKEN (TOKEN-IX) = 'CALL'   
+             SET KEYWORD-MATCHED TO TRUE  
+           END-IF                         
            .
 
        5004-CHECK-VERIFY-CICS.
       *****************************************************************
       * Are we verifying a mocked EXEC CICS command?
       *****************************************************************
-           MOVE 'CICS ' TO KEYWORD-TO-MATCH
-           MOVE 5 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
+           IF TOKEN (TOKEN-IX) = 'CICS'   
+             SET KEYWORD-MATCHED TO TRUE  
+           END-IF                         
            .
 
        5005-CHECK-VERIFY-PARA.
       *****************************************************************
       * Are we verifying a mocked paragraph?
       *****************************************************************
-           MOVE 'PARA ' TO KEYWORD-TO-MATCH
-           MOVE 5 TO KEYWORD-MATCH-LENGTH
-           PERFORM 7400-MATCH-KEYWORD
-           IF NOT KEYWORD-MATCHED
-               MOVE TEMP-SUB TO KEYWORD-OFFSET
-               SUBTRACT 9 FROM KEYWORD-OFFSET
-               MOVE 'PARAGRAPH ' TO KEYWORD-TO-MATCH
-               MOVE 10 TO KEYWORD-MATCH-LENGTH
-               PERFORM 7400-MATCH-KEYWORD
-           END-IF
+           IF TOKEN (TOKEN-IX) = 'PARA' OR 'PARAGRAPH'  
+             SET KEYWORD-MATCHED TO TRUE  
+           END-IF                         
            .    
        5006-CHECK-VERIFY-SECT.                                           
       *****************************************************************  
       * Are we verifying a mocked paragraph?                             
       *****************************************************************  
-           MOVE 'SECT ' TO KEYWORD-TO-MATCH                              
-           MOVE 5 TO KEYWORD-MATCH-LENGTH                                
-           PERFORM 7400-MATCH-KEYWORD                                    
-           IF NOT KEYWORD-MATCHED                                        
-               MOVE TEMP-SUB TO KEYWORD-OFFSET                           
-               SUBTRACT 9 FROM KEYWORD-OFFSET                            
-               MOVE 'SECTION ' TO KEYWORD-TO-MATCH                       
-               MOVE 8 TO KEYWORD-MATCH-LENGTH                            
-               PERFORM 7400-MATCH-KEYWORD                                
+           IF TOKEN (TOKEN-IX) = 'SECT' OR 'SECTION' 
+             SET KEYWORD-MATCHED TO TRUE                                      
            END-IF                                                        
            .                                                             
                                                                    
@@ -3218,7 +3196,6 @@
       * the argument list.
       * When we encounter HAPPENED or NEVER it's the end of the tokens.
 
-           ADD 3 TO KEYWORD-OFFSET
            SET MOCK-LOOKUP-IX TO 1
            MOVE SPACES TO MOCK-LOOKUP-KEY
            MOVE SPACES TO MOCK-LOOKUP-KEYWORDS
@@ -3624,8 +3601,12 @@
                IF TOKEN(TOKEN-IX) IS EQUAL TO ONCE-KEYWORD
                    MOVE 1 TO MOCK-TEST-COUNT
                ELSE     
-                   COMPUTE MOCK-TEST-COUNT                   
-                         = FUNCTION NUMVAL(TOKEN(TOKEN-IX))  
+                   IF TOKEN(TOKEN-IX) = 'ZERO' 
+                     MOVE 0 TO MOCK-TEST-COUNT 
+                   ELSE                        
+                     COMPUTE MOCK-TEST-COUNT                   
+                           = FUNCTION NUMVAL(TOKEN(TOKEN-IX))  
+                   END-IF
                    PERFORM 7100-NEXT-TOKEN-TEST-CASES
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
                        CONTINUE
@@ -4857,12 +4838,9 @@
                  MOVE 1  TO KEYWORD-OFFSET          
                  MOVE 72 TO KEYWORD-END             
                  MOVE TEST-LINE TO LINE-TO-PARSE    
-                 MOVE '.' TO KEYWORD-TO-MATCH       
-                 MOVE 1 TO KEYWORD-MATCH-LENGTH     
-                 SET KEYWORD-NOT-MATCHED TO TRUE    
-                 PERFORM 7400-MATCH-KEYWORD         
-                                   
-                 IF KEYWORD-MATCHED                 
+                 PERFORM 7450-FIND-KEYWORD-BEGIN               
+                 IF LINE-TO-PARSE(KEYWORD-BEGIN:1) = '.'       
+                 AND LINE-TO-PARSE(KEYWORD-BEGIN + 1:) = SPACES
                    EXIT PARAGRAPH                                   
                  END-IF                                             
                ELSE                                                 
