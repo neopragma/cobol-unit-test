@@ -4946,6 +4946,7 @@
       *****************************************************************
       * Comment the current ORIGINAL-SOURCE line and copy it.
       *****************************************************************
+           INITIALIZE WS-COUNT
            INSPECT ORIGINAL-LINE TALLYING WS-COUNT FOR ALL '. '    
            IF ORIGINAL-LINE(7:1) = '*' OR WS-COUNT > 0             
              CONTINUE                                              
