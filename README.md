@@ -35,6 +35,7 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Fixed so you can have a period in a COBOL comment, without the unit test breaking.
 * Fixed so you can use unit test keywords like "expect" in testcase or testsuite description. 
 * Improved handling of . as section or paragraph end.
+* Enable several spaces between section name and section tag.
 
 ### Other fixes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
