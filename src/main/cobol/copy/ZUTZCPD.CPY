@@ -272,6 +272,7 @@
                UNTIL UT-FILE-IX GREATER UT-FILE-MAX
                OR UT-INTERNAL-FILENAME(UT-FILE-IX)
                 EQUAL UT-MOCK-FIND-FILENAME
+             CONTINUE    
            END-PERFORM
            SET UT-FILE-IX DOWN BY 1
            .
