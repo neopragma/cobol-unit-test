@@ -35,11 +35,11 @@
            05  UT-FAILED                 PIC X(11)  VALUE "**** FAIL: ".
            05  UT-PASSED                 PIC X(11)  VALUE "     PASS: ".
            05  UT-TEST-CASE-NAME         PIC X(80)  VALUE SPACES.
-           05  UT-TEST-CASE-NUMBER       PIC Z,ZZ9.
+           05  UT-TEST-CASE-NUMBER       PIC ZZ9.
            05  UT-RETCODE                PIC 9(4)   VALUE ZERO.
-           05  UT-TEST-CASE-COUNT        PIC 9(4)   VALUE ZERO COMP-5.
-           05  UT-NUMBER-PASSED          PIC 9(4)   VALUE ZERO COMP-5.
-           05  UT-NUMBER-FAILED          PIC 9(4)   VALUE ZERO COMP-5.
+           05  UT-TEST-CASE-COUNT        PIC 9(4)   VALUE ZERO.
+           05  UT-NUMBER-PASSED          PIC 9(4)   VALUE ZERO.
+           05  UT-NUMBER-FAILED          PIC 9(4)   VALUE ZERO.
        01  UT-MOCKS.
            05  FILLER                    PIC X(01) VALUE SPACES.
                88  UT-MOCK-FOUND                   VALUE 'Y'.
@@ -50,10 +50,8 @@
                88  UT-FIND-CICS-MOCK     VALUE 'CICS'.
                88  UT-FIND-SQL-MOCK      VALUE 'SQL'.
                88  UT-FIND-PARA-MOCK     VALUE 'PARA'.
-               88  UT-FIND-SECT-MOCK     VALUE 'SECT'. 
            05  UT-MOCK-FIND-FILENAME     PIC X(31).
            05  UT-MOCK-FIND-PARA-NAME    PIC X(31).
-           05  UT-MOCK-FIND-SECT-NAME    PIC X(31).
            05  UT-MOCK-FIND-OPERATION    PIC X(04).
            05  UT-MOCK-FIND-CALL-TOKENS.
                10  UT-MOCK-FIND-CALL-TOKEN OCCURS 25 PIC X(31).
@@ -62,7 +60,7 @@
            05  UT-MOCK-SET-RECORD        PIC X(2048).
            05  UT-MOCK-SET-FILE-STATUS   PIC X(02).
            05  UT-MOCK-MAX               PIC 9(02) VALUE 10.
-           05  UT-MOCK-COUNT             PIC 9(02) VALUE ZERO COMP-5.
+           05  UT-MOCK-COUNT             PIC 9(02) VALUE ZERO.
            05  UT-MOCK OCCURS 20 INDEXED BY UT-MOCK-IX.
                10  UT-MOCK-TYPE          PIC X(04).
                    88  UT-MOCK-FILE          VALUE 'FILE'.
@@ -70,8 +68,7 @@
                    88  UT-MOCK-CICS          VALUE 'CICS'.
                    88  UT-MOCK-SQL           VALUE 'SQL'.
                    88  UT-MOCK-PARA          VALUE 'PARA'.
-                   88  UT-MOCK-SECT          VALUE 'SECT'. 
-               10  UT-MOCK-ACCESS-COUNT    PIC 9(04) VALUE ZERO COMP-5.
+               10  UT-MOCK-ACCESS-COUNT    PIC 9(04) VALUE ZERO.
                10  UT-MOCK-RECORD        PIC X(8192).    
                10  UT-MOCK-DATA          PIC X(806).
                10  UT-MOCK-FILE-DATA REDEFINES UT-MOCK-DATA.        
@@ -86,9 +83,6 @@
                10  UT-MOCK-PARA-DATA REDEFINES UT-MOCK-DATA.
                    15  UT-MOCK-PARA-NAME  PIC X(31).
                    15  FILLER             PIC X(775).    
-               10  UT-MOCK-SECT-DATA REDEFINES UT-MOCK-DATA.         
-                   15  UT-MOCK-SECT-NAME  PIC X(31).                 
-                   15  FILLER             PIC X(775).                
                10  UT-MOCK-SQL-DATA REDEFINES UT-MOCK-DATA.
                    15  FILLER             PIC X(806).
        01  UT-FILES.
