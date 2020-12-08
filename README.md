@@ -4,6 +4,20 @@ The goal of the project is to enable isolated unit testing of individual paragra
 
 Please see [the wiki](https://github.com/neopragma/cobol-unit-test/wiki/) for more information.
 
+## Update December 2020 
+
+Having ignored this project for some time, I recently learned there were several pull requests that had been languishing for months. Sorry about that! 
+
+When I merged the changes, I discovered they broke the tool on Linux with Gnu COBOL. There is a set of sample test cases that should be executed to ensure functionality that worked before still works after applying changes to the code. 
+
+The modified version with changes by Rune Christensen and his team is available here: https://github.com/Rune-Christensen/cobol-unit-test. I think that version works on zOS. The present version here does not. 
+
+Beyond that, however, I think that it would be useful to rewrite this tool using a language better suited to text processing. This is a proof-of-concept project, and was never polished. It is somewhat useful, but there are many holes in it. 
+
+My original idea to write the tool in Cobol was to try and achieve cross-platform support. That didn't work out. I would like the tool to work on Linux, Unix, Windows, and zOS, and possibly OS X if there's a way to set it up so that it's hassle-free for developers. Gnu Cobol on OS X isn't hassle-free IMO. To that end, I'm thinking of Java for the rewrite, even though I can think of half a dozen other languages better suited to text processing. Java is a first-class citizens on all the platforms of interest.
+
+Let me know if you're interested in contributing to such a rewrite.
+
 ## Description
 
 The unit test precompiler copies the program under test and inserts test code into the WORKING-STORAGE SECTION and PROCEDURE DIVISION. You can then run the copy of the program, which executes the isolated unit test cases without running the program from start to finish.
