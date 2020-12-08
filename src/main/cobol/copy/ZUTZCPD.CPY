@@ -10,6 +10,17 @@
            MOVE UT-RETCODE TO RETURN-CODE
            GOBACK.
 
+       UT-NUMERIC-COMPARE.                                 
+           SET UT-COMPARE-NUMERIC TO TRUE                  
+           MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER  
+           PERFORM UT-REVERSE-RESULT                       
+                                                    
+           IF UT-COMPARE-PASSED                            
+               PERFORM UT-DISPLAY-PASSED                   
+           ELSE                                            
+               PERFORM UT-DISPLAY-FAILED                   
+           END-IF                                          
+           .                                               
        UT-ASSERT-EQUAL.
       *****************************************************************
       * COMPARE EXPECTED AND ACTUAL VALUES FOR EQUALITY.
@@ -25,14 +36,8 @@
 
        UT-COMPARE.
            SET UT-COMPARE-FAILED TO TRUE
-           IF UT-COMPARE-NUMERIC
-               IF UT-ACTUAL-NUMERIC IS EQUAL TO UT-EXPECTED-NUMERIC
-                   SET UT-COMPARE-PASSED TO TRUE
-               END-IF    
-           ELSE 
-               IF UT-ACTUAL IS EQUAL TO UT-EXPECTED
-                   SET UT-COMPARE-PASSED TO TRUE
-               END-IF    
+           IF UT-ACTUAL IS EQUAL TO UT-EXPECTED   
+               SET UT-COMPARE-PASSED TO TRUE
            END-IF        
            PERFORM UT-REVERSE-RESULT
            .
@@ -59,13 +64,15 @@
            DISPLAY UT-FAILED 
                    UT-TEST-CASE-NUMBER '. ' 
                    UT-TEST-CASE-NAME
+      
            IF UT-COMPARE-NUMERIC
-               DISPLAY '    EXPECTED ' UT-EXPECTED-NUMERIC
-                       ', WAS ' UT-ACTUAL-NUMERIC
+             DISPLAY ' (NB! zoned/packed decimal "WAS" values are' 
+                     ' shown without decimal point'   
            ELSE                     
-               DISPLAY '    EXPECTED <' UT-EXPECTED 
-                       '>, WAS <' UT-ACTUAL '>'
+             DISPLAY '    EXPECTED <' UT-EXPECTED 
+                     '>, WAS <' UT-ACTUAL '>'
            END-IF            
+      
            MOVE 4 TO UT-RETCODE
            .
 
@@ -166,6 +173,8 @@
                     PERFORM UT-SET-CICS-MOCK
                WHEN UT-FIND-PARA-MOCK
                     PERFORM UT-SET-PARA-MOCK          
+               WHEN UT-FIND-SECT-MOCK             
+                    PERFORM UT-SET-SECT-MOCK      
            END-EVALUATE
            .
 
@@ -223,7 +232,19 @@
                    TO UT-MOCK-PARA-NAME(UT-MOCK-IX)
            END-IF            
            .
-
+      
+       UT-SET-SECT-MOCK.                           
+           PERFORM UT-LOOKUP-MOCK                  
+           IF UT-MOCK-FOUND                        
+               CONTINUE                            
+           ELSE                                    
+               ADD 1 TO UT-MOCK-COUNT              
+               SET UT-MOCK-IX TO UT-MOCK-COUNT     
+               MOVE UT-MOCK-FIND-SECT-NAME         
+                 TO UT-MOCK-SECT-NAME(UT-MOCK-IX)
+           END-IF                                  
+           .                                       
+                                            
        UT-LOOKUP-MOCK.
       *****************************************************************
       * LOOK UP A MOCK SPECIFICATION.
@@ -259,6 +280,12 @@
                            SET UT-MOCK-FOUND TO TRUE
                            CONTINUE
                        END-IF               
+                   WHEN UT-FIND-SECT-MOCK                    
+                       IF UT-MOCK-FIND-SECT-NAME IS EQUAL TO 
+                              UT-MOCK-SECT-NAME(UT-MOCK-IX)  
+                           SET UT-MOCK-FOUND TO TRUE         
+                           CONTINUE                          
+                       END-IF                                
                END-EVALUATE
            END-PERFORM    
            SET UT-MOCK-IX DOWN BY 1
