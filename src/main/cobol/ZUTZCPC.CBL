@@ -1826,6 +1826,19 @@
            PERFORM 3960-COPY-OR-COMMENT-LINES
 
       * Replace the original behavior with the mocked behavior.
+           INITIALIZE TEST-LINE
+           STRING '            MOVE "' MOCK-LOOKUP-KEY '"'
+               DELIMITED '.'
+               INTO TEST-LINE
+           WRITE TEST-LINE
+
+           MOVE '                TO UT-MOCK-FIND-PARA-NAME'
+               TO TEST-LINE
+           WRITE TEST-LINE
+
+           MOVE '           PERFORM UT-LOOKUP-MOCK'
+               TO TEST-LINE
+           WRITE TEST-LINE
 
            MOVE INCR-MOCK-ACCESS-COUNT-STMT
                TO TEST-LINE
