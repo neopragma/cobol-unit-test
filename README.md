@@ -17,12 +17,15 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Removed the z/OS version, as it is a very minor fix to use the pc version. Added description of how to fix it.
 * All mocks can now contain more mocked lines.
 * Added eyecatchers surrounding inserted code, for use with gathering code coverage info.
+* Works with mixed case input in both COBOL and test source.
+* Updated CALL and EXEC CICS mocking to work in same way as SECTION and paragraph mocking. 
 
 ### Bugfixes:
 * Avoid infinite loops when missing . at end of testsuite file.
 * Comments in area A of the COBOL program no longer breaks the unit test.
 * Resets mock counters between testcases.
 * Handling of IN structures in expect statements.
+* Handling very long IN structures in expect statements.
 * Handling of expect statements that span multiple lines.
 * Handling of arrays in expect statements.
 * Using max value as end point, when traversing occurs structures containing lines of code, instead of relying on spaces as end marker.
@@ -36,6 +39,8 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Fixed so you can use unit test keywords like "expect" in testcase or testsuite description. 
 * Improved handling of . as section or paragraph end.
 * Enable several spaces between section name and section tag.
+* Section names of 30 chars now supported.
 
 ### Other fixes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
+* Many refactorings for easy of maintenance.
