@@ -18,7 +18,7 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * All mocks can now contain more mocked lines.
 * Added eyecatchers surrounding inserted code, for use with gathering code coverage info.
 * Works with mixed case input in both COBOL and test source.
-* Updated CALL and EXEC CICS mocking to work in same way as SECTION and paragraph mocking. 
+* Updated CALL and EXEC CICS* mocking to work in same way as SECTION and paragraph mocking. 
 
 ### Bugfixes:
 * Avoid infinite loops when missing . at end of testsuite file.
@@ -44,3 +44,5 @@ Atm. we are not making more pull requests to the original source, as the ones we
 ### Other fixes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
 * Many refactorings for easy of maintenance.
+
+Note: CICS mocking only uses the first two CICS commands as keywords, so it is not possible to mock two very similar CICS commands in the same testsuite.
