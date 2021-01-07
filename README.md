@@ -42,8 +42,9 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Section names of 30 chars now supported.
 * Enabled using characters beyond 72 in the testcase file.
 
-### Other fixes:
+### Other changes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
 * Many refactorings for easy of maintenance.
+* Removed the usage of PERFORMED keyword, as it was superflouos.
 
 Note: CICS mocking only uses the first two CICS commands as keywords, so it is not possible to mock two very similar CICS commands in the same testsuite.
