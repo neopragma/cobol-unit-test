@@ -40,6 +40,7 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Improved handling of . as section or paragraph end.
 * Enable several spaces between section name and section tag.
 * Section names of 30 chars now supported.
+* Enabled using characters beyond 72 in the testcase file.
 
 ### Other fixes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.
