@@ -2382,6 +2382,7 @@
              PERFORM VARYING TALLY FROM TALLY BY 1
                UNTIL TALLY > TOKEN-IX
                MOVE TOKEN (TALLY) TO TOKEN (WS-IX)
+               MOVE ORIGINAL-TOKEN(TALLY) TO ORIGINAL-TOKEN(WS-IX)
                ADD 1 TO WS-IX
              END-PERFORM
            END-IF
