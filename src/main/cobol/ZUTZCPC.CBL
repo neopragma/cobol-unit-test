@@ -416,7 +416,8 @@
                                                 'AFTER-EACH',
                                                 'MOCK',
                                                 'VERIFY',
-                                                'IGNORE'.
+                                                'IGNORE',
+                                                '.'.
       
        01  FILLER.
            05  IGNORE-MAX PIC S9(02) VALUE 2.
@@ -4285,10 +4286,13 @@
            SET NOT-SCANNING-ORIGINAL-SOURCE TO TRUE
            SET SPACE-FOUND TO TRUE
            PERFORM 7312-FIND-NEXT-NON-SPACE-TEST UNTIL NON-SPACE-FOUND
-           PERFORM 7300-EXTRACT-NEXT-TOKEN
-           MOVE TEST-CASE-LINE
-               (CURRENT-TOKEN-OFFSET:TOKEN-LENGTH(TOKEN-IX))
-             TO ORIGINAL-TOKEN(TOKEN-IX)
+                                     OR NOT TEST-CASES-STATUS-OK
+           IF TEST-CASES-STATUS-OK
+               PERFORM 7300-EXTRACT-NEXT-TOKEN
+               MOVE TEST-CASE-LINE
+                   (CURRENT-TOKEN-OFFSET:TOKEN-LENGTH(TOKEN-IX))
+                 TO ORIGINAL-TOKEN(TOKEN-IX)
+           END-IF
            .
       
        7200-NEXT-TOKEN-ORIG-SOURCE.
