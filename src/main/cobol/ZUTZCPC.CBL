@@ -137,7 +137,7 @@
            05  FILLER                     PIC X.
                88  COMMENT-THE-LINES      VALUE 'Y'.
                88  COPY-THE-LINES         VALUE 'N'.
-           05  MAX-MOCKS                  PIC 9(02) VALUE 10.
+           05  MAX-MOCKS                  PIC 9(02) VALUE 50.
            05  MAX-CICS-KEYWORDS          PIC 9(02) VALUE 25.
            05  MAX-MOCK-REPLACEMENT-STMTS   PIC 9(03) VALUE 250.
        01  MOCKS.
@@ -149,7 +149,7 @@
                10  MOCK-LOOKUP-OPERATION  PIC X(20).
                10  MOCK-LOOKUP-PARA-NAME  PIC X(31).
                10  MOCK-LOOKUP-SECT-NAME  PIC X(31).
-           05  MOCK OCCURS 10 INDEXED BY MOCK-IX.
+           05  MOCK OCCURS 50 INDEXED BY MOCK-IX.
                10  MOCK-TYPE              PIC X(04).
                    88  MOCK-CALL          VALUE 'CALL'.
                    88  MOCK-CICS          VALUE 'CICS'.
@@ -285,10 +285,12 @@
       * Accumulate source statements that will be inserted into the
       * TEST-SOURCE file.
       *****************************************************************
-       01  MAX-GENERATED-STATEMENTS PIC S9(04) VALUE 100.
+       01  GENERATED-STATEMENT-LENGTH PIC 9(04) VALUE 1. 
+       01  GENERATED-STATEMENT-INPUT PIC X(80).          
+       01  MAX-GENERATED-STATEMENTS PIC S9(04) VALUE 250.
        01  GENERATED-SOURCE-STATEMENTS.
            05  GENERATED-SOURCE-STATEMENT
-               OCCURS 100
+               OCCURS 250
                INDEXED BY STATEMENT-IX   PIC X(160) VALUE SPACES.
       
       *****************************************************************
@@ -2439,6 +2441,13 @@
       *             ' , WAS ' x
       * END-IF
       
+           MOVE SPACES TO GENERATED-STATEMENT-INPUT         
+           STRING "'"                DELIMITED BY SIZE      
+                TOKEN(5)             DELIMITED BY SPACE     
+                  "'"                DELIMITED BY SIZE      
+             INTO GENERATED-STATEMENT-INPUT                 
+           PERFORM 4390-PREPARE-NICE-EXPECT                 
+       
            STRING
                IF-VERB              DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -2530,6 +2539,14 @@
            .
       
        4340-GENERATE-88-COMPARE.
+      
+           MOVE SPACES TO GENERATED-STATEMENT-INPUT     
+           STRING "'"                DELIMITED BY SIZE  
+                TOKEN(4)             DELIMITED BY SPACE 
+                  "'"                DELIMITED BY SIZE  
+             INTO GENERATED-STATEMENT-INPUT             
+           PERFORM 4390-PREPARE-NICE-EXPECT             
+      
       * EXPECT foo TO BE TRUE
            STRING
                MOVE-VERB             DELIMITED BY SIZE
@@ -2624,6 +2641,11 @@
       
        4350-GENERATE-PIC-X-COMPARE.
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
+           
+           MOVE ORIGINAL-TOKEN(4)           
+             TO GENERATED-STATEMENT-INPUT   
+           PERFORM 4390-PREPARE-NICE-EXPECT 
+      
            STRING
                MOVE-VERB            DELIMITED BY SIZE
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
@@ -2709,6 +2731,34 @@
            .
       
       *****************************************************************
+       4375-WRITE-TOKEN-2-WITH-QUOTE.                                  
+      *****************************************************************
+           MOVE 1 TO GENERATED-STATEMENT-LENGTH                        
+           IF TOKEN-LENGTH (2) > 57                                    
+             PERFORM 4380-FIND-MIDDLE-IN-POINT                         
+             STRING                   
+                 "'"                  DELIMITED BY SIZE                
+                 TOKEN(2)(1:WS-IX)    DELIMITED BY '  '                
+                 "'"                  DELIMITED BY SIZE                
+                 INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)         
+                           (STATEMENT-OFFSET:STATEMENT-LENGTH)         
+                 POINTER GENERATED-STATEMENT-LENGTH                    
+             END-STRING                                                
+           ELSE                                                        
+             STRING                                                    
+                 "'"                  DELIMITED BY SIZE                
+                 TOKEN(2)             DELIMITED BY '  '                
+                 WS-SUBSCRIPT         DELIMITED BY '  '                
+                 "'"                  DELIMITED BY SIZE                
+                 INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)         
+                           (STATEMENT-OFFSET:STATEMENT-LENGTH)         
+                 POINTER GENERATED-STATEMENT-LENGTH                    
+             END-STRING                                                
+           END-IF                                                      
+           SET STATEMENT-IX UP BY 1                                    
+           .                                                           
+                                                                 
+      *****************************************************************
        4380-FIND-MIDDLE-IN-POINT.
       *****************************************************************
            DIVIDE TOKEN-LENGTH (2) BY 3
@@ -2718,6 +2768,75 @@
                 OR TOKEN(2)(WS-IX:2) = 'IN'
            END-PERFORM
            SUBTRACT 1 FROM WS-IX
+           .                                                           
+                                                                 
+      *****************************************************************
+       4390-PREPARE-NICE-EXPECT.                                       
+      *****************************************************************
+           STRING                                                      
+               MOVE-VERB            DELIMITED BY SIZE                  
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)           
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)           
+           END-STRING                                                  
+           SET STATEMENT-IX UP BY 1                                    
+           PERFORM 4375-WRITE-TOKEN-2-WITH-QUOTE                       
+           STRING                                                      
+               TO-KEYWORD           DELIMITED BY SIZE                  
+               'UT-ACTUAL-VARIABLE' DELIMITED BY SIZE                  
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)           
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)           
+           END-STRING                                                  
+           SET STATEMENT-IX UP BY 1                                    
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)     
+           STRING                                                      
+               MOVE-VERB            DELIMITED BY SIZE                  
+               GENERATED-STATEMENT-LENGTH DELIMITED BY SIZE            
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)           
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH)           
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               TO-KEYWORD           DELIMITED BY SIZE        
+               'UT-ACTUAL-VARIABLE-LENGTH' DELIMITED BY SIZE 
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               MOVE-VERB             DELIMITED BY SIZE       
+               GENERATED-STATEMENT-INPUT DELIMITED BY SIZE   
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               TO-KEYWORD            DELIMITED BY SIZE       
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           MOVE 1 TO GENERATED-STATEMENT-LENGTH              
+           STRING                                            
+               'UT-EXPECT-VALUE'     DELIMITED BY SIZE       
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+               POINTER GENERATED-STATEMENT-LENGTH            
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               MOVE-VERB            DELIMITED BY SIZE        
+               GENERATED-STATEMENT-LENGTH DELIMITED BY SIZE  
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
+           STRING                                            
+               TO-KEYWORD           DELIMITED BY SIZE        
+               'UT-EXPECT-VALUE-LENGTH' DELIMITED BY SIZE    
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+                         (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+           END-STRING                                        
+           SET STATEMENT-IX UP BY 1                          
            .
       
        4400-KEYWORD-TESTCASE.
@@ -2746,6 +2865,23 @@
            ELSE
                SET GENERATE-PERFORM-AFTER TO TRUE
            END-IF
+      
+           STRING                                    
+               DISPLAY-VERB        DELIMITED BY SIZE 
+               "' '"               DELIMITED BY SIZE               
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
+                   (STATEMENT-OFFSET:STATEMENT-LENGTH)             
+           END-STRING                                              
+           SET STATEMENT-IX UP BY 1                                
+           MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
+           STRING                                                  
+               DISPLAY-VERB        DELIMITED BY SIZE               
+               "'RUNNING TESTCASE: '"                              
+               TOKEN(2)            DELIMITED BY SIZE               
+               INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)       
+                   (STATEMENT-OFFSET:)                             
+           END-STRING                                              
+           SET STATEMENT-IX UP BY 1                                
       
            STRING
                MOVE-VERB           DELIMITED BY SIZE
@@ -3149,6 +3285,7 @@
            PERFORM VARYING KEYWORD-OFFSET
                    FROM KEYWORD-OFFSET BY 1
                    UNTIL NO-MORE-TOKENS
+                  OR NOT TEST-CASES-STATUS-OK
       
                PERFORM 7100-NEXT-TOKEN-TEST-CASES
                IF TOKEN(TOKEN-IX) IS EQUAL TO END-CALL-KEYWORD
@@ -4907,7 +5044,7 @@
       * Insert test code resulting from parsing unit test keywords.
       *****************************************************************
            PERFORM VARYING STATEMENT-IX FROM 1 BY 1
-               UNTIL STATEMENT-IX IS GREATER THAN 100
+               UNTIL STATEMENT-IX > 250
                   OR GENERATED-SOURCE-STATEMENT(STATEMENT-IX)
                      IS EQUAL TO SPACES
       
@@ -4957,12 +5094,15 @@
       *****************************************************************
       * Comment the current ORIGINAL-SOURCE line and copy it.
       *****************************************************************
-           INITIALIZE WS-COUNT
-           INSPECT ORIGINAL-LINE TALLYING WS-COUNT FOR ALL '. '
-           IF ORIGINAL-LINE(7:1) = '*' OR WS-COUNT > 0
-             CONTINUE
-           ELSE
-             MOVE COMMENT-MARKER TO ORIGINAL-LINE(7:5)
+           IF ORIGINAL-LINE(7:1) NOT = '*'         
+             MOVE ORIGINAL-LINE TO LINE-TO-PARSE   
+             PERFORM 7500-INIT-KEYWORD-SEARCH      
+             MOVE '. ' TO KEYWORD-TO-MATCH         
+             MOVE 2 TO KEYWORD-MATCH-LENGTH        
+             PERFORM 7400-MATCH-KEYWORD            
+             IF KEYWORD-NOT-MATCHED                
+               MOVE COMMENT-MARKER TO ORIGINAL-LINE(7:5)
+             END-IF
            END-IF
            MOVE ORIGINAL-LINE TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE
