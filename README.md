@@ -19,6 +19,8 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Added eyecatchers surrounding inserted code, for use with gathering code coverage info.
 * Works with mixed case input in both COBOL and test source.
 * Updated CALL and EXEC CICS* mocking to work in same way as SECTION and paragraph mocking. 
+* Improved reporting with more data about the check and progress.
+* Increased mock count to 50.
 
 ### Bugfixes:
 * Avoid infinite loops when missing . at end of testsuite file.
@@ -41,6 +43,7 @@ Atm. we are not making more pull requests to the original source, as the ones we
 * Enable several spaces between section name and section tag.
 * Section names of 30 chars now supported.
 * Enabled using characters beyond 72 in the testcase file.
+* Handling of * was improved
 
 ### Other changes:
 * Fixed a lot of warnings and performance issues with the z/OS COBOL compiler.

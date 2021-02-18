@@ -1,7 +1,7 @@
       * ZUTZCPD.CPY
            DISPLAY SPACE
            MOVE UT-TEST-CASE-COUNT TO UT-TEST-CASE-NUMBER
-           DISPLAY UT-TEST-CASE-NUMBER ' TEST CASES WERE EXECUTED'
+           DISPLAY UT-TEST-CASE-NUMBER ' TESTS WERE EXECUTED'
            MOVE UT-NUMBER-PASSED TO UT-TEST-CASE-NUMBER
            DISPLAY UT-TEST-CASE-NUMBER ' PASSED'
            MOVE UT-NUMBER-FAILED TO UT-TEST-CASE-NUMBER
@@ -56,14 +56,20 @@
            ADD 1 TO UT-NUMBER-PASSED
            DISPLAY UT-PASSED 
                    UT-TEST-CASE-NUMBER '. ' 
-                   UT-TEST-CASE-NAME
+                   'EXPECTED '                                       
+                   UT-ACTUAL-VARIABLE(1:UT-ACTUAL-VARIABLE-LENGTH)   
+                   'TO BE '                                          
+                   UT-EXPECT-VALUE(1:UT-EXPECT-VALUE-LENGTH)         
            .              
 
        UT-DISPLAY-FAILED.
            ADD 1 TO UT-NUMBER-FAILED
            DISPLAY UT-FAILED 
                    UT-TEST-CASE-NUMBER '. ' 
-                   UT-TEST-CASE-NAME
+                   'EXPECTED '                                      
+                   UT-ACTUAL-VARIABLE(1:UT-ACTUAL-VARIABLE-LENGTH)  
+                   'TO BE '                                         
+                   UT-EXPECT-VALUE(1:UT-EXPECT-VALUE-LENGTH)        
       
            IF UT-COMPARE-NUMERIC
              DISPLAY ' (NB! zoned/packed decimal "WAS" values are' 
@@ -115,6 +121,10 @@
                        UT-TEST-CASE-NUMBER '. ' 
                       'VERIFY ' UT-EXPECTED-ACCESSES-FMT SPACE
                       UT-LABEL-EXPECTED-ACCESS
+                      ' TO '                          
+                      UT-MOCK-TYPE(UT-MOCK-IX)         
+                      ' '                             
+                      UT-MOCK-DATA(UT-MOCK-IX)(1:55)   
            ELSE 
                ADD 1 TO UT-NUMBER-FAILED
                MOVE SPACES TO UT-DISPLAY-MESSAGE
@@ -139,6 +149,8 @@
                        UT-FAILED                      DELIMITED BY SIZE
                        UT-TEST-CASE-NUMBER            DELIMITED BY SIZE
                        '. VERIFY ACCESSES TO '        DELIMITED BY SIZE
+                       UT-MOCK-TYPE(UT-MOCK-IX)    
+                       ' '                         
                        UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
                                                       DELIMITED BY SIZE
                        INTO UT-DISPLAY-MESSAGE
@@ -191,8 +203,11 @@
                MOVE UT-MOCK-FIND-OPERATION
                     TO UT-MOCK-OPERATION(UT-MOCK-IX)
            END-IF
+           MOVE SPACES                           
+             TO UT-MOCK-RECORD(UT-MOCK-IX)    
            MOVE UT-MOCK-SET-RECORD 
                 TO UT-MOCK-RECORD(UT-MOCK-IX)
+             (1:LENGTH OF UT-MOCK-SET-RECORD)
            MOVE UT-MOCK-SET-FILE-STATUS 
                 TO UT-MOCK-FILE-STATUS(UT-MOCK-IX)
            .    
@@ -206,6 +221,7 @@
                SET UT-MOCK-IX TO UT-MOCK-COUNT
                MOVE UT-MOCK-FIND-CALL-TOKENS
                    TO UT-MOCK-CALL-TOKENS-KEY(UT-MOCK-IX)
+               SET UT-MOCK-CALL(UT-MOCK-IX) TO TRUE
            END-IF
            .    
 
@@ -218,6 +234,7 @@
                SET UT-MOCK-IX TO UT-MOCK-COUNT
                MOVE UT-MOCK-FIND-CICS-KEYWORDS
                    TO UT-MOCK-CICS-KEYWORDS-KEY(UT-MOCK-IX)
+               SET UT-MOCK-CICS(UT-MOCK-IX) TO TRUE 
            END-IF
            .    
 
@@ -230,6 +247,7 @@
                SET UT-MOCK-IX TO UT-MOCK-COUNT
                MOVE UT-MOCK-FIND-PARA-NAME
                    TO UT-MOCK-PARA-NAME(UT-MOCK-IX)
+               SET UT-MOCK-PARA(UT-MOCK-IX) TO TRUE 
            END-IF            
            .
       
@@ -242,6 +260,7 @@
                SET UT-MOCK-IX TO UT-MOCK-COUNT     
                MOVE UT-MOCK-FIND-SECT-NAME         
                  TO UT-MOCK-SECT-NAME(UT-MOCK-IX)
+               SET UT-MOCK-SECT(UT-MOCK-IX) TO TRUE
            END-IF                                  
            .                                       
                                             
