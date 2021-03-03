@@ -307,6 +307,7 @@
       * UT-INITIALIZE-MOCK paragraph in the TEST-SOURCE file.
       *****************************************************************
        01  INITIALIZE-MOCK-STATEMENTS.
+           05  INITIALIZE-MOCK-STATEMENT-MAX PIC 9(4) COMP VALUE 250.
            05  INITIALIZE-MOCK-STATEMENT
                OCCURS 250
                INDEXED BY INITIALIZE-MOCK-IX PIC X(80) VALUE SPACES.
@@ -5191,7 +5192,8 @@
             TO INITIALIZE-MOCK-IX
       
            PERFORM VARYING INITIALIZE-MOCK-IX FROM 1 BY 1
-                   UNTIL INITIALIZE-MOCK-IX IS GREATER THAN 50
+                   UNTIL INITIALIZE-MOCK-IX                        
+                      IS GREATER THAN INITIALIZE-MOCK-STATEMENT-MAX
                    OR INITIALIZE-MOCK-IX = MAX-GENERATED-STATEMENTS
                MOVE INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)
                    TO TEST-LINE
