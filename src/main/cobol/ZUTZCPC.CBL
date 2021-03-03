@@ -308,7 +308,7 @@
       *****************************************************************
        01  INITIALIZE-MOCK-STATEMENTS.
            05  INITIALIZE-MOCK-STATEMENT
-               OCCURS 50
+               OCCURS 250
                INDEXED BY INITIALIZE-MOCK-IX PIC X(80) VALUE SPACES.
       
       *****************************************************************
@@ -3497,7 +3497,6 @@
            SET INITIALIZE-MOCK-IX UP BY 1
       
            PERFORM 4970-GEN-INIT-MOCK-COUNT
-           SET INITIALIZE-MOCK-IX UP BY 1
            .
       
       *****************************************************************
@@ -3541,6 +3540,7 @@
                'UT-MOCK-ACCESS-COUNT(UT-MOCK-IX)' DELIMITED BY SIZE
                INTO INITIALIZE-MOCK-STATEMENT(INITIALIZE-MOCK-IX)
            END-STRING
+           SET INITIALIZE-MOCK-IX UP BY 1
            .
       
        4980-SAVE-REPL-STMTS-FOR-MOCK.
