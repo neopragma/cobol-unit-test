@@ -297,9 +297,10 @@
       * Accumulate source statements that will be inserted into the
       * UT-INITIALIZE paragraph in the TEST-SOURCE file.
       *****************************************************************
+       01  MAX-INITIALIZATION-STATEMENTS PIC S9(04) VALUE 250.
        01  INITIALIZATION-STATEMENTS.
            05  INITIALIZATION-STATEMENT
-               OCCURS 50
+               OCCURS 250
                INDEXED BY INITIALIZATION-IX PIC X(80) VALUE SPACES.
       
       *****************************************************************
@@ -316,20 +317,22 @@
       * Accumulate source statements that will be inserted into the
       * UT-BEFORE paragraph in the TEST-SOURCE file.
       *****************************************************************
+       01  MAX-BEFORE-EACH-STATEMENTS        PIC S9(04) VALUE 250.
        01  BEFORE-EACH-STATEMENTS.
            05  BEFORE-EACH-MAX PIC 9(4) COMP VALUE 0.
            05  BEFORE-EACH-STATEMENT
-               OCCURS 50
+               OCCURS 250
                INDEXED BY BEFORE-EACH-IX PIC X(80) VALUE SPACES.
       
       *****************************************************************
       * Accumulate source statements that will be inserted into the
       * UT-AFTER paragraph in the TEST-SOURCE file.
       *****************************************************************
+       01  MAX-AFTER-EACH-STATEMENTS         PIC S9(04) VALUE 250. 
        01  AFTER-EACH-STATEMENTS.
            05  AFTER-EACH-MAX PIC 9(4) COMP VALUE 0.
            05  AFTER-EACH-STATEMENT
-               OCCURS 50
+               OCCURS 250
                INDEXED BY AFTER-EACH-IX PIC X(80) VALUE SPACES.
       
       *****************************************************************
@@ -1101,6 +1104,7 @@
       *****************************************************************
        01  ERROR-MESSAGES.
       
+           05  WS-CURRENT-TESTCASE             PIC X(80) VALUE SPACES.
            05  ERROR-MESSAGE-LINE              PIC X(80) VALUE SPACES.
       
            05  MSG-ORIG-SOURCE-NOT-FOUND.
@@ -1172,21 +1176,21 @@
                    15  FILLER PIC X(80) VALUE 'Examples:'.
                10  FILLER.
                    15  FILLER PIC X(80) VALUE
-                   '    VERIFY FILE INPUT-FILE OPEN HAPPENED 3 TIMES'.
+                   '    VERIFY SECTION 010-INIT HAPPENED 3 TIMES'.     
                10  FILLER.
                    15  FILLER PIC X(80) VALUE
-                   '    VERIFY FILE INPUT-FILE OPEN HAPPENED ONCE'.
+                   '    VERIFY SECTION 010-INIT HAPPENED ONCE'.
                10  FILLER.
                    15  FILLER PIC X(80) VALUE
-                   '    VERIFY FILE INPUT-FILE OPEN NEVER HAPPENED'.
+                   '    VERIFY SECTION 010-INIT NEVER HAPPENED'.
                10  FILLER.
                    15  FILLER PIC X(40) VALUE
-                   '    VERIFY FILE INPUT-FILE OPEN HAPPENED'.
+                   '    VERIFY SECTION 010-INIT HAPPENED'.
                    15  FILLER PIC X(40) VALUE
                    ' AT LEAST ONCE'.
                10  FILLER.
                    15  FILLER PIC X(40) VALUE
-                   '    VERIFY FILE INPUT-FILE READ HAPPENED'.
+                   '    VERIFY CALL SUBPROC HAPPENED'.
                    15  FILLER PIC X(40) VALUE
                    ' NO MORE THAN 5 TIMES'.
                10  FILLER.
@@ -2789,6 +2793,7 @@
            END-STRING                                                  
            SET STATEMENT-IX UP BY 1                                    
            MOVE SPACES TO GENERATED-SOURCE-STATEMENT(STATEMENT-IX)     
+           SUBTRACT 2 FROM GENERATED-STATEMENT-LENGTH
            STRING                                                      
                MOVE-VERB            DELIMITED BY SIZE                  
                GENERATED-STATEMENT-LENGTH DELIMITED BY SIZE            
@@ -2802,12 +2807,14 @@
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
                          (STATEMENT-OFFSET:STATEMENT-LENGTH) 
            END-STRING                                        
-           SET STATEMENT-IX UP BY 1                          
+           SET STATEMENT-IX UP BY 1                      
+           MOVE 1 TO GENERATED-STATEMENT-LENGTH   
            STRING                                            
                MOVE-VERB             DELIMITED BY SIZE       
                GENERATED-STATEMENT-INPUT DELIMITED BY SIZE   
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
                          (STATEMENT-OFFSET:STATEMENT-LENGTH) 
+               POINTER GENERATED-STATEMENT-LENGTH 
            END-STRING                                        
            SET STATEMENT-IX UP BY 1                          
            STRING                                            
@@ -2816,12 +2823,10 @@
                          (STATEMENT-OFFSET:STATEMENT-LENGTH) 
            END-STRING                                        
            SET STATEMENT-IX UP BY 1                          
-           MOVE 1 TO GENERATED-STATEMENT-LENGTH              
            STRING                                            
                'UT-EXPECT-VALUE'     DELIMITED BY SIZE       
                INTO GENERATED-SOURCE-STATEMENT(STATEMENT-IX) 
                          (STATEMENT-OFFSET:STATEMENT-LENGTH) 
-               POINTER GENERATED-STATEMENT-LENGTH            
            END-STRING                                        
            SET STATEMENT-IX UP BY 1                          
            STRING                                            
@@ -2857,6 +2862,7 @@
            MOVE TEST-CASE-UPPERED-LINE (KEYWORD-OFFSET:72) TO TOKEN(2)
            INITIALIZE GENERATED-SOURCE-STATEMENTS
            SET STATEMENT-IX TO 1
+           MOVE TOKEN(2) TO WS-CURRENT-TESTCASE
       
            IF GENERATE-PERFORM-AFTER
                MOVE 'PERFORM UT-AFTER' TO
@@ -2957,7 +2963,8 @@
            PERFORM VARYING BEFORE-EACH-IX FROM 1 BY 1
                    UNTIL TEST-CASES-END-OF-FILE
                       OR KEYWORD-MATCHED
-                      OR BEFORE-EACH-IX IS GREATER THAN 50
+                      OR BEFORE-EACH-IX IS GREATER THAN 
+                                             MAX-BEFORE-EACH-STATEMENTS
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-BEFORE' TO KEYWORD-TO-MATCH
                MOVE 10 TO KEYWORD-MATCH-LENGTH
@@ -2994,7 +3001,8 @@
            PERFORM VARYING AFTER-EACH-IX FROM 1 BY 1
                   UNTIL TEST-CASES-END-OF-FILE
                   OR KEYWORD-MATCHED
-                  OR AFTER-EACH-IX IS GREATER THAN 50
+                  OR AFTER-EACH-IX IS GREATER THAN 
+                                        MAX-AFTER-EACH-STATEMENTS
                PERFORM 9350-READ-TEST-CASES
                MOVE 'END-AFTER' TO KEYWORD-TO-MATCH
                MOVE 9 TO KEYWORD-MATCH-LENGTH
@@ -4193,8 +4201,7 @@
                    IF TOKEN(TOKEN-IX) = 'ZERO'
                      MOVE 0 TO MOCK-TEST-COUNT
                    ELSE
-                     COMPUTE MOCK-TEST-COUNT
-                           = FUNCTION NUMVAL(TOKEN(TOKEN-IX))
+                     PERFORM 5051-TOKEN-AS-MOCK-TEST-COUNT
                    END-IF
                    PERFORM 7100-NEXT-TOKEN-TEST-CASES
                    IF TOKEN(TOKEN-IX) IS EQUAL TO 'TIME' OR 'TIMES'
@@ -4205,7 +4212,39 @@
                END-IF
            END-IF
            .
-      
+
+       5051-TOKEN-AS-MOCK-TEST-COUNT.                                   
+      ******************************************************************
+      * use the current token as a numeric and use it as mock-test-count
+      ******************************************************************
+           if FUNCTION TEST-NUMVAL(TOKEN(TOKEN-IX)) = 0                 
+             COMPUTE MOCK-TEST-COUNT                                    
+                   = FUNCTION NUMVAL(TOKEN(TOKEN-IX))                   
+           else                                                         
+             STRING "TESTCASE:"                                         
+                    WS-CURRENT-TESTCASE DELIMITED BY SIZE               
+               INTO ERROR-MESSAGE-LINE                                  
+             PERFORM 5052-PUSH-ERROR-MESSAGE-LINE                       
+                                                                  
+             STRING "   TOKEN: '"         DELIMITED BY SIZE             
+                    TOKEN(TOKEN-IX)       DELIMITED BY '  '             
+                    "' IS NOT NUMERIC."   DELIMITED BY SIZE             
+               INTO ERROR-MESSAGE-LINE                                  
+             PERFORM 5052-PUSH-ERROR-MESSAGE-LINE                       
+             PERFORM 5060-DISPLAY-VERIFY-ERROR                          
+           END-IF                                                       
+           .                                                            
+                                                                  
+       5052-PUSH-ERROR-MESSAGE-LINE.                                    
+      ***************************************************************** 
+      * PUt error message in buffer                                     
+      ***************************************************************** 
+            SET MSG-VERIFY-IX UP BY 1                                   
+           MOVE ERROR-MESSAGE-LINE                                      
+             TO MSG-VERIFY-SYNTAX(MSG-VERIFY-IX)                        
+           MOVE SPACES TO ERROR-MESSAGE-LINE                            
+           .                                                            
+                                                                  
        5055-GEN-VERIFY-CODE.
       *****************************************************************
       * Generate VERIFY code common to all types of mocks.
@@ -5119,8 +5158,8 @@
            PERFORM 9420-WRITE-TEST-LINE
            SET BEFORE-EACH-MAX TO BEFORE-EACH-IX
            PERFORM VARYING BEFORE-EACH-IX FROM 1 BY 1
-                     UNTIL BEFORE-EACH-IX > 50
-                        OR BEFORE-EACH-IX > BEFORE-EACH-MAX
+                     UNTIL BEFORE-EACH-IX > BEFORE-EACH-MAX
+                        OR BEFORE-EACH-IX > MAX-BEFORE-EACH-STATEMENTS
                MOVE BEFORE-EACH-STATEMENT(BEFORE-EACH-IX) TO TEST-LINE
                PERFORM 9420-WRITE-TEST-LINE
            END-PERFORM
@@ -5140,8 +5179,8 @@
            PERFORM 9420-WRITE-TEST-LINE
            SET AFTER-EACH-MAX TO AFTER-EACH-IX
            PERFORM VARYING AFTER-EACH-IX FROM 1 BY 1
-                     UNTIL AFTER-EACH-IX IS GREATER THAN 50
-                        OR AFTER-EACH-IX > AFTER-EACH-MAX
+                     UNTIL AFTER-EACH-IX > AFTER-EACH-MAX
+                        OR AFTER-EACH-IX > MAX-AFTER-EACH-STATEMENTS
                MOVE AFTER-EACH-STATEMENT(AFTER-EACH-IX) TO TEST-LINE
                PERFORM 9420-WRITE-TEST-LINE
            END-PERFORM
@@ -5164,7 +5203,7 @@
            PERFORM 9420-WRITE-TEST-LINE
       
            PERFORM VARYING INITIALIZATION-IX FROM 1 BY 1
-                   UNTIL INITIALIZATION-IX IS GREATER THAN 50
+                   UNTIL INITIALIZATION-IX > MAX-INITIALIZATION-STATEMENTS
                    OR INITIALIZATION-STATEMENT(INITIALIZATION-IX)
                    IS EQUAL TO SPACES
                MOVE INITIALIZATION-STATEMENT(INITIALIZATION-IX)
