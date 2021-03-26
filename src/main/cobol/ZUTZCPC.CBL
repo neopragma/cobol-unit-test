@@ -460,7 +460,7 @@
            05  PROCEDURE-DIVISION-COPYBOOK  PIC X(08) VALUE 'ZUTZCPD'.
            05  CALL-KEYWORD                 PIC X(04) VALUE 'CALL'.
            05  CICS-KEYWORD                 PIC X(04) VALUE 'CICS'.
-           05  COPY-KEYWORD                 PIC X(04) VALUE 'COPY'.
+           05  COPY-KEYWORD                 PIC X(06) VALUE ' COPY '.
            05  ELSE-KEYWORD                 PIC X(04) VALUE 'ELSE'.
            05  END-CALL-KEYWORD             PIC X(08) VALUE 'END-CALL'.
            05  END-EXEC-KEYWORD             PIC X(08) VALUE 'END-EXEC'.
@@ -5067,10 +5067,10 @@
       
        9430-CHECK-FOR-COPY-STMT.
            SET NOT-FIRST-TOKEN TO TRUE
-           PERFORM VARYING TEMP-SUB FROM 12 BY 1
+           PERFORM VARYING TEMP-SUB FROM 11 BY 1
                    UNTIL TEMP-SUB IS GREATER THAN KEYWORD-END
-               IF TEST-LINE(TEMP-SUB:1) IS NOT EQUAL TO SPACE
-                   IF TEST-LINE(TEMP-SUB:4)
+               IF TEST-LINE(TEMP-SUB + 1:1) IS NOT EQUAL TO SPACE
+                   IF TEST-LINE(TEMP-SUB:6)
                           IS EQUAL TO COPY-KEYWORD
                       SET IS-FIRST-TOKEN TO TRUE
                    END-IF
