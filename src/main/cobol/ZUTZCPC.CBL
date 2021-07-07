@@ -454,6 +454,8 @@
            05  STATEMENT-SPACER             PIC X(11) VALUE SPACES.
            05  PARAGRAPH-END-MARKER         PIC X(12) 
                                             VALUE '           .'.
+           05  PARAGRAPH-EMPTY-PREVENTER    PIC X(19) 
+                                            VALUE '           CONTINUE'.
            05  BEFORE-PARAGRAPH-HEADER      PIC X(17) 
                                             VALUE '       UT-BEFORE.'.
            05  AFTER-PARAGRAPH-HEADER       PIC X(17) 
@@ -1841,6 +1843,7 @@
       *****************************************************************
       * EXEC SQL was found. Future implementation.
       *****************************************************************
+           CONTINUE
            .
 
        3900-LOOKUP-MOCK.    
@@ -4158,7 +4161,7 @@
            .
 
        9290-CLOSE-ORIGINAL-SOURCE.
-           CLOSE ORIGINAL-SOURCE.
+           CLOSE ORIGINAL-SOURCE
            .
 
       *****************************************************************
@@ -4209,7 +4212,7 @@
            .
 
        9390-CLOSE-TEST-CASES.
-           CLOSE TEST-CASES.
+           CLOSE TEST-CASES
            .
 
       *****************************************************************
@@ -4366,6 +4369,8 @@
                MOVE BEFORE-EACH-STATEMENT(BEFORE-EACH-IX) TO TEST-LINE
                PERFORM 9420-WRITE-TEST-LINE    
            END-PERFORM
+           MOVE PARAGRAPH-EMPTY-PREVENTER TO TEST-LINE
+           PERFORM 9420-WRITE-TEST-LINE        
            MOVE PARAGRAPH-END-MARKER TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE        
            .
@@ -4385,6 +4390,8 @@
                MOVE AFTER-EACH-STATEMENT(AFTER-EACH-IX) TO TEST-LINE    
                PERFORM 9420-WRITE-TEST-LINE
            END-PERFORM
+           MOVE PARAGRAPH-EMPTY-PREVENTER TO TEST-LINE
+           PERFORM 9420-WRITE-TEST-LINE        
            MOVE PARAGRAPH-END-MARKER TO TEST-LINE
            PERFORM 9420-WRITE-TEST-LINE        
            .
@@ -4423,4 +4430,5 @@
            .    
 
        9999-END.
+           CONTINUE
            .

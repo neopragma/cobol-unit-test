@@ -97,4 +97,4 @@
                    15  UT-RECORD-FIELD-NAME      PIC X(31).
                    15  UT-FILE-STATUS-FIELD-NAME PIC X(31).
 
-      * END OF TEST CODE 
+      * END OF TEST CODE
